@@ -15,6 +15,7 @@ authors:
 version: "1.0.3"
 date-released: "2026-10-02"
 license: MIT
+doi: "10.5281/zenodo.23105742"
 repository-code: "https://github.com/sschippe/hydrocal"
 url: "https://github.com/sschippe/hydrocal/releases/tag/v1.0.3"
 keywords:

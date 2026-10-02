@@ -8,6 +8,8 @@ rate coefficients is supported as well.
 Development is driven by data-evaluation needs of storage-ring electron–ion collision
 experiments.
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23105741.svg)](https://doi.org/10.5281/zenodo.23105741)
+
 ## Requirements
 
 | | |
@@ -162,16 +164,21 @@ If you use hydrocal in your research, please cite the software itself:
   version      = {1.0.3},
   year         = {2026},
   month        = oct,
-  publisher    = {GitHub},
+  publisher    = {Zenodo},
+  doi          = {10.5281/zenodo.23105742},
+  url          = {https://doi.org/10.5281/zenodo.23105742},
   license      = {MIT},
   repository   = {github.com/sschippe/hydrocal},
-  url          = {https://github.com/sschippe/hydrocal},
   orcid        = {0000-0002-6166-7138},
   note         = {Revision 2133; release \url{https://github.com/sschippe/hydrocal/releases/tag/v1.0.3}}
 }
 ```
 
+Cite the version DOI above for a specific release. To cover all releases at once, cite the concept DOI `10.5281/zenodo.23105741`, which always resolves to the latest version.
+
 `@software` requires [biblatex](https://ctan.org/pkg/biblatex). For plain BibTeX use the `@misc` fallback in [`CITATION.bib`](CITATION.bib). Machine-readable metadata for GitHub's *Cite this repository* widget is in [`CITATION.cff`](CITATION.cff); both files also carry the method papers below.
+
+Each tagged release is archived on Zenodo, which mints a version DOI and groups releases under a single concept DOI. Archival is handled by the Zenodo GitHub integration; the source archive is the repository tarball at the tag, so the archived state is exactly the tagged commit.
 
 There is no dedicated hydrocal software paper. The articles under [References](#references) describe the underlying physics, not the code, and should be cited only when referring to that physics.
 
