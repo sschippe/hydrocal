@@ -65,10 +65,10 @@
    sudo apt install libfltk1.4-dev libcairo2-dev gnuplot
    @endverbatim
  * 
- * The hydrocal source files and the pertinent documentation can be retrieved from a subversion (svn) repository. 
+ * The hydrocal source files and the pertinent documentation can be retrieved from a repository hosted by github.com. 
  * For checking out all hydrocal source and documentation files change to your home directory and use the following command:
  * @verbatim
-    svn checkout http://www.strz.uni-giessen.de/repository/hydrocal hydrocal
+    git clone https://github.com/sschippe/hydrocal hydrocal
 @endverbatim
  *
  * The installation assumes that a directory <tt>~/bin</tt> exists and that the environment variable <tt>PATH</tt>
@@ -76,6 +76,7 @@
  * @verbatim
    cd ~/hydrocal/build
    cmake ..
+   make -j4
    make install
    make doc-html
    @endverbatim
@@ -83,5 +84,13 @@
  * Cmake uses the configuration in <tt>[hydrocal/CMakeLists.txt](../../CMakeLists.txt)</tt>.
  *
  * ClangFormat uses the configuration in <tt>[hydrocal/.clang-format](../../.clang-format)</tt>.
+ *
+ * If you want to commit and push changes to the code or to the documentation, you will have to make sure, that the revision counter
+ * is incremented. To this end, you should use the following commands once:
+ * @verbatim
+   cd ~/hydrocal
+   git config core.hooksPath .githooks
+   cmake --build build --target setup-hooks
+   @endverbatim
  */
 
