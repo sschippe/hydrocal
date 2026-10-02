@@ -59,6 +59,36 @@ Each test case in `doc/examples/` is a `.hcin` input file.
 ctest --test-dir build --output-on-failure
 ```
 
+## Version numbering
+
+Every binary embeds a revision number, printed in the start-up banner and in
+the header of most output files:
+
+```
+ *  hydrocal, revision 2122                                   *
+```
+
+It is a monotonically increasing integer that **continues the Subversion
+revision numbering**, so numbers stay unique and correctly ordered across the
+SVN → git transition. The last Subversion revision of the imported tree was
+**r2122**, which is what the root commit reports; every commit after that
+increments the counter by one.
+
+The number is *derived* from the history rather than stored in a file, so it
+cannot drift out of sync with the commits:
+
+```
+revision = REVISION_BASE + (commits on the main line) - 1
+```
+
+`REVISION_BASE` is set in `CMakeLists.txt` and can be overridden at configure
+time. The commit count uses `git rev-list --first-parent --count`, so merges
+advance the counter by one rather than by one per merged commit.
+
+A second macro, `HYDROCAL_GITID`, records `git describe` output (tag, distance
+and abbreviated hash, plus `-dirty` for uncommitted changes) for pinning an
+exact commit in a bug report.
+
 ## Layout
 
 | Path | Contents |

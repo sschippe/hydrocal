@@ -10,7 +10,9 @@ build/
 _build/
 
 # Auto-generated files
-svnrevision.h
+buildinfo.h
+src/stubs/buildinfo.h
+doc/buildinfo.txt
 
 # Output files
 # Scoped: autostructure/examples/O2DR/CRYcooler.dat is a versioned data file

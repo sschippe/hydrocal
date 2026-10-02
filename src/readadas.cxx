@@ -13,7 +13,7 @@
 #include "readadas.h"
 #include "hydroconst.h"
 #include "hydromath.h"
-#include "svnrevision.h"
+#include "buildinfo.h"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -362,7 +362,7 @@ void ADASadf09::write_ratecoef() {
        << endl;
   fout << "### Total DR rate coefficient (cm^3/s) from ADAS ADF09 file" << endl;
   fout << "###" << endl;
-  fout << "###  hydrocal SVN revision : " << SVNrevision << endl;
+  fout << "###  hydrocal revision     : " << HYDROCAL_REVISION << endl;
   fout << "###               filename : " << outname << endl;
   fout << "###      start date & time : " << asctime(localtime(&rawtime));
   fout << "###             ADF09 file : " << s_filename << endl;

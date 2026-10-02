@@ -21,7 +21,7 @@ recombination experiments
 #include "hydromath.h"
 #include "matrix.h"
 #include "radrate.h"
-#include "svnrevision.h"
+#include "buildinfo.h"
 #include <chrono> // clocks and time
 #include <cmath>
 #include <ctime>
@@ -91,7 +91,7 @@ void write_inputdata_to_file(ofstream &ftxt, const string fnroot, const string s
   ftxt << "###            Publication : Astrophys. J 555, 1027 (2001)" << endl;
   ftxt << "###                    DOI : https://doi.org/10.1086/321512" << endl;
   ftxt << "###" << endl;
-  ftxt << "###  hydrocal SVN revision : " << SVNrevision << endl; // defined in SVNrevision.h
+  ftxt << "###  hydrocal revision     : " << HYDROCAL_REVISION << endl; // defined in buildinfo.h
   ftxt << "###               filename : " << fnroot << endl;
   ftxt << "###      start date & time : " << asctime(timeinfo);
   ftxt << "###           storage ring : " << storage_ring << endl;

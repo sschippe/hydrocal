@@ -53,7 +53,7 @@
 #include "rydserie.h"
 #include "storagetime.h"
 #include "stripping.h"
-#include "svnrevision.h"
+#include "buildinfo.h"
 #include <cstdio>
 #include <iostream>
 
@@ -673,7 +673,7 @@ void miscellaneus_group(void) {
 int main(void) {
   int i = 1, choice = 0;
   printf(" **************************************************************\n");
-  printf(" *  hydrocal, revision %-20s                   *\n", SVNrevision);
+  printf(" *  hydrocal, revision %-20s                   *\n", HYDROCAL_REVISION);
   printf(" *                                                            *\n");
   printf(" *         Compilation of hydrogenic atomic structure         *\n");
   printf(" *               and other useful calculations                *\n");

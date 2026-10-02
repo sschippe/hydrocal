@@ -17,6 +17,14 @@ CC = g++
 CFLAGS = -std=c++17 -Wall -Wno-unused-result -Wno-format -Wno-unused-variable -O3 -fopenmp -I. -Isrc
 ccgui: CFLAGS += -I/usr/include/cairo/ -I. -Isrc
 
+# Revision counter, continuing the Subversion numbering (see CMakeLists.txt):
+#   revision = REVISION_BASE + (commits on the main line) - 1
+REVISION_BASE = 2122
+NCOMMITS = $(shell git rev-list --first-parent --count HEAD 2>/dev/null)
+REVISION = $(shell awk -v n="$(NCOMMITS)" -v b=$(REVISION_BASE) \
+              'BEGIN { print (n + 0 > 0) ? b + n - 1 : b }')
+GITID = $(shell git describe --tags --always --dirty 2>/dev/null || echo unknown)
+
 PREFIX=         ${HOME}
 BIN_PREFIX=	${PREFIX}/bin
 
@@ -48,12 +56,14 @@ help:
 	@echo '  Or with optional dependencies:'
 	@echo '  cmake .. -DUSE_BOOST=ON' 
 
-########################### create header file defining the current SVN revision and the versions of boost and root (if installed) 
-.PHONY: svnrevision
-svnrevision:
-	echo "#define SVNrevision \""$(shell svnversion -n .)\" > svnrevision.h 
-	echo "$(shell less /usr/include/boost/version.hpp | grep '#define BOOST_LIB_VERSION')" >> svnrevision.h
-	echo "#define ROOTversion "$(shell root-config --version | tr -c -d [:digit:]) >> svnrevision.h 
+########################### create header file defining the current git revision
+.PHONY: buildinfo
+buildinfo:
+	@echo "#ifndef HYDROCAL_BUILDINFO_H" > buildinfo.h
+	@echo "#define HYDROCAL_BUILDINFO_H" >> buildinfo.h
+	@echo "#define HYDROCAL_REVISION \"$(REVISION)\"" >> buildinfo.h
+	@echo "#define HYDROCAL_GITID \"$(GITID)\"" >> buildinfo.h
+	@echo "#endif" >> buildinfo.h 
 
 ########################### select compilation the hydrocal program using boost library
 .PHONY: hydrocal-boost
@@ -62,7 +72,7 @@ hydrocal-boost:
 
 ########################### compile the hydrocal program
 .PHONY: hydrocal
-hydrocal: svnrevision $(OBJECTS)
+hydrocal: buildinfo $(OBJECTS)
 	$(CC) -o hydrocal.exe $(OBJECTS) $(LIBRARIES) 
 
 ########################### run tests
@@ -92,7 +102,7 @@ gui:
 
 ########################### compile the hydrocal GUI
 .PHONY: ccgui
-ccgui: svnrevision $(GUIOBJECTS)
+ccgui: buildinfo $(GUIOBJECTS)
 	touch src/hydrocalGUI.cxx
 	$(CC) -o hydrocalGUI.exe $(GUIOBJECTS) $(GUILIBRARIES) 
 
@@ -118,13 +128,13 @@ install:
 ########################### install the html documentation
 .PHONY: doc-html
 doc-html:
-	echo "SVN revision: "$(shell svnversion -n .) > doc/svnversion.h
+	@echo "git revision: $(REVISION)" > doc/buildinfo.txt
 	doxygen doc/hydrocal_html.dox
 
 ########################### install the latex-pdf documentation
 .PHONY: doc-pdf
 doc-pdf:
-	echo "SVN revision: "$(shell svnversion -n .) > doc/svnversion.h
+	@echo "git revision: $(REVISION)" > doc/buildinfo.txt
 	doxygen doc/hydrocal_pdf.dox
 	$(MAKE) -C doc/latex/ # invoke makefile created by doxygen
 	cp doc/latex/refman.pdf doc/hydrocal_manual.pdf

@@ -19,7 +19,7 @@
 #include "hydroconst.h"
 #include "hydromath.h"
 #include "radrate.h"
-#include "svnrevision.h"
+#include "buildinfo.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -419,7 +419,7 @@ void calc_spectrum() {
        << endl;
   fout << "### radiative recombination (RR lines + cascade lines)" << endl;
   fout << "###" << endl;
-  fout << "###  hydrocal SVN revision : " << SVNrevision << endl;
+  fout << "###  hydrocal revision     : " << HYDROCAL_REVISION << endl;
   fout << "###               filename : " << filename << endl;
   fout << "###  number of spec. lines : " << nlines-nstart << endl;
   fout << "###      start date & time : " << asctime(timeinfo);

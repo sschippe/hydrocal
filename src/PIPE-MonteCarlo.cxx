@@ -17,7 +17,7 @@ setup
 #include "hydroconst.h"
 #include "hydromath.h"
 #include "matrix.h"
-#include "svnrevision.h"
+#include "buildinfo.h"
 #include <chrono> // clocks and time
 #include <cmath>
 #include <complex>
@@ -573,8 +573,8 @@ int PIPE_MonteCarlo() {
   fout << "###            Publication : ChemPhysChem 24, e202300061 (2023)" << endl;
   fout << "###                    DOI : https://doi.org/10.1002/cphc.202300061" << endl;
   fout << "###" << endl;
-  fout << "###  hydrocal SVN revision : " << SVNrevision
-       << endl; // defined in SVNrevision.h
+  fout << "###  hydrocal revision     : " << HYDROCAL_REVISION
+       << endl; // defined in buildinfo.h
   fout << "###               filename : " << outfilename << endl;
   fout << "###      start date & time : "
        << asctime(timeinfo); // endl comes with asctime

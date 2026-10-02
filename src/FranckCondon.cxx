@@ -14,7 +14,7 @@
 #include "hydroconst.h"
 #include "matrix.h"
 #include "peakfunctions.h"
-#include "svnrevision.h"
+#include "buildinfo.h"
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -893,8 +893,8 @@ int FranckCondon(void) {
             "factors"
          << endl;
 #endif
-    fout << "###  hydrocal SVN revision : " << SVNrevision
-         << endl; // defined in SVNrevision.h
+    fout << "###  hydrocal revision     : " << HYDROCAL_REVISION
+         << endl; // defined in buildinfo.h
     fout << "###               filename : " << outfilename << endl;
     fout << "###      start date & time : "
          << asctime(timeinfo); // endl comes with asctime

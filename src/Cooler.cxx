@@ -17,7 +17,7 @@ world
 #include "hydromath.h"
 #include "kinema.h"
 #include "readxsec.h"
-#include "svnrevision.h"
+#include "buildinfo.h"
 #include <cmath>
 #include <cstdlib>
 #include <cstring>

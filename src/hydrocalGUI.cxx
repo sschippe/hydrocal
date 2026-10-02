@@ -39,7 +39,7 @@
 #include <FL/fl_ask.H>
 #include <FL/fl_file_chooser.H>
 
-#include "svnrevision.h"
+#include "buildinfo.h"
 
 using namespace std;
 
@@ -1360,7 +1360,7 @@ int main(int /*argc*/, char * /*argv*/[]) {
   //**************************************************************************
   if (!HCwin) {
     HCwin = new Fl_Double_Window(int(w), int(h));
-    string label = "hydrocal GUI - revision " + string(SVNrevision); // from svnrevision.h included above
+    string label = "hydrocal GUI - revision " + string(HYDROCAL_REVISION); // from buildinfo.h included above
     if (!isdigit(label.back())) label.resize(label.size()-1); // cut off the last charcater if it is not numeric
     HCwin->copy_label(label.data());
     HCwin->iconlabel("HC");

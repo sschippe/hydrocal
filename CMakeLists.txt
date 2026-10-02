@@ -34,21 +34,68 @@ if(ENABLE_WARNINGS)
 endif()
 
 # ---------------------------------------------------------------------------
-# Build-time generator for svnrevision.h
+# Build-time generator for buildinfo.h
 # ---------------------------------------------------------------------------
-set(SVNREVISION_HEADER "${CMAKE_CURRENT_BINARY_DIR}/svnrevision.h")
-file(WRITE "${CMAKE_BINARY_DIR}/gen_svnrevision.cmake" [=[
+# Replacement for the old `svnversion -n` mechanism.
+#
+# HYDROCAL_REVISION is a monotonically increasing integer that continues the
+# Subversion revision numbering, so numbers cited in the literature stay
+# unique and ordered across the SVN -> git transition.  It is derived, not
+# stored, so it cannot drift out of sync with the history:
+#
+#   revision = REVISION_BASE + (number of commits on the main line) - 1
+#
+# REVISION_BASE is the last Subversion revision of the imported tree, so the
+# root commit reports exactly that number and every later commit increments
+# by one.  `rev-list --first-parent` keeps the count linear: merges add one
+# step rather than one per merged commit.
+#
+# HYDROCAL_GITID additionally records `git describe` output, which pins the
+# exact commit (and shows "-dirty" for uncommitted changes) — useful when a
+# bug report needs to name a precise build.
+set(REVISION_BASE 2122 CACHE STRING
+    "Revision number of the initial commit (last Subversion revision)")
+
+set(BUILDINFO_HEADER "${CMAKE_CURRENT_BINARY_DIR}/buildinfo.h")
+file(WRITE "${CMAKE_BINARY_DIR}/gen_buildinfo.cmake" [=[
 execute_process(
-  COMMAND svnversion -n "${SRC_DIR}"
-  OUTPUT_VARIABLE SVN_REVISION
+  COMMAND git -C "${SRC_DIR}" rev-list --first-parent --count HEAD
+  OUTPUT_VARIABLE NCOMMITS
   OUTPUT_STRIP_TRAILING_WHITESPACE
   ERROR_QUIET
 )
-if(SVN_REVISION STREQUAL "")
-  set(SVN_REVISION "exported")
+if(NOT NCOMMITS MATCHES "^[0-9]+$")
+  set(NCOMMITS 0)
 endif()
+math(EXPR REV "${REV_BASE} + ${NCOMMITS} - 1")
+if(REV LESS 0)
+  set(REV 0)
+endif()
+
+execute_process(
+  COMMAND git -C "${SRC_DIR}" describe --tags --always --dirty
+  OUTPUT_VARIABLE GITID
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET
+)
+if(GITID STREQUAL "")
+  set(GITID "unknown")
+endif()
+execute_process(
+  COMMAND git -C "${SRC_DIR}" log -1 --format=%cd --date=short
+  OUTPUT_VARIABLE REVDATE
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET
+)
 set(TEMP "${HEADER}.tmp")
-file(WRITE "${TEMP}" "#define SVNrevision \"${SVN_REVISION}\"\n")
+file(WRITE "${TEMP}"
+  "#ifndef HYDROCAL_BUILDINFO_H\n"
+  "#define HYDROCAL_BUILDINFO_H\n"
+  "#define HYDROCAL_VERSION \"${VERSION}\"\n"
+  "#define HYDROCAL_REVISION \"${REV}\"\n"
+  "#define HYDROCAL_GITID \"${GITID}\"\n"
+  "#define HYDROCAL_REVISION_DATE \"${REVDATE}\"\n"
+  "#endif\n")
 if(EXISTS "${HEADER}")
   file(READ "${HEADER}" OLD)
   file(READ "${TEMP}" NEW)
@@ -60,12 +107,14 @@ endif()
 file(RENAME "${TEMP}" "${HEADER}")
 ]=])
 
-add_custom_target(gen_svnrevision ALL
+add_custom_target(gen_buildinfo ALL
   COMMAND ${CMAKE_COMMAND} -D SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
-                          -D HEADER="${SVNREVISION_HEADER}"
-                          -P "${CMAKE_BINARY_DIR}/gen_svnrevision.cmake"
-  BYPRODUCTS "${SVNREVISION_HEADER}"
-  COMMENT "Updating svnrevision.h"
+                          -D VERSION="${PROJECT_VERSION}"
+                          -D REV_BASE="${REVISION_BASE}"
+                          -D HEADER="${BUILDINFO_HEADER}"
+                          -P "${CMAKE_BINARY_DIR}/gen_buildinfo.cmake"
+  BYPRODUCTS "${BUILDINFO_HEADER}"
+  COMMENT "Updating buildinfo.h"
 )
 
 # ---------------------------------------------------------------------------
@@ -160,7 +209,7 @@ set(HYDROCAL_HEADERS
   src/Stark.h
   src/storagetime.h
   src/stripping.h
-  svnrevision.h
+buildinfo.h
   src/TOPbase.h
 )
 
@@ -168,7 +217,7 @@ set(HYDROCAL_HEADERS
 # Library
 # ---------------------------------------------------------------------------
 add_library(hydrocal_lib STATIC ${HYDROCAL_SOURCES} ${HYDROCAL_HEADERS})
-add_dependencies(hydrocal_lib gen_svnrevision)
+add_dependencies(hydrocal_lib gen_buildinfo)
 target_include_directories(hydrocal_lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/src" "${CMAKE_CURRENT_BINARY_DIR}")
 
 # OpenMP
@@ -396,7 +445,7 @@ add_custom_target(run-tests
   COMMAND sh "${CMAKE_CURRENT_BINARY_DIR}/run_tests.sh"
   DEPENDS hydrocal
 )
-# Small config snippet to inject the correct INCLUDE_PATH for svnrevision.h
+# Small config snippet to inject the correct INCLUDE_PATH for buildinfo.h
 set(DOXYGEN_EXTRA "${CMAKE_CURRENT_BINARY_DIR}/doxygen_extra.cfg")
 file(WRITE "${DOXYGEN_EXTRA}" "INCLUDE_PATH += ${CMAKE_CURRENT_BINARY_DIR}\n")
 
@@ -418,7 +467,7 @@ add_custom_target(doc-html
   COMMAND doxygen "${CMAKE_CURRENT_SOURCE_DIR}/doc/hydrocal_html.dox"
                   "${DOXYGEN_EXTRA}"
   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-  DEPENDS gen_svnrevision
+  DEPENDS gen_buildinfo
 )
 add_custom_target(doc-pdf
   COMMAND doxygen "${CMAKE_CURRENT_SOURCE_DIR}/doc/hydrocal_pdf.dox"
@@ -427,5 +476,5 @@ add_custom_target(doc-pdf
   COMMAND cp "${CMAKE_CURRENT_SOURCE_DIR}/doc/latex/refman.pdf"
              "${CMAKE_CURRENT_SOURCE_DIR}/doc/hydrocal_manual.pdf"
   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-  DEPENDS gen_svnrevision
+  DEPENDS gen_buildinfo
 )

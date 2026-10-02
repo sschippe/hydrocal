@@ -19,7 +19,7 @@
  */
 #include "DiracTrans.h"
 #include "DiracRate.h"
-#include "svnrevision.h"
+#include "buildinfo.h"
 #include <cmath>
 #include <cstdio>
 #include <fstream>
@@ -96,8 +96,8 @@ static void dirac_fixed_n1_n2(void) {
   fout << "####################################################################################" << endl;
   fout << "### Fully relativistic hydrogenic transition rates acccounting for full retardation"  << endl;
   fout << "###" << endl;
-  fout << "###  hydrocal SVN revision : " << SVNrevision
-       << endl; // defined in SVNrevision.h
+  fout << "###  hydrocal revision     : " << HYDROCAL_REVISION
+       << endl; // defined in buildinfo.h
   fout << "###               filename : " << filename << endl;
   fout << "###" << endl;
   fout << "###         nuclear charge : " << z << endl;

@@ -29,7 +29,7 @@ file.
 #include "hydromath.h"
 #include "kinema.h"
 #include "readxsec.h"
-#include "svnrevision.h"
+#include "buildinfo.h"
 #include <chrono> // clocks and time
 #include <cmath>
 #include <cstdlib>
@@ -398,8 +398,8 @@ void CoolerMonteCarlo(void) {
   fout << "###            Publication : Eur. Phys. J. D 78, 122 (2024)" << endl;
   fout << "###                    DOI : https://doi.org/10.1140/epjd/s10053-024-00914-7" << endl;
   fout << "###" << endl;
-  fout << "###  hydrocal SVN revision : " << SVNrevision
-       << endl; // defined in SVNrevision.h
+  fout << "###  hydrocal revision     : " << HYDROCAL_REVISION
+       << endl; // defined in buildinfo.h
   fout << "###               filename : " << outfilename << endl;
   fout << "###      start date & time : " << asctime(timeinfo);
   cooler.Print(fout);

@@ -37,7 +37,7 @@
 #include <endian.h>
 #endif
 #include "matrix.h"
-#include "svnrevision.h"
+#include "buildinfo.h"
 
 using namespace std;
 
@@ -318,7 +318,7 @@ int ConvertStrzDataFile(void) {
   };
   vector<Parameter> params;
   params.push_back(
-      {"hydrocal SVN revision", SVNrevision}); // defined in svnrevision.h
+      {"hydrocal revision", HYDROCAL_REVISION}); // defined in buildinfo.h
   string outstr = asctime(timeinfo);
   outstr.resize(outstr.size() - 1); // remove newline character
   params.push_back({"date & time of conversion", outstr});

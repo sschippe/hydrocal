@@ -19,7 +19,7 @@
 #include "hydromath.h"
 #include "kinema.h"
 #include "readxsec.h"
-#include "svnrevision.h"
+#include "buildinfo.h"
 #include <chrono> // clocks and time
 #include <cmath>
 #include <cstdlib>
@@ -305,8 +305,8 @@ void CoolerDeconvolve(void) {
           "electron-ion merged-beams experiment"
        << endl;
   fout << "###" << endl;
-  fout << "###  hydrocal SVN revision : " << SVNrevision
-       << endl; // defined in SVNrevision.h
+  fout << "###  hydrocal revision     : " << HYDROCAL_REVISION
+       << endl; // defined in buildinfo.h
   fout << "###               filename : " << outfilename << endl;
   fout << "###         input filename : " << filename << endl;
   fout << "###    number of data sets : " << npts << endl;

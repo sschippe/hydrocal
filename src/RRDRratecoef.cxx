@@ -23,7 +23,7 @@ sections
 #include "gaussint.h"
 #include "hydroconst.h"
 #include "readxsec.h"
-#include "svnrevision.h"
+#include "buildinfo.h"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -572,7 +572,7 @@ new_temperatures:
   } else {
     fout << "### hydcrocal plasma recombination rate-coefficient\n";
   }
-  fout << "### SVN revision       : " << SVNrevision << "\n";
+  fout << "### revision           : " << HYDROCAL_REVISION << "\n";
   fout << "### filename           : " << fn << "\n";
   if (fselect == 1) {
     fout << "### kTpar (meV)        : " << setw(8) << fixed << setprecision(3)
