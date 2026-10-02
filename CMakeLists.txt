@@ -38,38 +38,53 @@ endif()
 # ---------------------------------------------------------------------------
 # Replacement for the old `svnversion -n` mechanism.
 #
-# HYDROCAL_REVISION is a monotonically increasing integer that continues the
-# Subversion revision numbering, so numbers cited in the literature stay
-# unique and ordered across the SVN -> git transition.  It is derived, not
-# stored, so it cannot drift out of sync with the history:
-#
-#   revision = REVISION_BASE + (number of commits on the main line) - 1
-#
-# REVISION_BASE is the last Subversion revision of the imported tree, so the
-# root commit reports exactly that number and every later commit increments
-# by one.  `rev-list --first-parent` keeps the count linear: merges add one
-# step rather than one per merged commit.
+# HYDROCAL_REVISION continues the Subversion revision numbering, so numbers
+# cited in the literature stay unique and ordered across the SVN -> git
+# transition.  The counter lives in the REVISION file at the top of the
+# source tree and is bumped by the pre-commit hook in .githooks/, which
+# stages the new value together with the commit itself.  REVISION_BASE is
+# only a fallback for checkouts where the file is missing (e.g. someone
+# builds from a partial copy); in that case the value is reconstructed as
+#   REVISION_BASE + (commits on the main line) - 1
+# using `rev-list --first-parent`, so merges add one step rather than one per
+# merged commit.
 #
 # HYDROCAL_GITID additionally records `git describe` output, which pins the
 # exact commit (and shows "-dirty" for uncommitted changes) — useful when a
 # bug report needs to name a precise build.
 set(REVISION_BASE 2122 CACHE STRING
-    "Revision number of the initial commit (last Subversion revision)")
+    "Fallback revision when the REVISION file is absent (last SVN revision)")
 
 set(BUILDINFO_HEADER "${CMAKE_CURRENT_BINARY_DIR}/buildinfo.h")
 file(WRITE "${CMAKE_BINARY_DIR}/gen_buildinfo.cmake" [=[
-execute_process(
-  COMMAND git -C "${SRC_DIR}" rev-list --first-parent --count HEAD
-  OUTPUT_VARIABLE NCOMMITS
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-  ERROR_QUIET
-)
-if(NOT NCOMMITS MATCHES "^[0-9]+$")
-  set(NCOMMITS 0)
+# Primary source: the counter file maintained by the pre-commit hook.
+set(REV "")
+set(COUNTER "${SRC_DIR}/REVISION")
+if(EXISTS "${COUNTER}")
+  file(READ "${COUNTER}" RAW)
+  string(STRIP "${RAW}" RAW)
+  if(RAW MATCHES "^[0-9]+$")
+    set(REV "${RAW}")
+  else()
+    message(WARNING "REVISION does not contain a plain integer: '${RAW}'")
+  endif()
 endif()
-math(EXPR REV "${REV_BASE} + ${NCOMMITS} - 1")
-if(REV LESS 0)
-  set(REV 0)
+
+# Fallback: reconstruct from the history when the counter file is missing.
+if(REV STREQUAL "")
+  execute_process(
+    COMMAND git -C "${SRC_DIR}" rev-list --first-parent --count HEAD
+    OUTPUT_VARIABLE NCOMMITS
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_QUIET
+  )
+  if(NOT NCOMMITS MATCHES "^[0-9]+$")
+    set(NCOMMITS 0)
+  endif()
+  math(EXPR REV "${REV_BASE} + ${NCOMMITS} - 1")
+  if(REV LESS 0)
+    set(REV 0)
+  endif()
 endif()
 
 execute_process(
@@ -116,6 +131,23 @@ add_custom_target(gen_buildinfo ALL
   BYPRODUCTS "${BUILDINFO_HEADER}"
   COMMENT "Updating buildinfo.h"
 )
+
+# Git does not track hook configuration, so a fresh clone has no active
+# hooks and the REVISION counter would silently stop advancing.  This target
+# points git at the versioned .githooks/ directory.
+find_program(GIT_EXECUTABLE git)
+if(GIT_EXECUTABLE)
+  add_custom_target(setup-hooks
+    COMMAND ${GIT_EXECUTABLE} config core.hooksPath .githooks
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    COMMENT "Activating .githooks (revision counter hook)"
+  )
+else()
+  add_custom_target(setup-hooks
+    COMMAND ${CMAKE_COMMAND} -E echo "git not found — run manually: git config core.hooksPath .githooks"
+    COMMENT "git not found"
+  )
+endif()
 
 # ---------------------------------------------------------------------------
 # Library sources (all computational modules, no main)

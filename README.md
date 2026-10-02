@@ -65,25 +65,38 @@ Every binary embeds a revision number, printed in the start-up banner and in
 the header of most output files:
 
 ```
- *  hydrocal, revision 2122                                   *
+ *  hydrocal, revision 2123                                   *
 ```
 
 It is a monotonically increasing integer that **continues the Subversion
 revision numbering**, so numbers stay unique and correctly ordered across the
 SVN → git transition. The last Subversion revision of the imported tree was
-**r2122**, which is what the root commit reports; every commit after that
-increments the counter by one.
+**r2122**, and the counter carries on from there.
 
-The number is *derived* from the history rather than stored in a file, so it
-cannot drift out of sync with the commits:
+The counter is the single line in the **`REVISION`** file at the top of the
+source tree. It is bumped automatically by the `pre-commit` hook in
+`.githooks/`, which writes the new value and stages it as part of the same
+commit — so the number a build reports always belongs to the tree it was
+built from, and there is nothing to bump by hand.
 
+Git does not track hook configuration, so activate it once per clone:
+
+```bash
+git config core.hooksPath .githooks    # or: cmake --build build --target setup-hooks
 ```
-revision = REVISION_BASE + (commits on the main line) - 1
-```
 
-`REVISION_BASE` is set in `CMakeLists.txt` and can be overridden at configure
-time. The commit count uses `git rev-list --first-parent --count`, so merges
-advance the counter by one rather than by one per merged commit.
+To set the number deliberately (e.g. to mark a release), edit `REVISION`
+before committing; the hook increments from whatever is in the file.
+
+Commits made with `--no-verify` skip the bump — increment `REVISION` by hand
+in that case so the sequence has no gaps. Note also that the counter follows
+the file, not the history, so it stays put across `rebase`, `reset` and
+history rewriting — already-published numbers remain valid.
+
+If the `REVISION` file is missing (a partial copy, for instance) the build
+falls back to reconstructing the value as
+`REVISION_BASE + (commits on the main line) - 1`, where `REVISION_BASE` is set
+in `CMakeLists.txt`.
 
 A second macro, `HYDROCAL_GITID`, records `git describe` output (tag, distance
 and abbreviated hash, plus `-dirty` for uncommitted changes) for pinning an
@@ -97,6 +110,7 @@ exact commit in a bug report.
 | `doc/` | Doxygen sources (`doc/src`), example inputs and references (`doc/examples`) |
 | `autostructure/` | the autostructure (AUTO) structure-generation codes and examples |
 | `JAC/` | JAC relativistic atomic structure code and install helpers |
+| `REVISION` | current revision number, bumped by the `.githooks/` commit hook |
 
 ## License
 

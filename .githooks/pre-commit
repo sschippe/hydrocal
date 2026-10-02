@@ -1,0 +1,42 @@
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+#
+# pre-commit hook: bump the revision counter.
+#
+# The counter in REVISION continues the Subversion revision numbering so that
+# numbers cited in the literature stay unique and ordered across the SVN -> git
+# transition.  Each commit increments it by one, and the increment is part of
+# the commit itself, so the number a build reports is always the number of the
+# tree it was built from.
+#
+# Activated by setting the hooks path (see README.md):
+#     git config core.hooksPath .githooks
+#
+# Commits made with --no-verify skip the bump; bump REVISION by hand in that
+# case so the sequence has no gaps.
+
+set -e
+
+counter=REVISION
+
+[ -f "$counter" ] || exit 0
+
+# Read the current value, ignoring surrounding whitespace.
+current=$(tr -d ' \t\r\n' < "$counter")
+
+# Refuse to guess if the file is not a plain number.
+case "$current" in
+  '' | *[!0-9]*)
+    echo "pre-commit: $counter does not contain a plain integer ('$current')." >&2
+    echo "pre-commit: fix the file by hand; not bumping." >&2
+    exit 0
+    ;;
+esac
+
+next=$((current + 1))
+printf '%s\n' "$next" > "$counter"
+
+# Stage the bumped counter so it lands in the same commit.
+git add "$counter"
+
+echo "pre-commit: revision $current -> $next"

@@ -17,12 +17,15 @@ CC = g++
 CFLAGS = -std=c++17 -Wall -Wno-unused-result -Wno-format -Wno-unused-variable -O3 -fopenmp -I. -Isrc
 ccgui: CFLAGS += -I/usr/include/cairo/ -I. -Isrc
 
-# Revision counter, continuing the Subversion numbering (see CMakeLists.txt):
-#   revision = REVISION_BASE + (commits on the main line) - 1
+# Revision counter, continuing the Subversion numbering (see CMakeLists.txt).
+# Read from the REVISION file, which the pre-commit hook in .githooks/ bumps
+# (activate it with: git config core.hooksPath .githooks).  If the file is
+# missing, reconstruct the value from the history instead.
 REVISION_BASE = 2122
-NCOMMITS = $(shell git rev-list --first-parent --count HEAD 2>/dev/null)
-REVISION = $(shell awk -v n="$(NCOMMITS)" -v b=$(REVISION_BASE) \
-              'BEGIN { print (n + 0 > 0) ? b + n - 1 : b }')
+REVISION = $(shell tr -d ' \t\r\n' < REVISION 2>/dev/null | \
+              grep -E '^[0-9]+$$' || \
+              awk -v b=$(REVISION_BASE) -v n="$$(git rev-list --first-parent --count HEAD 2>/dev/null)" \
+                  'BEGIN { print (n + 0 > 0) ? b + n - 1 : b }')
 GITID = $(shell git describe --tags --always --dirty 2>/dev/null || echo unknown)
 
 PREFIX=         ${HOME}
