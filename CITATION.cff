@@ -1,6 +1,7 @@
 cff-version: 1.2.0
 message: "If you use hydrocal in your research, please cite it as below."
 title: "hydrocal: hydrogenic atomic structure calculations and radiative transition rates"
+type: software
 abstract: >-
   hydrocal is a collection of subroutines performing hydrogenic atomic
   structure calculations such as bound-bound and bound-free radiative
@@ -11,11 +12,11 @@ authors:
     given-names: "Stefan"
     affiliation: "Institute of Experimental Physics I, Justus-Liebig-Universitaet Giessen, Heinrich-Buff-Ring 16, 35392 Giessen, Germany"
     orcid: "https://orcid.org/0000-0002-6166-7138"
-version: "1.0.1"
+version: "1.0.3"
 date-released: "2026-10-02"
 license: MIT
 repository-code: "https://github.com/sschippe/hydrocal"
-url: "https://github.com/sschippe/hydrocal/releases/tag/v1.0.1"
+url: "https://github.com/sschippe/hydrocal/releases/tag/v1.0.3"
 keywords:
   - atomic physics
   - hydrogenic ions

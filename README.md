@@ -159,7 +159,7 @@ If you use hydrocal in your research, please cite the software itself:
   author       = {Schippers, Stefan},
   title        = {{hydrocal}: hydrogenic atomic structure calculations
                   and radiative transition rates},
-  version      = {1.0.1},
+  version      = {1.0.3},
   year         = {2026},
   month        = oct,
   publisher    = {GitHub},
@@ -167,7 +167,7 @@ If you use hydrocal in your research, please cite the software itself:
   repository   = {github.com/sschippe/hydrocal},
   url          = {https://github.com/sschippe/hydrocal},
   orcid        = {0000-0002-6166-7138},
-  note         = {Revision 2132; release \url{https://github.com/sschippe/hydrocal/releases/tag/v1.0.2}}
+  note         = {Revision 2133; release \url{https://github.com/sschippe/hydrocal/releases/tag/v1.0.3}}
 }
 ```
 
