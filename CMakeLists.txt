@@ -20,6 +20,9 @@ option(WARNINGS_AS_ERRORS "Treat compiler warnings as errors (-Werror)" ON)
 # being linked into a foreign-target binary; the portable three-stage 1F1
 # fallback is used instead.
 option(USE_FLINT "Use FLINT for the exact 1F1/2F1 engines when available" ON)
+# Link the OpenMP runtime into the binary instead of importing it from a DLL.
+# Needed for self-contained Windows executables.
+option(USE_STATIC_OPENMP "Link libgomp statically (required for a DLL-free Windows build)" OFF)
 
 # ---------------------------------------------------------------------------
 # Warning flags (applied to all targets defined below)
@@ -262,6 +265,29 @@ find_package(OpenMP QUIET)
 if(OpenMP_CXX_FOUND)
   target_link_libraries(hydrocal_lib PUBLIC OpenMP::OpenMP_CXX)
   target_compile_options(hydrocal_lib PRIVATE -fopenmp)
+  # When cross-compiling to Windows, FindOpenMP resolves the OpenMP runtime to
+  # import libraries (libgomp.dll.a, libpthread.dll.a) and names those paths
+  # explicitly, so -static cannot substitute the archives and hydrocal.exe
+  # depends on libgomp-1.dll / libwinpthread-1.dll at run time.  Swap each
+  # import library for the static archive of the same name where it exists.
+  # The original order is preserved: libgomp.a must precede the thread runtime
+  # that resolves its undefined symbols.
+  if(USE_STATIC_OPENMP)
+    get_target_property(_hydrocal_omp_libs OpenMP::OpenMP_CXX
+                        INTERFACE_LINK_LIBRARIES)
+    set(_hydrocal_omp_new "")
+    foreach(_lib IN LISTS _hydrocal_omp_libs)
+      if(_lib MATCHES "\\.dll\\.a$")
+        string(REGEX REPLACE "\\.dll\\.a$" ".a" _hydrocal_static_lib "${_lib}")
+        if(EXISTS "${_hydrocal_static_lib}")
+          set(_lib "${_hydrocal_static_lib}")
+        endif()
+      endif()
+      list(APPEND _hydrocal_omp_new "${_lib}")
+    endforeach()
+    set_target_properties(OpenMP::OpenMP_CXX PROPERTIES
+      INTERFACE_LINK_LIBRARIES "${_hydrocal_omp_new}")
+  endif()
 else()
   message(STATUS "OpenMP not found — compiling without parallel support")
 endif()
@@ -347,6 +373,65 @@ if(FLTK_FOUND AND HAVE_CAIRO)
   message(STATUS "GUI enabled (FLTK + Cairo found)")
 else()
   message(STATUS "GUI disabled (FLTK: ${FLTK_FOUND}, Cairo: ${HAVE_CAIRO})")
+endif()
+
+# ---------------------------------------------------------------------------
+# Visual Studio project files (for people building on Windows without mingw)
+# ---------------------------------------------------------------------------
+# The project file is generated from the same source list CMake uses, so it can
+# never drift out of sync with the build.  Paths are relative to the source
+# root because that is where the generated buildinfo.h lives too.
+set(HYDROCAL_WINPROJ_DIR "${CMAKE_BINARY_DIR}/win-project")
+file(MAKE_DIRECTORY "${HYDROCAL_WINPROJ_DIR}")
+
+set(HYDROCAL_VCX_SOURCES "")
+set(HYDROCAL_VCX_HEADERS "")
+foreach(_src IN LISTS HYDROCAL_SOURCES)
+  get_filename_component(_hdr "${_src}" NAME_WE)
+  # Visual Studio expects Windows-style relative paths.
+  string(REPLACE "/" "\\" _msvc_src "${_src}")
+  string(APPEND HYDROCAL_VCX_SOURCES
+         "    <ClCompile Include=\"${_msvc_src}\" />\n")
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/${_hdr}.h")
+    string(APPEND HYDROCAL_VCX_HEADERS
+           "    <ClInclude Include=\"src\\${_hdr}.h\" />\n")
+  endif()
+endforeach()
+string(APPEND HYDROCAL_VCX_SOURCES "    <ClCompile Include=\"src\\hydrocal.cxx\" />\n")
+
+set(HYDROCAL_VCX_HEADERS "${HYDROCAL_VCX_HEADERS}    <ClInclude Include=\"src\\buildinfo.h\" />\n")
+
+configure_file(packaging/windows/hydrocal.vcxproj.in
+               "${HYDROCAL_WINPROJ_DIR}/hydrocal.vcxproj" @ONLY)
+configure_file(packaging/windows/hydrocal.sln.in
+               "${HYDROCAL_WINPROJ_DIR}/hydrocal.sln" @ONLY)
+configure_file(packaging/windows/ReadMe.txt.in
+               "${HYDROCAL_WINPROJ_DIR}/ReadMe.txt" @ONLY)
+
+add_custom_target(win-project ALL
+  # The MSVC project includes "buildinfo.h"; it only exists after the build,
+  # so it is copied here rather than at configure time.
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          "${CMAKE_BINARY_DIR}/buildinfo.h"
+          "${HYDROCAL_WINPROJ_DIR}/buildinfo.h"
+  COMMAND ${CMAKE_COMMAND} -E echo
+          "Visual Studio project files written to ${HYDROCAL_WINPROJ_DIR}"
+  DEPENDS hydrocal
+  COMMENT "Generating Visual Studio project files")
+
+# Assemble the distributable archive.  file(ARCHIVE_CREATE) needs CMake 3.18.
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.18)
+  add_custom_target(win-zip
+    COMMAND ${CMAKE_COMMAND}
+            -DBUILD_DIR=${CMAKE_BINARY_DIR}
+            -DWINPROJ_DIR=${HYDROCAL_WINPROJ_DIR}
+            -DHYDROCAL_EXE=$<TARGET_FILE:hydrocal>
+            -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/packaging/windows/make-zip.cmake
+    DEPENDS hydrocal win-project
+    COMMENT "Packaging hydrocal_win.zip")
+else()
+  message(STATUS "CMake < 3.18 — target 'win-zip' unavailable")
 endif()
 
 # ---------------------------------------------------------------------------

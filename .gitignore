@@ -8,6 +8,7 @@
 # Build directory (CMake)
 build/
 _build/
+build-win/
 
 # Auto-generated files
 buildinfo.h

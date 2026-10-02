@@ -79,9 +79,9 @@
    make install
    @endverbatim
  *
- * Cmake uses the configuration in <tt>[hydrocal/CMakeLists.txt](../../CMakeLists.txt)</tt>.
+ * Cmake uses the configuration in <tt>[~/hydrocal/CMakeLists.txt](../../CMakeLists.txt)</tt>.
  *
- * The following command produces the html documentation acessible at <tt>[hydrocal/doc/index.html](index.html)</tt>.
+ * The following command produces the html documentation acessible at <tt>[~/hydrocal/doc/index.html](index.html)</tt>.
  * @verbatim
    cd ~/hydrocal/build
    make doc-html

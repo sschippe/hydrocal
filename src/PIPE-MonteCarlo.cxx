@@ -23,6 +23,7 @@ setup
 #include <complex>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <fstream>
 #include <functional> // for "bind (random_generator, random_distribution)"
 #include <iostream>
