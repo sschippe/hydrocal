@@ -405,15 +405,18 @@ configure_file(packaging/windows/hydrocal.vcxproj.in
                "${HYDROCAL_WINPROJ_DIR}/hydrocal.vcxproj" @ONLY)
 configure_file(packaging/windows/hydrocal.sln.in
                "${HYDROCAL_WINPROJ_DIR}/hydrocal.sln" @ONLY)
-configure_file(packaging/windows/ReadMe.txt.in
-               "${HYDROCAL_WINPROJ_DIR}/ReadMe.txt" @ONLY)
 
 add_custom_target(win-project ALL
-  # The MSVC project includes "buildinfo.h"; it only exists after the build,
-  # so it is copied here rather than at configure time.
+  # buildinfo.h only exists after the build, so the header is copied and the
+  # ReadMe filled in here rather than at configure time.
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
           "${CMAKE_BINARY_DIR}/buildinfo.h"
           "${HYDROCAL_WINPROJ_DIR}/buildinfo.h"
+  COMMAND ${CMAKE_COMMAND}
+          -DBUILD_DIR=${CMAKE_BINARY_DIR}
+          -DWINPROJ_DIR=${HYDROCAL_WINPROJ_DIR}
+          -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/packaging/windows/make-readme.cmake
   COMMAND ${CMAKE_COMMAND} -E echo
           "Visual Studio project files written to ${HYDROCAL_WINPROJ_DIR}"
   DEPENDS hydrocal
