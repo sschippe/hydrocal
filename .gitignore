@@ -1,0 +1,63 @@
+# Build artifacts
+*.o
+*.exe
+*.a
+*.so
+*.dll
+
+# Build directory (CMake)
+build/
+_build/
+
+# Auto-generated files
+svnrevision.h
+
+# Output files
+# Scoped: autostructure/examples/O2DR/CRYcooler.dat is a versioned data file
+/doc/examples/CRYcooler.dat
+*.log
+*.aux
+*.out
+*.bbl
+*.blg
+*.core
+
+# Test output
+test/
+
+# Generated test/reference output (versioned references like S3soft.fn/.fnl stay)
+doc/examples/RADRATES
+doc/examples/exit.lines
+doc/examples/test.sig
+doc/examples/S3soft*.fm[123]
+doc/examples/S3soft_*.fn
+doc/examples/S3soft_*.fnl
+src/test.sig
+
+# Editor/OS files
+*~
+*.swp
+*.swo
+\#*
+.\#*
+
+# Version control
+.svn/
+
+# IDE
+.idea/
+.vscode/
+.vs/
+*.user
+*.slnx
+
+# Local agent/tool settings
+.claude/settings.local.json
+
+# Prebuilt Windows distribution (generated)
+hydrocal_win.zip
+
+# Documentation build
+doc/html/
+doc/latex/
+.aider*

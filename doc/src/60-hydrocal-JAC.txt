@@ -1,0 +1,111 @@
+/** 
+    @file 60-hydrocal-JAC.txt
+    @brief hydrocal JAC intstallation support
+ 
+    @par CREATION
+    @author Stefan Schippers
+    
+    @par VERSION
+    $Id: 60-hydrocal-JAC.txt 2050 2026-07-20 14:20:05Z iamp $
+
+ */ 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ /** @page pageJAC JAC (Jena Atomic Calculator)
+ *
+ * JAC is a modern, fully-relativistic atomic code being developed under the lead of Stephan Fritzsche (HI Jena).
+ * Comprehensive information (and the code)  is available at [github.com/OpenJAC](https://github.com/OpenJAC/JAC.jl).
+ *
+ * The [JAC User Guide](../../JAC/Fritzsche_UserGuide-JAC.pdf) provides theoretical background and, in itself, is a comprehensive collection of atomic-physics knowledge.
+ *
+ * JAC is coded in the programming language [Julia](https://julialang.org) which runs on many platforms, among others, Linux and Windows. 
+ * 
+ * <h3>Installation on a Windows system</h3>
+ *
+ * For a Windows installation of Julia use the terminal command
+ * @verbatim
+    winget install Julialang.Julia
+ @endverbatim
+ * After successful installation Julia will be available as an App, which opens a terminal window for command-line input.
+ * JAC is available as a Julia package. Within the Julia environment it can be easily installed by using the commands
+ * @verbatim
+    julia> import Pkg; Pkg.add("JenaAtomicCalculator")
+ @endverbatim
+ * 
+ * <h3>Installation on a Linux system</h3>
+ *
+ * For a Linux installation of Julia and JAC invoke the following script in the directory <tt>hydrocal/JAC</tt>:
+ * @verbatim
+    ./InstallJAC.bash
+ @endverbatim
+ * Note that super-user rights (sudo) are required for the installation (you will be asked for your credentials). After the installation,
+ * make sure that your <tt>PATH</tt> variable contains <tt>/usr/local/bin</tt>. To this end you could add the line
+ * @verbatim
+    export PATH=$PATH:/usr/local/bin
+ @endverbatim
+ * to the file  <tt>~/.bashrc</tt>. Julia can then be started by typing '<tt>julia</tt>' on the command line. 
+ * The script <tt>InstallJAC.bash</tt> can be edited, e.g., for changing the Julia version to installed. 
+ *
+ * <h3>Usage within the Julia environment</h3>
+ *
+ * JAC input files <tt>\<filename\>.jl</tt> should have the file extension <tt>*.jl</tt>.  Start Julia and within the Julia environment use:
+ * @verbatim
+    julia> using JenaAtomicCalculator
+    julia> include("<filename>.jl") 
+    julia> exit()
+ @endverbatim
+ * Note that <tt>using ...</tt> has to be entered only once at the beginning. 
+ * The <tt>include(...)</tt> command can then be invoked as often as required.
+ *  
+ * <h3>Usage from the Linux command line</h3>
+ *
+ * Within Linux, a calculation can also be made by just issuing the command
+ * @verbatim
+    JAC <filename>
+ @endverbatim
+ * which runs the script [JAC.bash](../../JAC/JAC.bash).
+ *
+ * <h3>Usage within Pluto notebooks</h3>
+ *
+ * JAC can also be run within [<tt>Pluto</tt>](https://plutojl.org) notebooks.
+ * Pluto is available as a Julia package and can be installed with the commands
+ * @verbatim
+    julia> import Pkg; Pkg.add("Pluto")
+ @endverbatim
+ * The following <tt>cd</tt> command changes to the working directory, which can be located anywhere. 
+ * @verbatim
+    julia> cd("D:\\JAC\\current_project")
+ @endverbatim
+ * Pluto is started by the commands
+ * @verbatim
+    julia> import Pluto; Pluto.run()
+ @endverbatim
+ * The notebook opens in a html-browser tab. The tab contains a button "Live docs" in the lower right corner. 
+ * This is very useful as it displays documentation of JAC commands as you type.
+ * See [github.com/OpenJAC/demos](https://github.com/OpenJAC/JenaAtomicCalculator.jl/tree/master/demos) for further details.     
+ *
+ * <h3>Usage within Jupyter notebooks</h3>
+ *
+ * Another variant of running JAC is the use of [<tt>jupyter</tt>](https://jupyter.org/) notebooks. The Julia interface to <tt>jupyter</tt> is <tt>IJulia</tt>. This can be installed as follows:
+ * @verbatim
+    julia> import Pkg; Pkg.add("IJulia")
+ @endverbatim
+ The following sequence of commands opens a <tt>jupyter</tt> tab in your default html browser: 
+ * @verbatim
+    julia>using JenaAtomicCalculator
+    julia>using IJulia
+    julia>notebook() 
+ @endverbatim
+ *
+ * <h3>Examples for input files</h3>
+ *
+ *  Various examples for JAC input files are available at [github.com/OpenJAC](https://github.com/OpenJAC/JAC.jl) and some more here below:
+ *
+ * - Calculation of atomic energy levels:  [AtomicLevels.jl](../../JAC/samples/AtomicLevels.jl) 
+ * - Calculation of atomic energy levels:  [AtomicLevelsPluto.jl](../../JAC/samples/AtomicLevelsPluto.jl) (Pluto version),  [AtomicLevelsPluto.pdf](../../JAC/samples/AtomicLevelsPluto.pdf) (PDF version)
+ * - LMM DR of berylliumlike Au<sup>75+</sup>: [Au75LMMDR.jl](../../JAC/samples/Au75LMMDR.jl)
+ * - DR of berylliumlike Pb<sup>78+</sup>(1s<sup>2</sup>2s<sup>2</sup>) via 1s<sup>2</sup>2s2p <sup>3</sup>P<sub>1</sub>19l resonances: [Pb78LL19DR.jl](../../JAC/samples/Pb78LL19DR.jl)
+ *
+ */
+

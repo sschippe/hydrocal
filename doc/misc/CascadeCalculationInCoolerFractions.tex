@@ -1,0 +1,186 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\newcommand{\bB}{\boldsymbol{B}}
+\newcommand{\bD}{\boldsymbol{D}}
+\newcommand{\bI}{\boldsymbol{I}}
+\newcommand{\bM}{\boldsymbol{M}}
+\newcommand{\bN}{\boldsymbol{N}}
+\newcommand{\bQ}{\boldsymbol{Q}}
+\newcommand{\bR}{\boldsymbol{R}}
+\newcommand{\bp}{\boldsymbol{p}}
+
+\begin{document}
+
+\title{Cascade Calculation Methods in \texttt{hydrocal/src/CoolerFractions.cxx}}
+\author{AI generated and edited by S. Schippers}
+\date{\today}
+\maketitle
+
+\section{Problem}
+
+An ion beam is created in hydrogenic excited states $|n,l\rangle$ and
+traverses a cooler section of length $L$ before entering a field ioniser.
+During the flight of duration $t = L/v_{\rm ion}$ the states undergo
+radiative cascade.  We need the \emph{detection probability}
+\begin{equation}
+  f_{nl} \;=\; \sum_{n',l'} \bigl[\exp(\bM\, t)\bigr]_{n'l',\,nl}\;
+  p_{\rm surv}(n',l')
+  \label{eq:fnl}
+\end{equation}
+where $p_{\rm surv}(n,l)$ is the field-ionisation survival probability
+($0$ or $1$ below/above the field-ionisation threshold $n_{\rm zero}$)
+and $\bM$ is the radiative rate matrix.
+
+\section{Rate Matrix}
+
+States are indexed as $(n,l) \to i = n(n{-}1)/2 + l$, giving
+$N = n_{\rm max}(n_{\rm max}{+}1)/2$ states.  The rate matrix $\bM$ is
+upper-triangular (decays only go to lower~$n$):
+\begin{equation}
+  M_{ii} = -\frac{1}{\tau_i}\,, \qquad
+  M_{ji} = \frac{B(i\!\to\!j)}{\tau_i} \quad(j < i)
+\end{equation}
+where $\tau_i$ is the radiative lifetime of state~$i$ and $B(i\!\to\!j)$
+the branching ratio for the dipole transition $i\!\to\!j$.
+Column sums of $\bM$ vanish, guaranteeing probability conservation.
+
+\section{Method 1: Matrix Exponential}
+
+The population vector obeys $d\bp/dt = \bM\,\bp$.  Its formal solution
+$\bp(t) = \exp(\bM\,t)\,\bp(0)$ gives the exact cascade evolution for
+all coupled states simultaneously.
+
+\subsection{Implementation}
+
+The matrix exponential is computed by scaling and squaring with a
+Pad\'{e}\,[13/13] approximant~\cite{Higham2008}:
+\begin{enumerate}
+\item Compute the 1-norm $\|\bM\,t\|_1$ and determine a scaling
+  parameter $s = \max\bigl(0,\;\lceil\log_2(\|\bM\,t\|_1/2)\rceil\bigr)$.
+\item Form $\bQ = \bM\,t\,/\,2^s$.
+\item Evaluate the Pad\'{e}\ numerator $\bN(\bQ)$ and denominator
+  $\bD(\bQ)$ polynomials of degree~13 using Horner's rule on even/odd
+  powers of $\bQ^2$.
+\item Solve $\bD\,\bR = \bN$ by Newton iteration
+  $\bR_{k+1} = \bR_k(2\bI - \bD\,\bR_k)$, starting from $\bR_0 = \bI$.
+  Three iterations suffice ($\|\bI - \bD\|$ is small after scaling).
+  Then $\bR \leftarrow \bR\,\bN$ to obtain $\bR = \bD^{-1}\bN \approx \exp(\bQ)$.
+\item Square $s$~times: $\bR \leftarrow \bR^2$ to recover
+  $\exp(\bM\,t)$.
+\end{enumerate}
+Finally, $f_{nl}$ is obtained from Eq.~(\ref{eq:fnl}) as a single
+matrix--vector product $\bR^{\!\mathsf T}\,p_{\rm surv}$.
+For an extended creation region ($x_1 \ne x_2$) a trapezoidal average
+of $\exp(\bM\,t_1)$ and $\exp(\bM\,t_2)$ is used.
+
+\subsection{Complexity}
+
+Matrix multiplication dominates at $O(N^3)$ per multiply.
+For $n_{\rm max} = 20$ ($N = 210$): the scaling factor is
+$s \approx 15$, giving roughly $20$ matrix multiplications in total.
+The $\mathcal{O}(N^3)$ cost is modest for $N \lesssim 1000$ but becomes
+prohibitive for very large $n_{\rm max}$.
+
+\section{Method 2: Recursive Cascade}
+
+The original \texttt{hydrocal} recursive method builds $f_{nl}$ analytically, state by state,
+without ever forming the full matrix \cite{Schippers2001c}.
+
+\subsection{Core formula}
+
+For an initial state $(n_1,l_1)$ the detection probability is
+\begin{equation}
+  f_{n_1 l_1} = \bigl(1 - p_{\rm d}(n_1 l_1)\bigr)\,p_{\rm surv}(n_1 l_1)
+  \;+\; \sum_{n_2,l_2} B(n_1 l_1 \!\to\! n_2 l_2)\;
+  \Bigl[\bigl(p_{\rm d}(n_1 l_1) - p_{\rm casc}\bigr)\,p_{\rm surv}(n_2 l_2)
+  + f_{\rm casc}\Bigr]
+  \label{eq:recursive}
+\end{equation}
+where $p_{\rm d}(nl) = 1 - e^{-t/\tau_{nl}}$ is the single-state decay
+probability and $p_{\rm casc}$ is the effective cascade-chain decay
+probability computed by the Lagrange-type identity:
+\begin{equation}
+  p_{\rm casc} = \sum_{i=0}^{K} \frac{p_{{\rm d},i}}
+  {\prod_{k \ne i}\bigl(1 - \tau_k/\tau_i\bigr)}
+  \label{eq:pcasc}
+\end{equation}
+for a chain of $K{+}1$ states with lifetimes $\tau_0, \tau_1, \ldots,
+\tau_K$ and individual decay probabilities $p_{{\rm d},i}$.
+The term $f_{\rm casc}$ is the recursive contribution from deeper cascade
+steps, computed by calling \texttt{cascade()} with the chain extended by
+one state.
+
+The recursion depth is controlled by \texttt{ncascstep}:
+\begin{itemize}
+\item \texttt{ncascstep = 0}: no cascade (direct survival only).
+\item \texttt{ncascstep $> 0$}: at most that many cascade steps.
+\item \texttt{ncascstep $< -1$}: unlimited ($= n_{\rm max}$).
+\item \texttt{ncascstep = $-1$}: selects the matrix exponential method.
+\end{itemize}
+
+\subsection{Complexity}
+
+The recursion visits each $(n,l)$ state a limited number of times.
+The total work scales roughly as $O(N \times \langle n_{\rm cascade}\rangle
+\times n_{\rm neighbours})$, where $\langle n_{\rm cascade}\rangle$ is the
+average chain length and $n_{\rm neighbours} \le 2$ (dipole selection
+rules allow at most two $l$-values per $n_2$).  For $n_{\rm max} = 20$
+this is very fast ($\sim 10^5$ operations).
+
+\section{Comparison}
+
+Both methods were verified against each other for $n_{\rm max} = 20$,
+$q_{\rm ion} = 3$, and realistic CSRe parameters
+($v_{\rm ion} = 2.0 \times 10^8$~cm/s, $L = 68$~cm).
+The maximum absolute difference across all 210~states is
+$\sim 3 \times 10^{-7}$, consistent with accumulated floating-point
+round-off in two independent algorithms.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+ & Matrix exponential & Recursive cascade \\
+\midrule
+Mathematical basis & Exact ODE solution & Lagrange interpolation identity \\
+Complexity & $O(N^3)$ & $O(N \times n_{\rm chain})$ \\
+Matrix storage & $N \times N$ & $O(N)$ \\
+Arbitrary $n_{\rm max}$ & Expensive for large $N$ & Always fast \\
+Exactness & Machine precision & Machine precision \\
+Truncation control & None (exact) & Via \texttt{ncascstep} \\
+Extended creation & Trapezoidal average & Trapezoidal average \\
+\bottomrule
+\end{tabular}
+\caption{Comparison of the two cascade calculation methods.}
+\label{tab:comparison}
+\end{table}
+
+\subsection{Recommendations}
+
+\begin{itemize}
+\item For $n_{\rm max} \le 200$ both methods are fast.  The matrix
+  exponential is simpler to implement and verify, and gives the exact
+  answer in one shot.
+\item The recursive method is preferred when $n_{\rm max}$ is large
+  ($\gtrsim 500$), since its cost scales linearly in~$N$ rather than
+  cubically.  The \texttt{ncascstep} parameter provides a natural
+  convergence knob.
+\item Both methods handle the trapezoidal position average for extended
+  creation regions identically.
+\end{itemize}
+
+\begin{thebibliography}{1}
+\bibitem{Higham2008}
+  N.~J.~Higham,
+  \href{https://de.scribd.com/document/401677222/Nicholas-J-Higham-Functions-of-Matrices-Theory-BookFi-org-pdf}{\emph{Functions of Matrices: Theory and Computation}}, SIAM - Society for Industrial and Applied Mathematics, Philadelpphia, USA (2008).
+  
+  
+\bibitem{Schippers2001c}
+  S. Schippers, A. Müller, G. Gwinner, J. Linkemann, A.A. Saghiri, and A. Wolf, \emph{Storage ring measurement of the C IV recombination rate coefficient}, \href{https://doi.org/10.1086/321512}{Astrophys. J. \textbf{555}, 1027 (2001)}.
+\end{thebibliography}
+
+\end{document}

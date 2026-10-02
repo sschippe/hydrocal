@@ -1,0 +1,2118 @@
+N. R. Badnell         A U T O S T R U C T U R E               11/09/23
+                      *************************
+                               (30.x)
+
+This write-up, codes and installation instructions are available
+via the WWW from http://www.apap-network.org/autos/ .
+
+
+1. Introduction
+2. AUTOSTRUCTURE
+    a. Energy levels & Radiative rates
+    b. Autoionization and photoionization
+    c. Dielectronic & Radiative recombination, resonant-excitation etc.
+    d. Direct Electron-Impact Excitation
+    e. External orbitals
+    f. Miscellaneous Examples
+3. Post-Processing
+    a. Resonant Excitation
+    b. Dielectronic Recombination
+    c. Radiative Recombination
+    d. Photoexcitation-Autoionization/Photoionization
+    e. General Post-Processor
+4. NAMELIST Inputs
+    a. SALGEB
+    b. DRR
+    c. SMINIM
+    d. SRADWIN
+    e. SRADCON
+5. Advanced data handling for modelling
+    
+--------------------------------------------------------------------------------
+    
+    
+
+                        1. INTRODUCTION
+                        ***************
+
+Historically, AUTOSTRUCTURE (AS) was developed from SUPERSTRUCTURE (SS).
+The theory behind SS is described by Eissner, Jones, & Nussbaumer in
+their Computer Physics Communications paper CPC8,270-306 (1974). Further
+significant development was undertaken by Storey (unpublished). SS deals 
+with bound-state problems: energy levels and radiative rates (E_k & M_k). 
+AS deals with collisions as well: autoionization rates, photoionization
+cross sections and electron-impact excitation (EIE), for example. Some 
+original theory may be found in Badnell J.Phys.B19, 3827-35 (1986). For EIE,
+see Eissner CPC114, 295-341 (1998) and Badnell CPC 182, 1528-35 (2011).
+
+Here is a simple guide to get you going. It is not exhaustive. In general,
+if you want to do something not described here, and it is physically
+possible, then it is likely that it is already possible/coded but just
+not detailed here.
+
+All examples can be found in the test_suite directory, likely along with 
+the output obtained running locally.
+
+********************************************************************************
+--------------------------------------------------------------------------------
+
+
+
+                        2. AUTOSTRUCTURE
+                        ****************
+                        
+
+2a. Energy levels & Radiative rates
+***********************************
+
+All input described is free-formatted and NAMELISTed, EXCEPT for the
+first 4 characters of line 1 which flag the input style.
+Here, we focus on A.S. (There is also S.S. which enables configurations
+to be input fixed-format using the Eissner notation, no details.)
+
+So,
+
+A.S. Starts the file and the rest of the line is for comment.
+
+Next we have the "algebra" NAMELIST: e.g.
+
+ &SALGEB  MXCONF=3 MXVORB=3  &END
+
+is the minimal input where MXCONF is the number of target configurations
+and MXVORB is the number of distinct (valence) electron orbitals which
+describe them. For example, Be-like C2+ described by 1s^2 2s^2, 1s^2 2s 2p
+and 1s^2 2p^2 :
+
+ 1 0  2 0  2 1
+  2    2    0
+  2    1    1
+  2    0    2
+
+Recall, the input is free-formatted. The MXVORB nl-orbital quantum numbers
+are listed before the MXVORB occupation numbers for the MXCONF 
+configurations.
+
+Finally, we have the "radial" NAMELIST SMINIM in which we define the
+nuclear charge NZION:
+
+ &SMINIM NZION=6  &END
+
+for Carbon. 
+
+
+In total, we now have:
+
+Example 1.
+----------
+
+A.S. Be-like C structure - energies
+ &SALGEB MXCONF=3 MXVORB=3  &END
+ 1 0  2 0  2 1
+  2    2    0
+  2    1    1
+  2    0    2
+ &SMINIM NZION=6  &END
+
+This is the minimal input and it will give term energies in LS-coupling:
+You should obtain (see INSTALL for compilation & execution details):
+
+  I         T        K*CM  2S+1 L   CF     WEIGHTS        (EI-E1)/RY     E1/RY =    -72.851751
+  1         5           0.    1 0    1       0.000          0.000000
+  2         3       53615.   -3 1    2       0.000          0.488573
+  3         4      110474.   -1 1    2       0.000          1.006710
+  4         2      138472.    3 1    3       0.000          1.261854
+  5         1      154159.    1 2    3       0.000          1.404803
+  6         6      191335.    1 0    3       0.000          1.743577
+
+(This is just the end of the UNIT6 output file, default name "olg".)
+Further, more machine friendly, files are also created holding similar
+data, viz. TERMS and ols.
+
+Now, you want more? For example, what about intermediate coupling and
+radiative rates? CUP specifies the coupling scheme (default was 'LS')
+and RAD specifies the type of radiation (default was '  ', i.e. none).
+
+
+So,
+
+Example 2.
+----------
+
+A.S. Be-like C structure - energies + radiative rates
+ &SALGEB CUP='IC' RAD='E1' MXCONF=3 MXVORB=3  &END
+ 1 0  2 0  2 1
+  2    2    0
+  2    1    1
+  2    0    2
+ &SMINIM NZION=6  &END
+
+gives intermediate coupling and electric dipole radiative rates. 
+
+Here is an excerpt from the end of the olg file:
+
+
+  K        LV         T        K*CM     2*S+1  L   2J   CF         (EK-E1)/RY     E1/RY =   -72.87735554               
+  1         8         5           0.      1    0    0    1         0.00000000
+  2        10         3       53644.     -3    1    0    2         0.48884296
+  3         5         3       53686.     -3    1    2    2         0.48921835
+  4         3         3       53768.     -3    1    4    2         0.48997075
+  5         6         4      110586.     -1    1    2    2         1.00773254
+  6         7         2      138633.      3    1    0    3         1.26331361
+  7         4         2      138674.      3    1    2    3         1.26369165
+  8         2         2      138756.      3    1    4    3         1.26444153
+  9         1         1      154402.      1    2    4    3         1.40701899
+ 10         9         6      191560.      1    0    0    3         1.74562273
+.
+.
+
+E 1-DATA   K  KP           A(EK)*SEC           S               G*F   
+  1        3   1           2.068E+02       0.000002         3.227E-07
+  2        5   1           2.414E+09       2.643179         8.879E-01
+  3        6   3           1.669E+09       1.343586         3.467E-01
+  4        6   5           3.229E+02       0.000007         6.155E-07
+  5        7   2          -5.579E+08      -1.343584        -3.470E-01
+  6        7   3          -4.178E+08      -1.007687        -2.601E-01
+  7        7   4           6.943E+08       1.679481         4.331E-01
+.
+.
+
+There is more data to the right of A(EK) the radiative rate, S the line
+strength and G*F the symmetric oscillator strength.
+
+Negative "rates" are just flagging the sign of the matrix element before it was 
+squared. (Some applications require the (sign of) the matrix element itself.)
+
+--------------------------------------------------------------------------------
+
+
+Let's look next at the SMINIM NAMELIST. The radial equations use a "model"
+potential to describe the affect of the atomic electrons upon each other.
+The default is the Thoma-Fermi-Dirac-Amaldi (see the SS CPC paper for details).
+To provide "optimization", NLAM adjustable scaling parameters (lambdas) are 
+introduced on the potential's radial coordinate - one for each nl-orbital. 
+A weighted-sum of INCLUD eigenenergies is minimized to determine the optimum 
+structure by varying NVAR of the scaling parameters. For example: we include
+all 6 terms in the sum to be minimized. We read-in NLAM=3 initial scaling
+parameters of value 1.0 and we vary two of them corresponding to the
+2s and 2p (orbitals 2 and 3):
+
+Example 3.
+----------
+
+A.S. Be-like C structure
+ &SALGEB CUP='LS' MXVORB=3 MXCONF=3  &END
+ 1 0  2 0  2 1
+  2    2    0
+  2    1    1
+  2    0    2
+ &SMINIM NZION=6 INCLUD=6 NLAM=3 NVAR=2  &END
+  1.0 1.0 1.0
+       2   3
+
+To obtain (in the olg file)
+
+ MINIMIZATION RESULT OF VARIATIONAL PARAMETERS:   1.23295   1.16140
+
+and new energies
+
+ I         T        K*CM  2S+1 L   CF     WEIGHTS        (EI-E1)/RY     E1/RY =    -72.893022
+ 1         5           0.    1 0    1       1.000          0.000000
+ 2         3       53750.   -3 1    2       1.000          0.489807
+ 3         4      112739.   -1 1    2       1.000          1.027354
+ 4         2      139700.    3 1    3       1.000          1.273037
+ 5         1      156278.    1 2    3       1.000          1.424114
+ 6         6      195554.    1 0    3       1.000          1.782016
+
+which may, or may not, be an improvement on those obtained previously.
+
+Note, the non-zero WEIGHTS show which terms were INCLUDed in the
+energy sum, and their weighting.
+
+
+THIS ENDS THE MINIMUM INPUT.
+****************************
+
+--------------------------------------------------------------------------------
+
+
+
+OPTIONAL INPUT
+--------------
+
+2b. Autoionization and photoionization:
+***************************************
+
+Let's introduce a continuum electron, which may be produced following auto-
+ionization or photoionization. We now have two sets of configurations: firstly, 
+N-electron target configurations to which a continuum electron is coupled;
+secondly, (N+1)-electron bound orbital configurations (often confusingly called 
+correlation configurations) whose energy levels may either be true bound or lie 
+above the ionization limit (i.e. autoionizing).  For example, consider the KLL
+Li-like resonances autoionizing to the He-like ground state. We have MXCONF=1 
+(electron) target configurations, viz. 1s^2, and (here) MXCCF=3 (N+1)-electron 
+autoionizing configurations, viz. 1s 2s^2, 1s 2s 2p, 1s 2p^2. A typical
+dataset would then be of the form (the blank line separating the MXCONF and
+MXCCF configuration occupation numbers is optional, just to guide the eye):
+
+Example 4.
+----------
+
+A.S. KLL Li-like -> He-like + e-
+ &SALGEB CUP='IC' RAD='  '  MXVORB=3 MXCONF=1 MXCCF=3 &END
+ 1 0  2 0  2 1
+  2    0    0
+
+  1    2    0
+  1    1    1
+  1    0    2
+ &SMINIM NZION=26  &END
+ &SRADCON MENG=4 &END
+ 300 320 340 360
+
+The non zero-value for MXCCF is enough for the code to recognize that the
+MXCONF target configurations need to be coupled to a continuum electron.
+(Internally, continuum orbitals are flagged by n=90-99, usually 90.)
+It then requires the namelist SRADCON to be present where the user tells 
+the code which MENG continuum energies to use for interpolation purposes. 
+
+Autoionization rates are written on-the-fly interspersed with the H
+diagonalization output in olg (continuum configurations are flagged negative):
+
+   T,2S+1L  P   H(ZZ)/2RY   EIGEN-H/2RY   CF  NI  NO  MATRIX <GSL!CASL>  AND  H(Z)/2RY-TRIANGLE.  E(CORE)/2RY =   0.00000     0.0000
+    NA  W   T  TP        AA*SEC      ECONT(A.U)       E-I(A.U)
+   1  2  2  0    -505.76599   -489.838237 -3   1   1  1.0000  0.0000 15.9278
+   2  2  2  0    -506.21712   -490.237974  6   1   2  0.0000  1.0000 -0.0304 15.9791
+       10   1   2     -1.533E+14       169.6003      -659.8382
+     1
+   3  4  1  0    -506.21712   -491.139119  6   2   1  1.0000 15.0780
+   4  4  1  1    -506.31938   -492.862636  5   1   1  1.0000 13.4567
+   5  2  1  0    -506.21712   -489.969380  6   3   1  1.0000 16.2477
+   6  2  1  1    -505.76599   -489.838237 -2   1   1  1.0000  0.0000  0.0000 15.9278
+   7  2  1  1    -506.31938   -490.904474  5   2   2  0.0000  0.7467 -0.6651 -0.0145 15.1472
+   8  2  1  1    -506.31938   -491.509723  5   3   3  0.0000  0.6651  0.7467  0.0205 -0.3006 15.0774
+        6   6   7     -9.919E+13       168.9338      -659.8382
+        6   6   8      5.404E+12       168.3285      -659.8382
+     2
+   9  2  0  0    -505.76599   -489.838237 -1   1   1  1.0000  0.0000  0.0000 15.9278
+  10  2  0  0    -506.42165   -493.271596  4   1   2  0.0000  0.9480 -0.3184 -0.0235 13.5788
+  11  2  0  0    -506.21712   -489.042330  6   4   3  0.0000  0.3184  0.9480  0.0195  1.2766 16.7460
+        2   9  10     -1.359E+14       166.5666      -659.8382
+        2   9  11      1.968E+13       170.7959      -659.8382
+     2
+
+Negative rates again just flag the sign of the matrix element before it was 
+squared.
+
+The ols file now contains the autoionization rates, in a form useful for
+further processing.
+
+Radiative rates are not calculated unless requested via a non-blank RAD.
+
+Further details on the NAMELIST SRADCON entries: 
+
+MENG is the number of interpolation energies (in Rydbergs). If .gt. 0, MENG
+     energies follow and the continuum orbitals are calculated at those energies. 
+     If .lt. 0, only the range need be specified and the -MENG interpolation
+     energies will be chosen internally.
+
+EMIN, EMAX specify the energy range (in Rydbergs).
+      When in doubt, set EMIN to zero and EMAX to the maximum core excitation 
+      energy, e.g., that of 1s^2 to 1s2p in Example 4. 
+
+If none of the above are set then the code *attempts* to determine suitable
+energies internally.
+
+For autoionization, the code looks for a TERMS/LEVELS file from a previous 
+structure run. This should include the core de-/excitations for the autoionizing
+transitions under study. (For the He-like + e- example above, 1s2s and/or 1s2p
+should be added to 1s^2 target to produce a usable TERMS/LEVELS file.)
+
+For photoionization, it chooses a wide logarithmic energy range suitable
+for forming recombination coefficients. Indeed, the user should "choose"
+this option for rate coefficient determination. For photoionization
+cross sections as the end requirement, such a range is likely to be to
+wide and too coarsely tabulated. In this instance, MENG,EMIN,EMAX
+should be set to give the required energy range and density of energy points.
+
+     
+ECORLS/ECORIC is an optional correction energy (Ryd) added to all target
+      continuum. If negative, this lowers all target states relative to
+      the autoionizing states. This ensures that autoionization data exists
+      for low-lying autoionizing states. It may be discarded later, in a
+      post-processor, by further application of observed energies. Default=0.
+
+
+Here is an example of outer-shell photoionization: 1s^2 2s and 1s^2 2p to 1s^2
+
+
+Example 5.
+----------
+
+A.S. PI of Li-like -> He-like + e-
+ &SALGEB RUN='PI' CUP='LS' RAD='  '  MXVORB=3 MXCONF=1 MXCCF=2 &END
+ 1 0  2 0  2 1
+  2    0    0
+
+  2    1    0
+  2    0    1
+ &SMINIM NZION=26  &END
+ &SRADCON MENG=-15  EMIN=0. EMAX=1500. &END
+
+Note that it is necessary to set RUN now. While autoionization rates were
+automatically computed by default when a continuum was present, photoionization
+must be requested. Autoionization rates are then not calculated by default
+(they are not actually energetically allowed in this example) since the
+continuum energies required are usually very different.
+You will also see from your output that E1 radiation has been switched-on by
+default, but ordinary radiative radiative rates are not calculated unless
+requested via RAD.
+
+   E1-DATA  I  IP      A(EK)*SEC   ...
+    1      -3   2     -2.337E-20
+    2      -4   1     -2.469E-20
+    3      -5   2      8.207E-22
+
+Detailed PI cross sections now appear in the opls file. (Only a single energy
+PI cross section is written in place of a radiative rate in the olg file,
+and is flagged by a negative term index I.)
+
+  NV=    2  LV=   -1       K
+ 15 E(RYD)   Z=26    N= 3     LS-Coupling           EIONMIN=       0.000000
+    0.00000E+00    6.86104E-01    1.84295E+00    3.79350E+00    7.08234E+00
+    1.26277E+01    2.19777E+01    3.77427E+01    6.43243E+01    1.09144E+02
+    1.84713E+02    3.12132E+02    5.26973E+02    8.89218E+02    1.50000E+03
+        I-S            C-S          PHOTO-IONIZATION DATA       Z=26   N= 3
+   CF    T    W   CF    T   EO       P/CM2         E-I(RYD)      E-C(RYD)
+    5    3    6   -3    1    1   -2.33701E-20   -1465.056310   -1319.676419
+   -2.33701E-20   -2.30374E-20   -2.24901E-20   -2.16049E-20   -2.02115E-20
+   -1.81142E-20   -1.51728E-20   -1.14709E-20   -7.49090E-21   -4.03266E-21
+   -1.72397E-21   -5.76008E-22   -1.51826E-22   -3.24475E-23   -5.81412E-24
+    4    5    2   -2    2    1   -2.46915E-20   -1468.495620   -1319.676419
+   -2.46915E-20   -2.44624E-20   -2.40828E-20   -2.34612E-20   -2.24629E-20
+   -2.09097E-20   -1.86130E-20   -1.54720E-20   -1.16447E-20   -7.66581E-21
+   -4.28161E-21   -1.99417E-21   -7.74833E-22   -2.54968E-22   -7.26467E-23
+    5    3    6   -1    4    1    8.20745E-22   -1465.056310   -1319.676419
+    8.20745E-22    8.11736E-22    7.96843E-22    7.72547E-22    7.33773E-22
+    6.74070E-22    5.87243E-22    4.71603E-22    3.36321E-22    2.04000E-22
+    1.01004E-22    3.96388E-23    1.22026E-23    2.97771E-24    5.92108E-25
+
+
+Negative cross sections again just flag the sign of the matrix element before 
+it was squared.
+
+--------------------------------------------------------------------------------
+
+
+2c. Dielectronic & Radiative recombination, resonant-excitation etc.
+********************************************************************
+
+In principle, we have already discussed how to calculate atomic data
+for these processes viz. autoionization and radiative rates, as well as
+photoionization cross sections. However, what characterizes DR, RR & RE etc
+is that a large number of Rydberg states can contribute and to run each
+configuration manually is impractical. If the user sets RUN='DR', 'RR', 'RE'
+or 'PE' ('PE' flags photo-excitation autoionization, i.e. inverse DR, and like
+'RE' it is mainly a convenience to the user to use these alternative flags) then
+the NAMELIST DRR is read to define the Rydberg nl-values that AS will loop-over.
+(Internally, Rydberg orbitals are flagged by n=80-89, usually 80.)
+
+
+For example, DR of Li-like Carbon:
+
+Example 6.
+----------
+
+A.S. DR of Li-like Carbon
+ &SALGEB RUN='DR' CUP='IC' MXVORB=2 MXCONF=2 MXCCF=3 KCOR1=1 KCOR2=1 &END
+ 2 0  2 1
+  1    0
+  0    1
+
+  2    0
+  1    1
+  0    2
+ &DRR  NMIN=3 NMAX=15 NMESH=14 LMIN=0 LMAX=7 &END
+16   20   25   35   45   55   70  100  140  200  300  450  700  999
+ &SMINIM  NZION=6 PRINT='FORM' &END
+ &SRADCON MENG=-15  EMIN=0 EMAX=2 &END
+
+Note, we have taken the opportunity to remove explicit specification of
+the closed-shell 1s^2 core via use of KCOR1, KCOR2 instead, and we will
+omit mention of it now. So, we have target 2s and 2p configurations. In
+addition to coupling on a continuum electron, the RUN='DR' flag ensures a
+Rydberg electron is also coupled to the same target configurations.
+
+The nl-values of this Rydberg electron are specified in the DRR NAMELIST
+viz. NMIN, NMAX, LMIN,LMAX. We also read-in (free-format, subsequently) NMESH
+additional n-values so as to span high Rydberg states efficiently.
+***For production runs of total DR the user should not set NMESH,***
+it will be set internally. (Set NMESH=0 to switch-off any additional n-values.)
+
+We also have MXCCF Be-like correlation configurations 2s^2, 2s 2p and 
+2p^2  which allow for outer-electron radiation in the DR process.
+Outer-electron radiation to higher excited states outside of the core
+is usually post-processed in (hydrogenically).
+(RUN='DR' automatically re-sets RAD='E1'.)
+
+SRADCON specifies the continuum interpolation energies again.
+
+
+The corresponding RR example is similar, but simpler:
+
+Example 7.
+----------
+
+A.S. RR of Li-like Carbon
+ &SALGEB RUN='RR' CUP='LS' MXVORB=2 MXCONF=2 KCOR1=1 KCOR2=1 &END
+ 2 0  2 1
+  1    0
+  0    1
+ &DRR  NMIN=3 NMAX=15 NMESH=14 LMIN=0 LMAX=3 &END
+16   20   25   35   45   55   70  100  140  200  300  450  700  999
+ &SMINIM  NZION=6 PRINT='UNFORM' MAXE=40 &END
+ &SRADCON EMAX=40 &END
+
+The RUN='RR' flag switches-on photoionization (which is converted to
+recombination via detailed balance during post-processing). No (N+1)-bound
+configurations are required since we are dealing with a one-body operator.
+***For production runs of total RR the user should not set NMESH,***
+it will be set internally.(Set NMESH=0 to switch-off any additional n-values.)
+The l-range is reduced since it is more efficient to post-process high-l
+(very high for low temperatures) hydrogenically. Unlike 'DR', we do not
+have to specify any energy details if the goal is a recombination rate 
+coefficient, then it is best to let the code choose them. Here, we have
+artificially restricted the upper range via EMAX otherwise we may need a 
+larger radial dimension, set by MAXB1. Also, because the scattering energies 
+can be large for non-resonant processes, it can be necessary to specify 
+the maximum scattering energy MAXE in SMINIM also, where the radial array 
+is set-up. Here, it is being used to stop the mesh being set too fine! 
+
+Note the use of the PRINT='UNFORM' option so as to output unformatted
+files olsu and oplsu, both for speed and accuracy, but not user friendly.
+
+
+The final example in this section is that of inner-shell dielectronic 
+recombination. We now have to handle the situation of core-rearrangement
+autoionization which leaves a Rydberg orbital in the N-electron target
+configurations. Thus, we must specify it in the MXVORB orbital list
+which defines the target configurations. Here, we recall that such an
+orbital is flagged internally by having n=80 (its l-value is irrelevant). 
+
+
+So, consider:
+
+Example 8.
+----------
+
+A.S. Inner-shell DR of Li-like C.
+ &SALGEB RUN='DR' CUP='LS' MXVORB=4 MXCONF=6 MXCCF=3 &END
+ 1 0  2 0  2 1 80 1
+  2    1    0    0
+  2    0    1    0
+  1    2    0    0
+  1    1    1    0
+  1    0    2    0
+
+  2    0    0    1
+
+  2    2    0    0
+  2    1    1    0
+  2    0    2    0
+
+ &DRR  NMIN=3 NMAX=10 LMIN=0 LMAX=5 &END
+ &SMINIM  NZION=6 &END
+ &SRADCON MENG=-15  EMIN=0 EMAX=25 &END
+
+Here, our 6th target configuration contains the Rydberg orbital.
+There can be as many such configurations as we like, but they
+*must* all be listed after all of the regular target configurations.
+(Again, the blank line is irrelevant and is to guide the eye only.)
+
+The regular subset of target configurations are treated as in the 
+outer-shell case: (N+1)-electron configurations are formed by
+coupling on a Rydberg electron as well as angular momentum changing
+continuum orbitals. The new subset which already contains a Rydberg
+orbital just gives rise to (N+1)-electron configurations with fixed
+angular momentum continuum orbitals, since this autoionization is
+independent of the l-varying Rydberg orbital. Internally, the fixed
+angular momentum continuum are flagged by n=99, adjustable by n=90-98. 
+
+--------------------------------------------------------------------------------
+
+
+2d. Direct Electron-Impact Excitation
+*************************************
+
+The write-up of the UCL-DW code contains related background material - see
+Eissner CPC114, 295-341 (1998) - as well as the paper Badnell CPC182, 1528-35 
+(2011). The AS implementation of the (LS) angular algebra is very similar to
+that of the UCL-DW code but the cross section part is very different (much
+more efficient.)
+
+
+RUN='DE' Direct electron-impact Excitation, colloquially "DW" but DR, RR
+         etc are also DW, of course, hence the more precise 'DE'.
+
+Collision strengths (between terms) can be calculated in LS-coupling and level-
+resolved in Breit-Pauli intermediate-coupling. The coupling-dependent input (via
+SALGEB) is described next, followed by the common input for scattered energies 
+(via SRADCON). In particular, collision strengths are calculated at the
+same set of *final scattered* energies for ALL transitions, e.g. zero gives
+all threshold collision strengths. Slater integrals etc. are interpolated
+at the appropriate initial scattering energy. 
+
+Only RUN='DE' is "compulsory", a complete type-5 adf04 collision strength file 
+will be generated, without any additional user input, using "production run" 
+defaults:  but *not* BP corrections to M1, or M_k>1 - set RAD='ALL' or 'M2' to 
+get them as well.
+(The reason for this is that both get time consuming for complex atoms.)
+
+The type-5 adf04 file can be converted to the more familiar type-3 adf04 upsilon
+file using the utility program (standalone ADAS809):
+http://www.apap-network.org/autos/ver/misc/adasexj.f
+
+Note, it may be desirable, especially in the early days, to perform consistency 
+checks using the input variables detailed next.
+
+
+Examples: LS & BP
+
+Example 9.
+----------
+
+A.S. H-like DW (LS)
+ &SALGEB RUN='DE' CUP='LS'   
+         MXVORB=3 MXCONF=3 NMETA=3 MINLT=0 MAXLT=11  &END
+1 0 2 0 2 1 
+ 1   0   0
+ 0   1   0
+ 0   0   1
+ &SMINIM NZION=2 JPRINT=2 MAXE=16  &END
+ &SRADCON MENG=8 NDE=1 MENGI=0  &END
+0. .2  .6  1. 3. 5.  9.  13.
+3. 
+
+
+Compare above with running NDE=0 and MENGI=-1 and -2
+
+Note, 2p is listed below 2s here and 2s-2p dipole top-up is formally infinite, 
+proportional to 1/dE=1/0, also EI=0=EF dipole integral is zero.
+
+
+Example 10.
+-----------
+
+A.S. Be-like Fe DW (BP)
+ &SALGEB RUN='DE' CUP='IC' NMETAJ=2 
+         MXVORB=2 MXCONF=3 KCOR1=1 KCOR2=1 &END
+2 0 2 1
+ 2   0
+ 1   1
+ 0   2
+ &SMINIM NZION=26 MAXE=500 &END
+ &SRADCON &END
+
+Note the minimal user input, and the default output.
+
+
+Excitations can be restricted by
+
+NMETA/J= the number of ground plus metastable TERMS/LEVELS for which excitation
+       algebra/data is computed between themselves and to ALL excited states, 
+       i.e., transitions between excited states are omitted.
+       The NMETA/J terms/levels are the energetically lowest ones.
+       LS *Default* (NMETA=1) the ground term only.        
+       IC *Default* (NMETAJ=0) levels of the ground term. 
+       These defaults are for complex atoms, where there may be hundreds of
+       terms/levels in the ground configuration. 
+
+While no input is required, the user will possibly want to set their own 
+final scattered energies (all energies are in unscaled Rydbergs):
+
+MENG .eq. 0 (default) uses 0, DE/3, DE, 3*DE (& 8*DE if MAXLT/JT.gt.35/70) 
+            where DE=max(TEAPOT, DELTAX) and TEAPOT is the estimated ionization 
+            potential and DELTAX is the highest (spectroscopic) term energy.
+     .gt. 0 reads MENG final scattered energies following the NAMELIST.
+     .lt. 0 internally sets -MENG energies between a user specified range:
+
+EMIN, EMAX the minimum & maximum final scattered energies.
+
+
+In general, additional interpolation energies will be required as the final
+scattered energies are likely too coarsely spaced. The code automatically 
+handles the fact that the largest initial scattering energy required is the
+maximum final scattered energy plus the maximum excitation energy DELTAX, by 
+adding NIDX additional suitable energy points, unless the user explicitly
+sets the interpolation energies themselves (NDE.gt.0 or MENGI.gt.0, see below).
+
+NIDX .gt. 0 ensures there are at least NIDX energies (inc. DELTAX) beyond EMAX.
+            Default .eq. NLAG, the order of the Lagrange interpolation.
+
+
+There are several ways to specify additional interpolation energies:
+
+Systems with a small set of well defined excitation energies can be dealt with 
+formally by reading
+
+NDE .gt. 0 excitation energies, to be read after the final scattered energies.
+    .eq. 0 default, none, unless MENG=0, then uses 2 internally generated ones,
+           plus zero, based-on DELTAX.
+    .lt. 0 uses -NDE between DEMIN and DEMAX, default .eq. zero and DELTAX.
+
+Then, the code adds interpolation energies at all (initial scattering)
+energies defined by adding all excitation energies to all final scattered
+energies. Zero is automatically added/needed, so do not specify it explicitly.
+This approach becomes increasingly time-consuming for "large" NDE & MENG,
+so keep MENG as small as possible - we are talking non-resonant DW after all.
+
+The user can also specify interpolation energies more directly via
+
+MENGI .gt. 0 reads MENGI interpolation energies after the final scattered 
+             energies.
+      .lt. 0 inserts -MENGI energies between each final scattered energy.
+             Running -1 followed by -2 enables one to gauge interpolation 
+             errors.
+      .eq. 0 (default) none here.
+
+
+Finally, it can be useful to set the maximum initial scattering energy, via 
+MAXE, in SMINIM so as to ensure a suitably fine radial mesh is generated to 
+support the continuum.
+Also in SMINIM, setting JPRINT.gt.0 gives increasingly detailed output (=1-5)
+Default JPRINT=-11 (corresponds to PRINT='FORM') while -33 corresponds to 
+'UNFORM', i.e. output (to UNIT6=olg) is highly suppressed.
+
+
+--------------------------------------------------------------------------------
+
+
+2e. External orbitals
+*********************
+
+The final optional NAMELIST input concerns orbital replacement, i.e. where
+one wants to use radial wavefunction determined from some alternative
+external source such Fischer's MCHF code or Hibbert's CIV3 code.
+A subset of the MXVORB orbitals is flagged for replacement by setting
+their n-values in the range 70-79. The NAMELIST SRADWIN is then read,
+which specifies how the "external" orbitals are to be input.
+
+KEY=- 9, default. Assumes that the external input file (radwin) is in 
+         Opacity/Iron/RmaX/APAP Project format (approx. the old IMPACT format).
+   =-10, UNIT5 read of free-formatted STO/Clementi orbital input as per 
+         R-matrix STG2, from UNIT5 input file.
+
+A blank line is need to terminate the STO/Clementi orbital input.
+
+
+An example (neutral Chromium):
+
+Example 11.
+-----------
+
+A.S.  Neutral Cr
+ &SALGEB  RUN='  ' RAD='E1' CUP='LS' MXVORB=7 MXCONF=8
+          KCOR1=1 KCOR2=-5 NAST=2  &END
+ 71 0 72 0 72 1 73 0 73 1 73 2 74 0 74 1 74 2 74 3 75 0 75 1
+ 4 0 1 1 0 0 0
+ 4 1 0 1 0 0 0
+ 5 0 1 0 0 0 0
+ 4 1 1 0 0 0 0
+ 4 1 0 0 0 0 1
+ 4 0 1 0 0 1 0
+ 5 1 0 0 0 0 0
+ 4 0 0 0 0 1 1
+ 5 0 0
+ 5 1 1
+ &SMINIM  NZION=24  &END
+ &SRADWIN  &END
+
+NOTE the use of negative KCOR2 to read ALL nl definitions (as we must if we 
+want to replace the core orbitals as well as the valence) but valence 
+occupation numbers only for the configurations.
+
+Note: All of the orbitals are tagged for replacement so SMINIM requires
+little input. The version of Fischers code used produces OP format.
+Although the use of 71 0 72 0 is suggestive of 1s and 2s replacement (and
+helpful) it should be noted that the 1st orbital (71 0) will be replaced
+by the first s-orbital in the file radwin. We could have written 72 0 71 0
+and the same result would be obtained, if somewhat confusing - the 1s
+orbital (assuming it was infront of the 2s on radwin) would be in 72 0.
+
+Finally, we used NAST to restrict the number of terms to be generated from the 
+listed configurations for neutral Chromium, which would be large otherwise.
+
+
+Another example illustrates using Clementi/STO orbitals from CIV3:
+
+Example 12.
+-----------
+
+A.S. Be+ using STO input from Berrington et al JPB30, 4973 (1997)
+ &SALGEB MXVORB=10 MXCONF=12 &END
+   1 0 2 0 2 1 3 0 73 1 3 2 74 0 74 1 74 2 74 3
+ 2     1 8*0
+ 2 1*0 1 7*0
+ 2 2*0 1 6*0
+ 2 3*0 1 5*0
+ 2 4*0 1 4*0
+ 2 5*0 1 3*0
+ 2 6*0 1 2*0
+ 2 7*0 1 1*0
+ 2 8*0 1
+ 1 2 0 7*0
+ 1 1 1 7*0
+ 1 0 2 7*0
+ &SMINIM  NZION=4  &END
+ &SRADWIN KEY=-10 &END
+ 4                                                  "1sbar"
+ 1 2 3 4
+ 0.971825    1.004046   1.737171   1.374292
+ 4.5503412 -25.1391755 10.0594491 12.5146482
+ 2                                                  "1pbar"
+ 2 3
+ 2.021253   1.212317
+ 7.9481978 -0.7926990
+ 3                                                  "2pbar"
+ 2 3 4
+ 1.32       1.32      1.32
+ 8.1450302 -9.0962054 2.0607677
+ 2                                                  "1dbar"
+ 3 4
+ 1.4889106  0.8167585
+ 1.1371840 -0.6610356
+ 2                                                  "1fbar"
+ 4 5
+ 1.894808   0.551422
+ 1.0009988 -0.1575788
+
+
+Here, the 1s,2s,2p,3s and 3d are (spectroscopic) internal orbitals.
+The "4s", "3p", "4p", "4d", "4f" are (pseudo) external orbitals.
+
+--------------------------------------------------------------------------------
+
+
+2f. Miscellaneous Examples.
+**************************
+
+Here, I'll place some examples that might be of interest.
+
+Example 13.
+-----------
+
+A.S. Generate all Be-like CFs nln'l' up to n=5. Use MXVORB<0 for standard order.
+ &SALGEB KCOR1=1 KCOR2=1 MXVORB=-14 MXCONF=1 ICFG=1 &END
+ 14*0                !minimum occupation nos
+ 14*2                !maximum occupation nos
+ 2 13*0  2           !base config and no. of promotions
+ &SMINIM NZION=26 &END
+
+This illustrates basic usage of promotional rules. See SALGEB input.
+
+
+Example 14.
+-----------
+
+A.S. Generate a B-like Laguerre pseudo-state expansion to 10d
+ &SALGEB CUP='LS' KCOR1=1 KCOR2=1 MXVORB=2 NXTRA=10 LXTRA=2 MXCONF=2 ICFG=1 &END
+ 2 0 2 1
+ 0 0               !minimum occupation nos
+ 2 2               !maximum occupation nos
+ 2 1  1            !base config and no. of promotions
+ 1 2  1            !base config and no. of promotions
+ &SMINIM NZION=6 NLAM=4 ORTHOG='LPS' RADOUT='YES' &END
+1. 1. 1. -1.       !1s,2s,2p spect. 3s upwards Laguerre.
+
+For a small RMPS calculation.
+
+
+Example 15.
+-----------
+
+A.S. Produce support files for an R-matrix stgicf calculation: OMGINF, adf04.
+ &SALGEB CUP='IC' MXVORB=3 MXCONF=3 RAD='ALL' KUTSO=0 &END !KUTSO for R-matrix
+ 1 0  2 0  2 1
+  2    2    0
+  2    1    1
+  2    0    2
+ &SMINIM NZION=6 ESKPL=1. ESKPH=1.1 ECORR=1.3 &END !Flags correlation by energy
+
+Correlation TERMS/LEVELS lie between ESKPL,ESKPH and above ECORR.
+KUSTO=0 corresponds to R-matrix usage.
+
+
+Example 16.
+-----------
+
+A.S. Kappa-averaged relativistic orbitals + finite nucleus, 1- & 2-body fs & nfs
+ &SALGEB CUP='ICR' RAD='E3' MXVORB=2 MXCONF=3 KCOR1=1 KCOR2=1 
+         KUTSO=0 KUTSS=-999  KUTOO=1 &END
+ 2 0 2 1
+  2   0
+  1   1
+  0   2
+&SMINIM NZION=74 NLAM=3 IREL=2  INUKE=1 QED=1 &END
+1.37380  1.14270  1.17110
+
+IREL=2 uses approximate small component
+
+
+Example 17.
+-----------
+
+A.S. Be-like C structure in self-consistent Kohn-Sham (KS) plasma potential
+ &SALGEB RAD='YES'  MXCONF=3 MXVORB=3 &END
+ 1 0  2 0  2 1
+  2    2    0
+  2    1    1
+  2    0    2
+ &SMINIM NZION=6 NLAM=3 PPOT='KS' NDEN=1 &END
+1.0  1.23224   1.16141
+1.e24 -1.e6       !NDEN electron density/temp pairs: N(cm/3) / T(>0 Ryd or <0 K)
+
+Use PPOT='IS' for Ion-Sphere plasma potential (non-perturbative effective 1-body
+only.)
+
+Use PPOT='DH' for Debye-Huckel (includes 1- and 2-body potentials). 
+(Use PPOT='PDH' to treat 1-body as a perturbation, 2-body is always a
+perturbation. This may be necessary for weak fields where the Stark effect is
+smaller than the underlying atomic structure uncertainty. For strong fields,
+the perturbative approach is slow to converge.)
+
+
+Example 18.
+-----------
+
+A.S. CADW for all Be-like CFs 2ln'l' up to n=5. Use MXVORB<0 for standard order.
+ &SALGEB RUN='DE' CUP='CA' MXVORB=-14 MXCONF=1 ICFG=1 NMETA=99 
+         KCOR1=1 KCOR2=1 &END
+ 14*0                !minimum occupation nos
+ 14*1                !maximum occupation nos
+ 1 1 12*0  1         !base config and no. of promotions
+ &SMINIM NZION=26 MAXE=500 &END
+ &SRADCON &END
+
+
+Example 19.
+-----------
+
+A.S. Use of Simplified ReLaXed orbital basis.
+ &SALGEB RUN='DR' CUP='IC' MXVORB=3 MXCONF=2 MXCCF=1 BASIS='SRLX' &END
+1 0 2 0 2 1 
+
+1 1      !group number followed by number of configs
+2 0 0
+
+2 2      !if ICFG was specified in SALGEB then min and max occ. nos follow
+1 1 0
+1 0 1
+
+3 2
+2 1 0
+2 0 1
+
+ &DRR     NMIN=3 NMAX=3 NMESH=0 LMIN=0 LMAX=0 &END                   
+ &SMINIM  NZION=6 PRINT='FORM' NLAM=3 &END
+1 5
+1.110 1.120 1.121 1.130 1.131
+
+2 5
+1.210 1.220 1.221 1.230 1.231
+
+3 3
+1.310 1.320 1.321
+
+&SRADCON EMIN=0 EMAX=25 &END
+
+MXCONF and MXCCF now specify the number of configuration groups, N and N+1
+electron, and NLAM specifies the number of groups of scaling parameters.
+
+The scaling parameters are illustrative only (not optimized).
+Note that any Rydberg lamda follows the last global (MXVORB) bound one.
+And any continuum one follows the Rydberg, or bound if RUN='  '.
+
+If we wanted to use STO model potentials (NZION=-6) then similarly to NLAM,
+we add MCFMX=3 (for the 3 groups) and follow the lambdas with the MCFMX group
+nos and number of configuration numbers to be read which are to be used for 
+the occuppation nos for each orbital in each group viz.
+
+1 5
+1 0 0  1 4
+
+2 4
+2 2 3 3
+
+3 3
+19 19 20
+
+Note that we need a preliminary run (e.g. with CUP='CA' and NZION=0 for speed)
+so as to determine the configuration numbers from the set expanded by AS - see
+the top of the olg file:
+
+   20    9
+  1 0  2 0  2 1 80 2 90 0 90 1 90 2 90 3 90 4
+ 1::
+   1: 2 0 0 1 0 0 0 0 0
+ 2::
+   2: 1 1 0 1 0 0 0 0 0
+   3: 1 0 1 1 0 0 0 0 0
+...
+...
+etc.
+
+It is not necessary to specify all the continumm orbitals, indeed, if a Rydberg
+is present in the group then it is not necessary to specify any continuum
+(the Rydberg config. will be used.)
+
+If a group dependent closed-shell is present (flagged by KCOR1=-1 KCOR2=1, say)
+then the SMINIM input is unchanged. (The SALGEB configs always start at 2s.)
+But, if a common closed-shell is present (e.g. KCOR1=1 KCOR2=1, then its SMINIM
+properties are specified by group zero and group 1,2,3 etc are the valence
+orbital values only. (The SALGEB configs are unchanged from KCOR1=-1.)
+
+In the fully-relaxed case BASIS='RLX' the SALGEB configuration input is
+unchanged from the NON-relaxed case. And the SMINIM input for NLAM is the same
+as for BASIS='SRLX'. Only a common closed shell is allowed. In the STO case,
+only the MCFMX=1 core group 0 is allowed since the valence are trivially known,
+there being a set of orbitals for each config. The STO core default is config 1.
+
+
+Example 20.
+-----------
+
+A.S. Inner-shell DR of Li-like C.
+ &SALGEB RUN='DR' CUP='CA' MXVORB=4 MXCONF=6 MXCCF=3 &END
+ 1 0  2 0  2 1 80 1
+  2    1    0    0
+  2    0    1    0
+  1    2    0    0
+  1    1    1    0
+  1    0    2    0
+
+  2    0    0    1
+
+  2    2    0    0
+  2    1    1    0
+  2    0    2    0
+
+ &DRR  NMIN=3 NMAX=10 LMIN=0 LMAX=5 &END
+ &SMINIM  NZION=6 &END
+ &SRADCON MENG=-15  EMIN=0 EMAX=25 &END
+
+
+Example 21.
+-----------
+
+A.S. H-like DR with l-mixing. Use ICFG to generate the N+1, so MXCCF=0.
+ &SALGEB RUN='DR' CUP='IC' MXCONF=4  MXCCF=0 MXVORB=16 ICFG=2 &END
+1 0 2 0 2 1  80 0 80 1 80 2 80 3 80 4 80 5  90 0 90 1 90 2 90 3 90 4 90 5 90 6
+
+1 0 0  0 12*0         !min occ.
+1 0 0  1 12*1         !max occ.
+1 0 0  1 12*0  1      !base occ + promo: 1snl + 1skl
+
+0 1 0  0 12*0         !min occ.
+0 1 0  1 12*1         !max occ.
+0 1 0  1 12*0  1      !base occ + promo: 2snl + 2skl
+
+0 0 1  0 12*0         !min occ.
+0 0 1  1 12*1         !max occ.
+0 0 1  1 12*0  1      !base occ + promo: 2pnl + 2pkl
+
+1 0 0 13*0            !min occ.
+2 1 1 13*0            !max occ.
+2 15*0  1             !base occ + promo: 1s^2 + 1s2s + 1s2p
+
+ &DRR NMIN=6 NMAX=25 &END
+ &SMINIM NZION=26 &END
+ &SRADCON MENG=-15 EMIN=0 EMAX=500 &END
+
+Get n=5,4,3 by removing 80 5 & 90 6, 80 4 & 90 5, 80 3 & 90 4, respectively.
+Get n=2 as usual - see e.g. Example 4.
+
+Must specify Ryd (n=80) and cont (n=90) explicitly and N+1 configs since auto-
+generation can only add a single dummy Rydberg, and we set both its N and L.
+N is still a dummy but those L listed are the actual ones used, as are the cont.
+        
+MXCCF=0 is the default. But listed just to emphasise that we can't read the
+4th group with it since MXCONF defines the N+1, and MXCCF would expect to be N+2
+
+
+********************************************************************************
+--------------------------------------------------------------------------------
+
+
+
+
+                              3. POST-PROCESSING
+                              ******************
+
+
+The AUTOSTRUCTURE code produces large amounts of LS and IC data that is
+written to the files 'ols(u)' and 'oic(u)', and 'opls(u)' and 'opic(u)' ***
+for photoionization. In general, this cannot be processed by hand. 
+The transition probabilities are normally combined in many different
+ways depending on the resonant process that you wish to study. Similarly,
+photoionization cross sections can be reduced to a more manageable form,
+e.g. totals. Historically, there was a single general post-processor MDRCS 
+(current incarnation the mdrcs13.f code) which covered any and all applications.
+More specialized and structured codes evolved from this viz. the ADAS post-
+processors for RE, DR, RR, PE & PI. (No post-processing as such is required for 
+DE as AS directly delivers a type-5 adf04 file.) They deal with one specific 
+process and have evolved themselves so that they are often somewhat more 
+accurate than the general one as such development has not been ported back to 
+the historic general code. Some obscure requirements can still only be dealt 
+with by the general code.
+***The actual files read are o1(u) and op1(u), without any coupling extension.
+   Multiple files can be reed: o1 o2 o3... and op1 op2 op3...
+
+
+3a. ADASRE POST-PROCESSOR
+*************************
+
+The program 'adasre.f' will deliver a type-3 adf04 upsilon file for resonant 
+electron-impact excitation (from RUN='RE') so as to complement the non-resonant
+RUN='DE' direct contribution.
+
+
+
+3b. ADASDR POST-PROCESSOR
+*************************
+
+The program 'adasdr.f' reads standard AUTOSTRUCTURE output files and processes
+them specifically to form (final-state resolved) ADAS ADF09 files for the
+modelling of dielectronic recombination. See the ADAS web pages 
+(http://www.adas.ac.uk) for information about ADAS, its capabilities and 
+detailed documentation, including precise specification of the ADF09 format. 
+The series 7 codes are ADAS implementations of AUTOSTRUCTURE (701) and 
+adasdr (702), these are basically just the standalone codes with an IDL wrapper 
+for people familiar with working in the ADAS IDL environment.
+
+Formatted data from AUTOSTRUCTURE is expected in file 'o1' and unformatted
+data in file 'o1u'. The file 'o1' is checked first. In addition to the ADF09
+output, to file 'adf09', the (UNIT6) output to 'adasout' contains a terse
+summary of DR cross sections as a function of Rydberg nl, to be studied for
+convergence, and an estimate of the total rate coefficient from each initial
+metastable for the core excitation being processed.
+
+The UNIT5 data is free-formatted and namelisted, as follows:
+
+
+The first four characters of line 1 MUST be /LS/ or /IC/ so as to denote the
+type of data being processed. This generates 1998 style adf09 files
+(to recover 1993 style (LS) use /  /). The rest of line 1 is for comment.
+
+
+Namelist ONE
+------------
+
+COREX='n-m' selects the core transition n->m to be processed, where n and m
+            are the initial and final principal quantum numbers. The l-values
+            need not and must not be specified i.e. 'n-m' is 3 characters.
+            The default is '   ', no restriction on core excitations. Thus,
+            COREX should be specified. ADAS expects separate ADF09 files for
+            each core excitation.
+
+NTAR1=Number of initial (metastable) target states.
+
+NTAR2=Number of final resolved parent states.
+
+The values of (2S+1) L p (case /LS/) or 2J p 2S+1 L (case /IC/, where p, S and L
+are for labelling purposes only in adf09 - p is the parity) follow free-
+formatted, after Namelist TWO, for the NTAR2 parent states. (The files TERMS
+and LEVELS produced following a suitable target run with AUTOSTRUCTURE should
+provide this data.) This input data is compulsory.
+
+
+Namelist TWO
+------------
+
+NECOR=0 (default) does nothing.
+     >0, read NECOR experimental energies (in Rydbergs) relative to the ground.
+         They follow the statistical weight & calculated energy info.
+
+
+Example 1. Li-like target, term-resolved.
+
+/LS/ Li-like target, 2->2 core excitations.
+ &ONE NTAR1=1 NTAR2=2 COREX='2-2'  &END
+ &TWO  &END
+ 2 0 0    1    1          0.000000       
+ 2 1 1    2    1          0.593206       
+ 0 0 0    0    0        -69.424937
+
+The input after &TWO is taken directly from the TERMS file.
+The calculated (C3+) energies listed here will be checked internally 
+against those in the rate file.
+
+This input file can be used to process an ols file produced by Sec.2c Example 6.
+
+
+Example 2. Li-like target, level-resolved.
+
+/IC/ Li-like target, 2s->2p core excitations.
+ &ONE NTAR1=1 NTAR2=3 COREX='2-2'  &END
+ &TWO NECOR=3  &END
+ 1 0   2 0    1    1        0.00000000       
+ 1 1  -2 1    2    2        0.59410770       
+ 3 1  -2 1    2    1        0.59511353       
+ 0 0   0 0    0    0      -69.45108309
+0.0 0.587621 0.588603       These are the observed energies for C3+.
+                            This text is not read.
+
+This input file can be used to process an oic file produced by Sec.2c Example 6.
+
+
+
+3c. ADASRR POST-PROCESSOR
+*************************
+
+The program 'adasrr.f' reads standard AUTOSTRUCTURE output files and processes
+them specifically to form (final-state resolved) ADAS ADF48 files for the
+modelling of radiative recombination. It is similar in spirit to ADASDR and
+its minimum input is just NTAR1 and NTAR2 (and stat. weight info) as described
+for ADASDR. (There is no COREX or NECOR now.)
+
+
+
+
+3d. ADASPE/PI POST-PROCESSORS
+*****************************
+ 
+The programs 'adaspe.f' and 'adaspi.f' read standard AUTOSTRUCTURE output files 
+and process them specifically to form (final-state resolved) ADAS ADF38 and
+ADF39 files for the modelling of photoexcitation-autoionization and (direct)
+photoionization. These ADFXX files are also used by Mike Seaton's OP codes.
+They can also produce R-matrix style X-files: XPEPAR, XPETOT, XDPIPAR, XDIPTOT
+and the resonant "PE" files can be added to their corresponding direct "DPI"
+files using the 'xpeppi.f' code.
+
+The NAMELISTed input is similar to that for ADASDR, but simpler.
+
+ADASPE: Reads the same 'on' or 'onu' AUTOSTRUCTURE files (n=1,2,3,4 etc) as in
+        ADASDR.
+
+ADASPI: In addition, reads photoionization files 'opn' or 'opnu'.
+        The 'on' files must match the 'opn' files obtained from the
+        same AUTOSTRUCTURE run.
+
+The first four characters of line 1 MUST be /LS/ or /IC/ so as to denote the
+type of data being processed. The rest of line 1 is for comment.
+
+We refer to the initial state as the one that the photon impacts on and
+final state that of the residual ion that the ejected electron "sees".
+
+
+Namelist ONE
+------------
+
+NTAR=Number of (final) electron "target" states for which symmetry info is read.
+
+Unlike ADASDR/RR, NTAR is for labelling info only in the adf38/39 files.
+
+The values of (2S+1) L p (case /LS/) or 2J p 2S+1 L (case /IC/, where p, S and L
+are for labelling purposes only in adf38/39 - p is the parity) follow free-
+formatted, after Namelist TWO, for the NTAR final "target" states. (The files 
+TERMS and LEVELS produced following a suitable target run with AUTOSTRUCTURE 
+can provide this data.)
+
+
+The above is the standard (minimal) input for OP work, i.e. all possible data
+produced on adf38/39. It can be restricted though:
+
+NTARP, NTART restrict the number of electron targets resolved for partial data,
+       and which go into any total sum. They are independent of each other,
+       and of NTAR. So, the amount of partial data resolved can be restricted
+       without affecting any totals.
+       
+IRSLMX is the max no. of initial photon targets, default all.
+         (Strictly speaking, it is the adf38/39 IRSL index label, which may not
+          be energy ordered if multiple opn files are processed...)
+
+ADASPE only options:
+
+JRSLMX is as IRSLMX but for upper photon states.
+
+RAD='YES' includes radiation damping. This includes damping to autoionizing
+          states, which is not included by standard R-matrix. Default.
+   = 'NO' omits radiation damping.
+
+PABS='YES' then photoabsorption cross sections are written.
+    = 'NO' then "photoionization" is written, default.
+
+
+
+Namelist TWO
+------------
+
+None normally, for adf38/39 production.
+
+
+An alternative scheme involves producing R-matrix style X-files.
+This is controlled by the EWDITH and related parameters (see ONE).
+
+EWIDTH .gt.0 then PI cross sections and (energy-averaged) PE cross sections are
+             convoluted with a Gaussian of FWHM of EWIDTH Rydbergs and written
+             to the partial XDPIPAR, XPEPAR and total XDIPTOT, XPETOT files.
+
+EMIN, EMAX are the range of photon energies for which cross sections are 
+     convoluted.
+
+NBIN is the number of energy bins, between EMIN and EMAX, for energy-averaged 
+     PE cross sections (ADASPE only).
+
+
+The IRSLMX and NTAR defaults are different here viz. IRSLMX=1, and NTAR *does*
+restrict the X-file writes.
+
+
+Finally, the program 'xpeppi.f' can be used to add the resonance and direct 
+files together.
+
+
+
+
+3e. General POST-PROCESSOR
+**************************
+
+The post-processor 'mdrcs13.f'  can be used to study many resonant processes,
+maybe combined with direct backgrounds. *** If you just want to produce 
+ADF04/09/48/38/39 ADAS-style files then use instead the programs 
+adasre/dr/rr/pe/pi detailed previously.
+
+The UNIT5 data is all free-formatted and namelisted. The basic most
+commonly used variables are detailed below. There are many other
+options, some quite esoteric, which are available for manipulating
+the raw AUTOSTRUCTURE data. Information on these can be found in the
+comment cards towards the beginning of the code under the headings
+NAMELIST-ONE, NAMELIST-TWO and NAMELIST-THREE.
+
+Formatted data from AUTOSTRUCTURE is expected in file 'o1' and unformatted
+data in file 'o1u'. The file 'o1' is checked first.
+Non-resonant backgrounds can be added by simply making a suitable file
+available as the file 'ombg'. "Standard" R-matrix 'omega' and 'omegdr'
+files are acceptable.
+
+
+Namelist ONE
+------------
+
+RUN='DR' Process for photon emission (dielectronic recombination) default.
+   ='RE' Process for electron emission (resonant excitation).
+
+NTAR1=Number of initial (populated) target states.
+NTAR2=Number of final resolved states for RE (not used for DR).
+
+The values of (2S+1) L or 0 2J+1 follow free-formatted after Namelist TWO
+for the NTAR1 initial states. This is the minimal target info required.
+Suitable data is produced in the TERMS/LEVELS files by structure runs.
+They contain more info e.g. energy levels, which can be used by the ADASXX
+post-processors.
+
+NCUT=Rydberg principal quantum number cut-off of AUTOSTRUCTURE data (default 
+     all).
+LCUT=Rydberg angular momentum cut-off of AUTOSTRUCTURE data (default all).
+
+UNITS=1.0 Rydberg energy units (default).
+     =13.606 Electron-volt energy units.
+
+IPRINT=0,-1,-2,-3 Print-level, increasing values give a more detailed printout.
+      =-1 is the default and the best first choice.
+
+NC<=0 (default) binned cross sections are written to the file 'ocs'.
+   =1  Processing very large rate files can be time consuming. By setting 
+       NC=1 the binned cross sections can be read-back from 'ocs' and then
+       convoluted. Thus one can vary the convolution without having to 
+       re-process the raw data each time.
+
+
+Namelist TWO
+------------
+
+EMIN=Minimum continuum energy (in UNITS) for which rates are both processed
+     and plotted.
+EMAX=Maximum, ditto.
+
+NBIN=Number of bin energies (number of bins=NBIN-1). The bin width,
+     (EMAX-EMIN)/(NBIN-1) should be smaller than the convolution width
+     and larger than the natural width of the resonances.
+
+EWIDTH>0 Convolute the (bin) energy-averaged cross sections with a Gaussian
+         of FWHM EWIDTH UNITS.
+      =-0.5 (actually any non-integer negative number) convolute with a
+        Maxwellian distribution.
+      =0.0 Convolute with a cooler distribution, the characteristic
+       temperatures are given by:
+
+TPAR and TPER in UNITS.
+
+NR1>0 is the lowest final-state principal quantum number for a radiating
+      Rydberg electron that was NOT included in the AUTOSTRUCTURE run.
+      For example, dn=0 DR in highly-charged ions may allow the rydberg
+      electron to stabilize to quite a high n-value that would be impractical
+      and time consuming to include in an AUTOSTRUCTURE run. These rates
+      are generated hydrogenically within the post-processor (very fast).
+      Default, no rydberg electron radiation added.
+
+NECOR=0 (default) does nothing.
+     >0 read NECOR calculated then experimental energies (in UNITS) relative 
+        to the ground. They follow the statistical weight information.
+
+
+Namelist THREE
+--------------
+
+None normally, historic graphing input.
+
+
+********************************************************************************
+--------------------------------------------------------------------------------
+
+
+
+                            4. NAMELIST Inputs
+                            ******************
+                            
+Here is a list of the most frequently, and some of the less frequently, used
+inputs available via the NAMELISTs. SALGEB and SMINIM are compulsory.
+
+
+4a. SALGEB
+----------
+
+RUN='  ', default. Allows calculation of energies (LS or IC), radiative
+          rates (if RAD set) and autoionization rates (if continuum
+          present - see optional input below).
+   ='PI', will calculate (non-resonant) photoionization cross sections,
+          if continuum present. By default, it will not calculate ordinary
+          radiative rates or autoionization rates then. They can be switched-on
+          if required (at the same time) using RAD and/or AUGER (see below).
+   ='DR','RR','PE','RE'. All expect one or more Rydberg orbitals
+          to be defined (see below) and will read the optional namelist DRR
+          to define the nl values of the Rydberg series to be run over.
+    'DR'  calculates energies, radiative and autoionization rates.
+    'RR'  calculates non-resonant "radiative recombination" (in the form of PI).
+          Like 'PI', radiative rates or autoionization rates are not calculated
+          then, but can be switched-on if required.
+    'PE'  only differs from 'DR' in its use of default atomic structure - both
+          default to the initial state, which is the final state of the other.
+          In these cases, if no radiation is specified, E1 will be switched on.
+    'RE'  differs from option 'DR' only via no radiation being a valid option.
+
+CUP='CA'  for non-relativistic configuration average.
+   ='LS'  for non-relativistic LS-coupling, *default*.
+   ='LSM' or 'MVD' for LS-coupling including mass-velocity and Darwin operators.
+   ='IC'  for intermediate coupling (gives non-relativistic LS results as well).
+   ='ICM' for intermediate coupling (with LS results as per 'LSM'/'MVD').
+   ='XXR' where XX=CA/LS/IC for use of kappa-averaged relativistic wavefunctions
+          i.e. mass-velocity and Darwin operators are included in the solution 
+          of the radial equations. (So not really an algebra flag.)
+
+RAD='  ' or 'NO'  for no radiative data, default (unless RUN='DR' etc).
+   ='E1' or 'YES' for electric dipole radiation.
+   ='E2' or 'M1' for electric quadrupole and magnetic dipole, plus above.
+   ='E3' or 'M2' for electric octupole and magnetic quadrupole, plus above.
+   ='ALL'for all possible radiative data currently available,
+         inc. M1+BP corrections.
+   ='PI' or 'RR' switches-off the calculation of radiative rates but still
+         allows the calculation of photoionization cross sections.
+         This is now the default when RUN='PI' or 'RR'.
+The maximum E_k and M_k k-pole radiation can be set separately and explicitly
+via KPOLE and KPOLM (default as determined via RAD.)
+
+AUGER='  ' or 'YES' calculates autoionization (AKA Auger) rates when a continuum
+           is present in the structure.
+           This is the default, unless RUN='PI' or 'RR'
+     ='NO' does not calculate any autoionization rates, even if possible.
+           This is now the default when RUN='PI' or 'RR'.
+
+BORN='INF' evaluates infinite energy limit Born collision strengths.
+    ='YES' evaluates finite energy Born collision strengths (Type-1 adf04).
+    ='NO' does not, default (unless RAD='ALL', then defaults to 'INF'.)
+It is not possible to switch-off E_k radiation if BORN='INF' or 'YES'.
+
+KORB1.AND.KORB2 .OR. KCOR1.AND.KCOR2 denote closed shells (use one or other)
+     e.g. KCOR1=1 KCOR2=3 denotes a Ne-like core (assuming standard order).
+     This also defines any core model potential generated for R-matrix, the
+     effective charge is written in place of the duplicate radial mesh points.
+
+KUTSS controls valence-valence two-body fine-structure interactions.
+   =-1 None, default.
+   =-MAXCF, where MAXCF is (>=) the total number of configuration, All.
+     |KUTSS| .gt. 1 includes the interactions for the first |KUTSS|
+     configurations, KUTSS positive neglects the interaction between
+     distinct configurations.
+
+KUTSO controls the evaluation of the generalized spin-orbit parameter.
+   = 0 All.
+   < 0 includes interactions between the first -KUTSO configurations
+       and within a configuration for the remainder, default=-1.
+   > 0 includes interactions within a configuration for the first
+       KUTSO configurations and neglects all for the remainder.
+
+KUTOO controls the evaluation of the two-body non-fine-structure
+      interactions viz. contact spin-spin, two-body Darwin and
+      orbit-orbit (NOT available for non-relativistic LS).
+   = 0 or -1 neglected, default.
+   else all included (excepting 88(O-O),99(CSSD) & 98 reserved).
+
+BASIS ='   ' uses a unique orbital basis. Each configuration uses the
+        same orbitals. Default.
+      ='RLX' uses a ReLaXed orbital basis. Each configuration uses its
+        own set of orbitals and overlaps are neglected. 
+        But a unique set of core orbitals (KCOR1, KCOR2) is used.
+        This would normally be paired with STO potentials (NZION<0) where
+        the occupation numbers are trivially known now.
+      ='SRLX' uses a Simplified ReLaXed orbital basis. Each user-defined
+        group of configurations uses its own set of orbitals.
+        If KCOR1.lt.0 then the core orbitals are different for each group.
+        See Example 18 for detailed inputs.
+              
+NAST/J, number of SLp/Jp term/level symmetries (listed following if .gt. 0 
+        as 2S+1 L p/ 2J p) generated from the configuration list. 
+        LS can be used with care in IC.
+        If .eq. 0 all possible symmetries are generated, default.
+
+ KCUT = 0 all configurations are treated as spectroscopic, default.
+|KCUT|> 0 configuration numbers greater than |KCUT| are treated as "correlation"
+          and terms are only generated from them if they also exist in the
+          spectroscopic list. Correlation terms are ignored when forming
+          the energy functional during optimization and no transition
+          probabilities (autoionization or radiative) are calculated for them.
+      > 0 also neglects mixing between correlation configurations.
+      < 0 does not and is the historic KCUT.ne.0.
+
+MSTART controls the restart facility that is useful for large isoelectronic 
+       runs where it is desirable to calculate the angular algebra once only.
+      = 0 does nothing, default.
+      = 1 writes the angular algebra to file RESTART.
+      = 5 reads the angular from file RESTART.
+     (= 2,3,4 continue an angular algebra calculation that did not complete.)
+
+MXVORB is the number of distinct valence orbitals required to describe the
+       configurations. 
+       > 0 their nl definitions are read next.
+       < 0 standard order is assumed for -MXVORB orbitals.
+       No default, 0 not allowed.
+         
+MXCONF is the number of (base) configurations. Occupation nos are specified
+       for the |MXVORB| orbitals, after any nl definition.
+       No default, must be >0.
+
+Optionally, promotion rules can be applied to base configurations to easily
+obtain a large configuration interaction basis (CI):
+
+ICFG = 0 (default) just applies above MXVORB, MXCONF.
+     = 1 Reads RMX STG2 style global (MNAL, MXAL) min and max occupations nos,
+         before config occupation nos, for |MXVORB| orbitals, and NXCITE  
+         promotions at the end of the config line.
+     = 2 Reads MNAL,MXAL before each base config.
+     =-1 Read (possibly modified) CONFIG.DAT produced by ICFG>0 run.
+(ICFG .ne. 0 redefines MXCONF internally!)
+
+NXTRA, LXTRA, IFILL (for ICFG.ne.0) extends the nl definition to n=NXTRA,l=LXTRA
+       in standard order AND assumes MNAL(I,M)=0, MXAL(I,M)=IFILL, for 
+       orbitals I > |MXVORB|, and base config. M occupation 0; i.e. only READ 
+       such info for I <= |MXVORB| now. Then, MXVORB is redefined internally!
+
+
+The above approach can be extended to describe a collision problem just by
+specifying target configs and a RUN switch (and, maybe, some N+1 bound
+configs).
+
+If RUN.ne.'  ' and no continuum orbitals are specified on the (optional) orbital
+redefinition line then it is assumed that the MXCONF N-electron target configs 
+have been specified (as above) and N+1 electron target+continuum configs are 
+internally generated by adding LCON continuum orbitals to each target config. 
+Depending on RUN, a Rydberg orbital is also added. Any KCUT input is relative 
+to the MXCONF N-electron configs, it is adjusted internally to match the 
+resultant N+1 electron target+continuum configs (which are ordered for KCUT).
+
+If explicit bound orbital N+1 electron configs are needed (e.g. DR) then 
+
+MXCCF > 0 reads bound N+1 configs in same fashion as N-electron configs, and 
+          after them. 
+      < 0 determines all possible based on adding a base orbital to the first 
+          -MXCCF N-electron configs.
+      = 0 (default) no explicit bound N+1 electron configs.
+
+Note: < 0 requires (N-electron) ICFG .ne. 0 (i.e. N+1 are auto-generated only if
+          N are auto-generated). (N.B. zero promotions can be flagged.)
+Note: N+1 ICFG is determined from ICFG/10 (N-electron ICFG is actually 
+      MOD(ICFG,10).) Ditto IFILL.
+
+KCUTCC is the equivalent of KCUT, but for the MXCCF N+1 configs and is specified
+relative to MXCCF, i.e. it is independent of the MXCONF N-electron configs.
+
+Note: configs with both a Rydberg and continuum (which result from a core
+re-arrangement autoionization) can also be handled, and KCUTI - see Example 8.
+
+
+Very Large-scale AS calculations may require the following variables be set:
+
+KUTDSK > 0 stores vector coupling coefficients on SCRATCH disk for configuration
+         nos CF.gt.KUTDSK. There can be Tera-bytes of them.
+       <=0 all on disk and only a small I/O buffer is allocated.
+       Default: all stored in memory.
+
+KUTLS < 0 restricts configuration mixing to *within* each (nl) configuration.
+          (Hamiltonian is repartioned to reflect this for speed.)
+      > 0 allows configuration mixing *between* the first KUTLS configurations
+          while restricting it to *within* again for the rest.
+          (The Hamiltonian is NOT repartioned, so no speed-up, but this
+           eliminates unphysical n-mixing between high Rydberg configurations.)
+      Default: no restriction on LS-mixing!
+
+
+Supplementary data:
+
+A number of the SALGEB variables flag the reading of data following the namelist
+The read order is indicated by the namelist variable that initiates the read 
+rather than the local variable in which the data is stored, which is of no 
+interest to the user.
+(The bracketed variables listed below have not been discussed above, 
+ only the most common.)
+
+(MCFSS - flag CFs for 2-fs additional to KUTSS)
+MXVORB
+MXCONF
+MXCCF
+(NASTS - restrict term symmetries of subshell nl^q)
+(NASTP - restrict parent term symmetries of a configuration)
+(NASTPJ - restrict parent level symmetries of a "configuration", RUN='DE' only)
+NAST
+NASTJ 
+
+
+Additional SALGEB Inputs for Direct Electron-Impact Excitation. 
+***************************************************************
+
+The collision algebra ranges over L/2J etc. given by
+
+MINLT, MAXLT = min and max total L (both parities) for
+MINST, MAXST = min and max total 2S+1
+
+MINJT, MAXJT = min and max 2J (both parities).
+
+It is not necessary to set MIN/MAXST (default, all).
+It is not necessary, but possibly desirable, to set MIN/MAXLT/JT 
+(default 0-30/60).
+If MIN/MAXJT is set then it is not necessary, or desirable, to set MIN/MAXLT.
+(If you accidentally restrict SLp so that a symmetry required by your
+requested Jp is missing then the code will flag this and, currently, aborts.
+If you set MIN/MAXJT while CUP='LS' then they are ignored.)
+
+
+Exchange is neglected for L (there is no separate J-value) greater than
+(you should not need to change it)
+
+MAXLX= max total L for which exchange is included.
+       Default is twice the max exchange multipole included, where
+
+MXLAMX= max exchange multipole.
+        Default is twice the max target orbital ang. mom. plus 3.
+        Negative will neglect exchange completely.
+        Smaller absolute values than default will restrict direct as well.
+
+Thereafter, the problem is solved for a single target spin-system,
+as per NX R-matrix, and the total spin is flagged in the same fashion.
+This works for both LS and BP operation.
+(In some cases MAXLX may be slightly larger as there is also
+the requirement that the full channel expansion be "open".)
+
+Top-up is automatically included at
+
+LRGLAM=MAXLT/JT (but can be reduced/switched-off by the user for testing.)
+
+
+In addition, collisional two-body non-fine-structure is controlled by
+
+KUTOOX= 1 includes orbit-orbit etc. in the same fashion as the target KUTOO.
+      =-1 off (default).  
+
+KUTOOX is independent of KUTOO, but some off/on combinations are more
+meaningful than others.
+
+
+In addition, collisional two-body fine-structure (2fs) is controlled by
+
+KUTSSX=-1 off (default)
+      =-999 all possible
+      = 1 first target config only.
+      = etc. all values have the same interpretation as the target KUTSS.
+
+KUTSSX is independent of KUTSS, but some off/on combinations are more
+meaningful than others.
+
+Since 2fs is likely only to be important for weak transitions, and it
+is time consuming, generating it over the full J-range is not desirable
+and so
+
+MAXJFS=the max 2J for which two-body fine-structure is included.
+*** It also requires KUTSSX to be switched "on" explicitly by the user. ***
+      (The min value is just MINJT.) 
+
+It is not necessary, but possibly desirable, to set MAXJFS. 
+If KUTSSX is "on" then, if not set, MAXJFS defaults to the max allowed by MAXLX.
+
+
+NMETA/J= the number of ground plus metastable TERMS/LEVELS for which excitation
+       algebra/data is computed between themselves and to ALL excited states, 
+       i.e., transitions between excited states are omitted.
+       The NMETA/J terms/levels are the energetically lowest ones.
+       LS *Default* (NMETA=1) the ground term only.        
+       IC *Default* (NMETAJ=0) levels of the ground term. 
+       These defaults are for complex atoms, where there may be hundreds of
+       terms/levels in the ground configuration. 
+
+If 2fs are present then the default (NMETAJ.ge.0) is to neglect interactions 
+between excited levels that at most spin-orbit mix with the metastable levels. 
+User input NMETAJ.lt.0 includes all allowed by angular momentum selection,
+and resets NMETAJ=-NMETAJ.
+
+TARGET='OLD'  reads previously computed (by a fast energy-only structure run)
+              TERMS/LEVELS files so as to determine the metastable symmetries.
+      ='NEW'  default. Writes TERMS/LEVELS files (only if FORMATTED output, 
+              default.)
+
+
+Finally, in addition to target symmetries being restrictable by the usual NAST/J
+and KCUT  parameters, the (N+1)-electron SLp/Jp symmetries can be restricted by 
+
+INAST/J .gt. 0, read INAST/J symmetries of the form 2S+1 L p / 2J p (p=0,1)
+                after the config. spec. and any NAST/J input.
+                By default, top-up is *OFF* (LRGLAM is set .lt.0) now.
+
+--------------------------------------------------------------------------------
+
+
+4b. DRR
+-------
+
+If RUN='DR','RR','PE','RE' then the (compulsory) DRR NAMELIST is read to specify
+Rydberg orbital info.
+
+NMIN, NMAX: Loop the valence orbital over n=NMIN to NMAX incrementing n by 1.
+
+NMESH .gt. 0, then NMESH additional n-values are read following the namelist.
+      AS inserts an additional n-value between each input value to aid
+      interpolation and numerical integration over n in user-supplied
+      post-processing routines. (The first value read must be NMAX+1.)
+    .eq. 0, none additional.
+    .lt. 0, default, an internal n-mesh is used. ***RECOMMENDED***
+     (Do not specify NMESH .lt. 0 explicitly as this can alter the internal 
+      n-mesh.)
+
+NRAD =1000, default. In DR runs the radiation from high-n is negligible
+      and the effect of the Rydberg orbital on the core is small.
+      So, for n.gt.NRAD no new radiative rates are calculated.
+      The default value is to always to compute radiative data.
+
+LMIN, LMAX: Loop the valence orbital over l=LMIN to LMAX incrementing l by 1. 
+      No defaults, but LMIN=0 and LMAX=7 - 12 are normal production values.
+
+LCON  is the number of l-values for the continuum orbitals. 
+      Let lc denoted the continuum angular momenta and lv the
+      Rydberg angular momentum. Then the internal assignment is 
+      lc=lv-(LCON-1)/2, lv-(LCON-1)/2 +1, ...... , lv+LCON/2.
+      Generally, LCON should be set to 2*LAMAX+1, where LAMAX is the 
+      largest target multipole transition required. Thus, LCON=3 for dipole, 
+      and =5 for quadrupole core transitions as well. (This is *not* the
+      full range allowed-for by angular momentum coupling rules, but it is
+      usually more than sufficient.)
+      Default: is 2* max_target orbital l, plus 1.
+
+--------------------------------------------------------------------------------
+
+
+4c. SMINIM
+----------
+
+NZION =   Nuclear charge (no default).
+      > 0 radial functions are calculated in an nl-dependent TFDA potential.
+          The orbitals are Schmidt orthogonalized, by default, unless kappa-
+          averaged orbitals are in use then the default is NOT to.
+      < 0 radial functions are calculated in an nl-dependent Hartree potential
+          evaluated with Slater-Type-Orbitals.
+          The orbitals are NOT Schmidt orthogonalized, by default.
+
+INCLUD = 0 no variational procedure, default.
+       > 0 include lowest INCLUD terms (LS), weighted over fine-structure (IC), 
+           in energy-sum to be minimized.
+       < 0 include -INCLUD terms (weighted over f.s.) in energy sum, pairs of
+           T-index labels and weighting factors follow next (before lambdas, 
+           see below).
+           Note: the T-index is required, not the I-index. This is output
+           in olg on the term (f.s. weighted) energy list from a trial run.
+       See Note 2 on ISHFTLS/IC (below) regarding minimizing the difference
+       with observed energies.
+
+IWGHT flags how the energy functional weighted-mean is to be formed.
+      = 1 weights the INCLUD>0 terms equally (default, arithmetic mean).
+      = 2 weights them statistically (historic SS weighted mean).
+      =-1,-2 as above but forms arithmetic mean of the configuration weighted-means.
+      Thus, the functional is not dominated by configs with a large no. of terms.
+
+NLAM  is the number of (lambda) scaling parameters. Both TFDA and STO
+      Hartree potentials contain a radial scaling parameter.
+    = 0 all lambda's equal unity. 
+      If NLAM is less than the number of orbitals then the last
+      scaling parameter read will be used for the remaining orbitals. 
+
+NVAR  is the number of variational parameters.
+
+Note 1:
+      If BASIS='RLX' or 'SRLX' in SALGEB, then NLAM refers to the number of
+      sets of parameters to be read, which are preceded by the configuration or
+      group number and the number of parameters in the set. Values for (common
+      KCOR1.gt.0) closed-shell orbitals are denoted by a configuration of zero.
+      Thus, only valence values are specified for non-core NLAM.
+      If a non-common core is used (KCOR1.lt.0) then all lambdas must be
+      specified, as in the non-relaxed case. A group value of zero is illegal.
+
+      The scaling parameter for a continuum orbital (see below) follows that
+      of the last (global occupied) bound orbital.
+
+Note 2:
+      The scaling/variational parameters are normally positive numbers
+      around 1. This gives a "physical" orbital. Pseudo-orbitals are
+      generated with negative lambdas. The default is a screened
+      hydrogenic potential of charge |lambda*NZION|. However, if.....
+
+
+ORTHOG='YES' impose Schmidt orthogonalization, overriding NZION default.
+       'NO' do not impose Schmidt orthogonalization, overriding NZION default.
+       'LPS' then orthogonal Laguerre pseudo-states are generated for that nl.
+       The -lambda is then the scaling parameter associated with the Laguerre
+       orbital, with the Z dependence factored out so that lambda=-1 is usual.
+       (Negative lambda without 'LPS' uses screened hydrogenic z=|NZION*lambda|)
+
+MCFMX: Case of STO Hartree/X potentials. MCFMX configuration numbers are read,
+       usually one for every orbital. The Hartree potential, for each orbital,
+       uses the occupation numbers from the specified configuration. If the
+       number of orbitals is .gt. MCFMX the last configuration is used for the 
+       remaining orbitals. The orbital must exist in the flagged configuration.
+       If BASIS='RLX' then only the core is defined as the configuration is set.
+       If BASIS='SRLX' then all groups of orbitals are set as NLAM in Note 1.
+
+MEXPOT <= 0 the STO potential is Hartree. Default is MEXPOT=0.
+        = 1 a local exchange term is added to the Hartree potential.
+       See (below) its use by PPOT for self-consistent configuration average.
+
+PRINT='FORM' (default) usual detailed formatted output for a structure
+              run. Energy/Rate files for DR/RE run are formatted.
+     ='UNFORM' limited writes to UNIT6 and Energy/Rate files for DR/RE
+               are unformatted.
+
+RADOUT='YES' produces a radial file (radout) suitable for LS/BP R-matrix stg1r.
+      ='NO' doesn't (default).
+
+MAXE  is the maximum scattering energy in Rydbergs. Useful for non-resonant
+      processes to ensure an optimal radial mesh is set-up, not too fine (slow)
+      and not too coarse (inaccurate, or later failure).
+
+ISHFTLS (ISHFTIC) = 0, no shifts (default).
+    = 1 Read term (level) numbers and energy corrections from file SHFTLS
+        (SHFTIC) preceded by the number of state/energy pairs to be read and 
+        the energy units used (as IP of H). Can be used together in an IC run,
+        then LS energy shifts are applied as term energy corrections to H(IC)
+        and the IC shifts as a (further) correction to the diagonal of H(IC), 
+        before diagonalization. If applying both to H(IC) then they are best
+        determined consistently through iteration, see next option. 
+        The term(level) numbers are the algebraic T (LV) numbers, NOT the energy
+        ordered. (ISHFTLS can also be used in CA using the CF numbers.)
+    > 1 then assumes observed energies, relative to the ground (averaged-over
+        fine-structure for terms) NOT corrections, are input and then ISHFTLS
+        *OR* ISHFTIC iterations of H(IC) are carried-out. ISHFTLS iterations are
+        applied as term energy corrections (TEC) to H(IC). The FINAL TECs can
+        then be input in SHFTLS with ISHFTLS=1 and THEN (optionally) ISHFTIC
+        iterations can be applied as level energy corrections (LEC) to the 
+        diagonal of H(IC) before diagonalization. The FINAL LECs can then be 
+        input in SHFTIC with ISHFTIC=1 to regenerate the final structure without
+         iteration.
+    < 0 no iterations (as .eq.1) but assumes input observed energies (as .gt.1).
+        Note, the IC shifts are applied AFTER diagonalization now (as they must
+        be), and so they can be used to achieve exact level positioning.
+
+Note 1: the LS term energies are shifted by whatever term energy corrections are
+        present, which may not be optimal for LS of course if IC is the focus.
+  
+Note 2: if INCLUD.ne.0 then the usual variation of scaling parameters operates
+        but the functional being minimized is the difference between theory and
+        observed. This requires the absolute theoretical ground state energy, in
+        addition to the observed energies relative to the ground. The actual 
+        (non-zero) value of ISHFTLS/IC is irrelevant now (no iteration is 
+        carried-out if .gt. 1 and corrections are not assumed even for .eq. 1).
+
+
+If kappa-averaged relativistic radial functions are in use (CUP='ICR') then
+there are a number of options which apply solely to this case:
+
+IREL = 1 neglects small component, and renormalizes large component to unity 
+        (default).
+     = 2 includes small component estimate.
+
+INUKE=-1 Point nucleus. (Default Z.le.30.)
+     = 0 Uniformly charged finite nucleus (with default atomic mass ATM=2.5*Z).
+     = 1 Approximation to Fermi distribution viz. U_6 charge distribution of 
+         Bogdanovich & Rancova Lithuanian J. Phys. v42, 257 (2002). 
+        (Default Z.gt.30.)
+
+IBREIT= 0 "usual" Breit interaction (long wavelength approx), default.
+      = 1 (Real) Generalized Breit interaction (non-zero exchange photon energy)
+
+QED = 0 No QED corrections, default.
+    = 1 Include vacuum polarization and self-energy contributions to level 
+        energies.
+    =-1 Include on term energies, as well.
+
+IRTARD = 0 Full retardation off in multipole radiation, default.
+       = 1 Full retardation on. Needed for high-energy photoionization, then
+           requires small component on (IREL=2).
+
+
+An alternative approach to minimizing an energy functional is to iterate
+to a self-consistent solution.
+
+PPOT = 'SCCA' uses a self-consistent configuration average potential,
+              including the full non-local exchange, via the default MEXPOT=0.
+              MEXPOT=1 uses a local exchange configuration average potential.
+          Use MEXPOT=-1 to switch-off exchange here.
+     = 'FAC'  uses the Flexible Atomic Code local Dirac-Hartree-Slater potential.
+
+The occupation numbers used in generating the configuration average potentials
+are controlled by:
+
+MCFMX >=0 as defined for non-self-consistent STO model potential (default=0). 
+      < 0 averages over the first  -MCFMX configurations.
+
+NOCC > 0 user-defined valence orbital occupation numbers are read, after any 
+         MCFMX>0 specification. (This is a unique set.)
+     = 0 default.
+
+PPOT can also be used to flag the inclusion of various plasma potentials - see
+Example 17.
+
+
+***Further variables controlling Advanced Data Handling are detailed in Sec.5
+
+
+Supplementary data:
+
+A number of the SMINIM variables flag the reading of data following the namelist
+Historically (prior to namelisting) the order of the variables on the card input
+line gave the the implicit order for subsequent reads. While this ordering has
+been preserved in the Examples above, namelist ordering is arbitrary and so we
+list below the order of reading multiple lines of data. The order is indicated
+by the namelist variable that initiates the read rather than the local variable
+in which the data is stored, which is of no interest to the user. (The bracketed
+variables listed below have not been discussed above, only the most common.)
+
+INCLUD
+NLAM
+NVAR
+(NFIX - tie scaling parameters for 2 or more orbitals during minimization)
+(MGRP - change default initial estimate of orbital epsilons)
+MCFMX
+NOCC
+(IFIX - for fixing orbitals during SCCA operation)
+(NDEN - number of plasma density/temperature pairs)
+
+--------------------------------------------------------------------------------
+
+      
+4d. SRADWIN
+-----------
+
+If use of external orbitals has been flagged then the (compulsory) SRADWIN
+NAMELIST is read (it may be empty).
+
+
+KEY=- 9, default. Assumes that the external input file (radwin) is in 
+         Opacity/Iron/RmaX/APAP Project format (approx. the old IMPACT format).
+   =-10, UNIT5 read of free-formatted STO/Clementi orbital input as per 
+         R-matrix STG2, from UNIT5 input file.
+
+--------------------------------------------------------------------------------
+
+
+4e. SRADCON
+-----------
+
+If use of continuum orbitals has been flagged then the (compulsory) SRADCON
+NAMELIST is read (it may be empty).
+
+
+MENG .eq. 0 (default) uses 0, DE/3, DE, 3*DE (& 8*DE if MAXLT/JT.gt.35/70) 
+            where DE=max(TEAPOT, DELTAX) and TEAPOT is the estimated ionization 
+            potential and DELTAX is the highest (spectroscopic) term energy.
+     .gt. 0 reads MENG final scattered energies following the NAMELIST.
+     .lt. 0 internally sets -MENG energies between a user specified range:
+
+EMIN, EMAX the minimum & maximum final scattered energies.
+      When in doubt, set EMIN to zero and EMAX to the maximum core excitation 
+      energy, e.g., that of 1s^2 to 1s2p in Example 4. 
+
+NIDX .gt. 0 ensures there are at least NIDX energies (inc. DELTAX) beyond EMAX.
+            Default .eq. NLAG, the order of the Lagrange interpolation.
+
+NDE .gt. 0 excitation energies, to be read after the final scattered energies.
+    .eq. 0 default, none, unless MENG=0, then uses 2 internally generated ones,
+           plus zero, based-on DELTAX.
+    .lt. 0 uses -NDE between DEMIN and DEMAX, default .eq. zero and DELTAX.
+
+MENGI .gt. 0 reads MENGI interpolation energies after the final scattered
+             energies.
+      .lt. 0 inserts -MENGI energies between each final scattered energy.
+             Running -1 followed by -2 enables one to gauge interpolation 
+             errors.
+      .eq. 0 (default) none here.
+
+ECORLS/ECORIC is an optional correction energy (Ryd) added to all target
+      continuum. If negative, this lowers all target states relative to
+      the autoionizing states. This ensures that autoionization data exists
+      for low-lying autoionizing states. It may be discarded later, in a
+      post-processor, by further application of observed energies. Default=0.
+
+
+********************************************************************************
+--------------------------------------------------------------------------------
+
+
+
+5. Advanced Data Handling for Modelling (Bundling)
+**************************************************
+
+Large-scale bound-free calculations (DR/RR,PE/PI) beyond the L-shell produce
+large amounts of data and, consequently, large adfxx files, even allowing for
+their default bundling. Modelling then requires further bundling of the default
+term/level resolved data, including parents. This can be carried-out with the 
+post-processors described above.
+
+However, it is more efficient to carry-out the bundling on-the-fly during the
+original AUTOSTRUCTURE calculation. Only the electron and/or photon targets 
+are bundled; autoionizing levels (which, ultimately, are not detailed in adfxx
+files) are fully-resolved still for the determination of fluorescence/Auger 
+branching/yields. This usage requires additional settings in SMINIM.
+(Note, at which ever stage the bundling is carried-out, the final adfxx file
+obtained is the same.)
+
+
+NMETAR,NMETARJ control bundling of electron targets for autoionization (and PI):
+       (They require the presence of the target TERMS/LEVELS files.)
+
+   > 0 lowest initial terms/levels are fully-resolved for dielectronic capture/
+       autoionization. These should cover those ground and metatsble (initial)
+       electron targets for which DR (and RR/PI) are required.
+       Higher electron-targets are fully summed-over - no final-state resolution
+       just a total loss rate.
+   < 0 the final-state bundling resolution is by final configuration (number).
+       |NMETAR/J| (still) gives the number of fully resolved initial states..
+   = 1 is useful for PE where only total autoionizing widths are needed.
+   = 0 Default ("off"), no bundling, historic fully-resolved.
+
+
+NRSLMX controls bundling of radiative data (including photoionization for RR).
+
+   >=0 the lower terms/levels with principal quantum number n>NRSLMX are summed-
+       over completely - no final-state resolution,just a total loss rate.
+       (Actually, it is partitioned between true bound and autoionizing.)
+       N.B. if the lower-state lies above any NEMTAR/J continuum specified then 
+       these data are automatically summed-over, irrespective of any NRSLMX.
+   < 0 the final-state bundling resolution is by configuration for configuration
+       numbers CF.le.-NRSLMX. 
+       Currently, adasdr/rr can only handle NRSLMX<=-MXCONF (when <0).
+       Default=10000.
+
+
+NMETAP/J restrict photon targets for PI (and PE).
+
+   > 0 then energy indexed photon targets above NMETAP/J are ignored, below are
+       fully-resolved still.
+       Also sums PI over continuum partial waves only, with no loss of energy
+       resolution.
+       Can be used in conjunction with NMETAR/J to sum-over electron targets.
+       N.B. It makes no sense to use NRSLMX if PI (PE) is the ultimate goal.
+   <=0 Default ("off"), all retained.
+
+
+N.B. AUTOSTRUCTURE makes no assumption about the ultimate application/direction
+     of atomic data computed, based-upon any RUN setting. (Recall, RUN='PI' is
+     required for part of the RR contribution. Also, RUN='RR' is an efficient
+     way of generating PI data for opacity.) Hence, the appropriate bundling
+     variables must be chosen by the user.
+
+
+Here are typical settings for the various processes (other variables omitted):
+(For Be-like <-> B-like if a specific value is required.)
+
+
+DR: &SMINIM  NMETAR=2 NMETARJ=4 NRSLMX=-10000  &END
+
+Term/level resolved DR from the ground and (the levels of) the first excited
+metastable term. All partial final-state recombination is resolved purely by
+configuration only.
+
+
+RR: &SMINIM  NMETAR=2 NMETARJ=4 NRSLMX=-10000  &END
+
+Normally mirrors DR.
+
+
+PE: &SMINIM  NMETAR=1 NMETAP=999999 NMETARJ=1 NMETAPJ=9999999  &END
+
+Photoexcitation, where upper levels maybe autoionizing. We bundle all
+autoionizing widths, e.g. for opacity  broadening. The activation of NEMTAR/J
+would also sum/bundle radiative data over LOWER autoionizing levels.
+If require opacity photoabsorption from initial autoionizing photon targets,
+then we need to set NMETAP/J to ensure it is fully term/level resolved still.
+
+N.B. If *no* N-electron targets are specified (MXCCF=0 & so MAXCF specifies
+the number of photon target configurations, e.g. for opacity production runs)
+then there is no autoionization and none of the above should be set.
+
+
+PI: &SMINIM  NMETAP=2 NMETAPJ=4 &END
+
+Only PI from the ground and metastables is output, to all possible electron
+continuum.
+
+N.B. use of NMETAR/J as in PE is only useful for PI if one really only needs
+PI to the "ground and metastable" electron targets (as with adasrr.f for RR)
+Thus, it would not normally be used for opacity work.
+However, even if PI is required from all initial photon targets, it is
+still worth setting NMETAP/J "large", even though not specifying them (default)
+gives everything, because then AS will still sum over the continuum partial
+waves and so reduces the size of opic (& oic), without loss of resolution.
+But adaspi.f cannot handle any further bundling of AS PI data.
+(And binning the electron continuum has yet to be implemented.)
+
+
+
+If in any doubt about the outcome, run a simple system first with PRINT='FORM'
+and examine the ols/oic/opls/opic files. Bundled data should be clearly 
+distinguishable from the historic, default, fully-resolved data.
+Check that you have what you want.
+
+(N.B. You may see some resolved autoionizing data which you requested to be
+bundled. This is due to such data being calculated on-the-fly by symmetry block.
+If the ground state for the electron target is not in the first symmetry block,
+then "unnecessary" data is written.)
+
+
+Post-processing: 
+****************
+
+For DR/RR set NTAR2<0. This flags the presence of bundled datafiles from 
+AUTOSTRUCTURE. The o_str file is also required.
+NTAR2<0 also bundles fully-resolved AUTOSTRUCTURE data in the same way.
+
+For PI/PE, nothing special is required. Recall discussion of NTAR, NTARP, NTART.
+
+
+--------------------------------------------------------------------------------
+
+EEEEEEEEEEEEEEEEENNNNNNNNNNNNNNNNNNNNNNNNDDDDDDDDDDDDDDDDDDDDDDD
+       E                     N                      D
+
+

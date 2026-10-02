@@ -1,0 +1,87 @@
+/** 
+    @file 00-hydrocal-intro.txt
+    @brief Main page of the documentation
+ 
+    @par CREATION
+    @author Stefan Schippers
+    
+    @par VERSION
+    $Id: 00-hydrocal-intro.txt 2108 2026-08-13 11:24:08Z iamp $
+
+ */ 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/** @mainpage
+ *
+ * @author 
+ *  Stefan Schippers<br />
+ *  Atomic and Molecular Physics<br />
+ *  Institute of Experimental Physics I<br />
+ *  Justus-Liebig-University Giessen<br />
+ *  Heinrich-Buff-Ring16<br />
+ *  35392 Giessen, Germany<br />
+ *<br />
+ *  schippers@jlug.de<br />
+ *  https://www.uni-giessen.de/amp
+ *
+******************************************************************************************************************
+ * @section Introduction
+ *
+ * The program hydrocal is a collection of subroutines performing hydrogenic atomic structure calculations such as
+ * bound-bound and bound-free radiative transion rates which are then used in, e.g., the calculation of cross sections
+ * and rate coefficients for radiative recombination. In addition convolutions can be carried out, e.g., for the 
+ * calculation of rate coefficients from cross sections. The program suite has evolved over the years. The development 
+ * has been mainly driven by data evaluation needs of storage-ring electron-ion collision experiments. 
+ * Some of the calculations are explained in the following references:
+ * -# S. Schippers et al., <a href="https://doi.org/10.1088/0953-4075/28/15/017">JPB 28 (1995) 3271</a>.
+ * -# S. Schippers et al., <a href="https://doi.org/10.1086/321512">ApJ 555 (2001) 1027</a>.
+ * -# S. Schippers et al., <a href="https://doi.org/10.1051/0004-6361:20040380">A&A 421 (2004) 1185</a>.
+ * -# S. Schippers, <a href="https://doi.org/10.1016/j.jqsrt.2018.08.003">JQSRT 219 (2019) 33 </a>. 
+ * -# S. Schippers et al., <a href="https://doi.org/10.1002/cphc.202300061">ChemPhysChem 24 (2023) e202300061 </a>. 
+ * -# S.-X. Wang et al., <a href="https://doi.org/10.1140/epjd/s10053-024-00914-7">EPJD 78 (2025) 122 </a>. 
+ *
+******************************************************************************************************************
+ * @section Installation 
+ *
+ * Required Linux packages (all these packages are part of any major Linux distribution): 
+ * -# <a href="https://subversion.apache.org/">subversion</a>, 
+ * -# <a href="https://cmake.org/">Cmake</a>,
+ * -# <a href="https://gcc.gnu.org/onlinedocs/gcc/index.html">GNU C++ compiler</a> (g++),
+ * -# Optionally: <a href="https://clang.llvm.org/docs/ClangFormat.html"> ClangFormat</a> for formating the source files
+ * -# Optionally: <a href="http://www.stack.nl/~dimitri/doxygen/index.html">doxygen</a> with
+ * <a href="http://www.graphviz.org/">graphviz</a> for generating the documentation. 
+ * -# Optionally: <a href="https://www.boost.org">BOOST libraries</a> used, e.g., for extended precision calculations.
+ * -# Optionally: <a href="https://github.com/flintlib/flint">FLINT (Fast Library for Number Theory)</a> provides hypergeometric functions with complex arguments
+ *
+ * On Linux systems, these packages can be installed with the commands
+ * @verbatim
+   sudo apt install subversion cmake g++ doxygen
+   sudo apt install graphviz libboost-all-dev libflint-dev clang-format 
+   @endverbatim
+ *
+ * The @ref pageGUI requires additional packages:
+ * @verbatim
+   sudo apt install libfltk1.4-dev libcairo2-dev gnuplot
+   @endverbatim
+ * 
+ * The hydrocal source files and the pertinent documentation can be retrieved from a subversion (svn) repository. 
+ * For checking out all hydrocal source and documentation files change to your home directory and use the following command:
+ * @verbatim
+    svn checkout http://www.strz.uni-giessen.de/repository/hydrocal hydrocal
+@endverbatim
+ *
+ * The installation assumes that a directory <tt>~/bin</tt> exists and that the environment variable <tt>PATH</tt>
+ * includes this directory. All software can be compiled and installed by using the following commands
+ * @verbatim
+   cd ~/hydrocal/build
+   cmake ..
+   make install
+   make doc-html
+   @endverbatim
+ *
+ * Cmake uses the configuration in <tt>[hydrocal/CMakeLists.txt](../../CMakeLists.txt)</tt>.
+ *
+ * ClangFormat uses the configuration in <tt>[hydrocal/.clang-format](../../.clang-format)</tt>.
+ */
+

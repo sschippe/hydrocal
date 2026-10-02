@@ -1,0 +1,34 @@
+A.S. Delta n=1 DR of O2+
+ &SALGEB RUN='DR' RAD='E2' CUP='IC' MXVORB=4 MXCONF=9 KCUT=-4 MXCCF=17 KCUTCC=-9 TITLE='O2DR' KCOR1=1 KCOR2=2 &END
+   2 1  3 0  3 1  3 2
+ 2 0 0 0
+ 1 1 0 0
+ 1 0 1 0
+ 1 0 0 1
+ 0 2 0 0
+ 0 1 1 0
+ 0 0 2 0
+ 0 0 1 1
+ 0 0 0 2
+
+ 2 1 0 0
+ 2 0 1 0
+ 2 0 0 1
+ 1 2 0 0
+ 1 1 1 0
+ 1 0 2 0
+ 1 1 0 1
+ 1 0 1 1
+ 1 0 0 2
+ 0 2 1 0
+ 0 1 2 0
+ 0 1 1 1
+ 0 1 0 2
+ 0 0 3 0
+ 0 0 2 1
+ 0 0 1 2
+ 0 0 0 3
+ &DRR NMIN=4 NMAX=16 LMIN=0 LMAX=11 &END
+ &SMINIM NZION=8 PRINT='UNFORM' &END
+ &SRADCON MENG=-9 &END
+  0.0 3.5

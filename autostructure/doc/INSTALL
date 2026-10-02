@@ -1,0 +1,39 @@
+Generic installation instructions for AUTOSTRUCTURE version 25.x.
+                                      *************
+ 
+An f95 compiler is required - see for example:
+
+SUN/Oracle (Linux) Recommended
+ http://www.oracle.com/technetwork/server-storage/solarisstudio/downloads/index-jsp-141149.html
+
+gfortran (Linux, Mac OS, Windows)
+ http://gcc.gnu.org/wiki/GFortranBinaries
+
+Intel (Linux)
+ http://software.intel.com/en-us/non-commercial-software-development
+
+Currently, g95 is not recommended.
+
+
+There is (almost) no machine dependent code. The source here is REAL*8.
+
+The dimensions are INCLUDEd from the file PARAM.
+It should suffice for most use(r)s.
+
+
+1. Compile AUTOSTRUCTURE (note PARAM must exist in the same directory):
+
+f95 asdeck.f -o aslm.x
+
+Use any optimization flags that you would normally use e.g. -fast.
+Note: no libraries are required.
+
+2. Execute AUTOSTRUCTURE
+
+aslm.x <data
+
+The file data should contain the UNIT5 data as discussed in WRITEUP.
+Sample datasets are included in the /data sub-directory along with this file.
+
+
+P.S. pasdeck.f is the parallel (f95) version.

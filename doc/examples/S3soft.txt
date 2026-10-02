@@ -1,0 +1,37 @@
+#################################################################################################
+### Input data for calculation of subshell dependent field ionization
+###
+###            Publication : Astrophys. J 555, 1027 (2001)
+###                    DOI : https://doi.org/10.1086/321512
+###
+###  hydrocal SVN revision : 2087
+###               filename : S3soft
+###      start date & time : Tue Jul 28 13:52:57 2026
+###           storage ring : CRYRING@ESR
+###             ion charge : 3
+###           ion mass (u) : 32
+###    cooling energy (eV) : 450
+###    guiding field  (mT) : 30
+###                  max n : 100
+###          cascade depth : 0
+###                 cutoff : soft
+#################################################################################################
+###          batch command : hydrocal < S3soft.hcin &
+###
+### The following output files (among others) will be created: 
+###   S3soft.fn  : n-resolved survival probabilities averaged over l
+###   S3soft.fnl : nl-resolved survival probabilities for input to autostructure
+###   S3soft.fm1 : nl-resolved survival probabilities in matrix form for 2D plotting
+#################################################################################################
+### cooler toroid demerger
+### electric field (kV/cm) : 1.88598
+### field ioniz. cut off n : 53
+##################################################
+### correction magnet
+### electric field (kV/cm) : 4.8281
+### field ioniz. cut off n : 42
+##################################################
+### analyzing dipole magnet
+### electric field (kV/cm) : 145.767
+### field ioniz. cut off n : 18
+##################################################

@@ -1,0 +1,280 @@
+/** 
+    @file 50-hydrocal-autos.txt
+    @brief hydrocal AUTOSTUCTURE intstallation
+ 
+    @par CREATION
+    @author Stefan Schippers
+    
+    @par VERSION
+    $Id: 50-hydrocal-autos.txt 1910 2026-03-12 12:33:08Z iamp $
+
+ */ 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ /** @page pageAUTOS AUTOSTRUCTURE
+ *
+ * AUTOSTRUCTURE is an atomic code which calculates cross sections for a number of atomic processes, among these RR and DR.
+ * AUTOSTRUCTURE has been developed by Nigel Badnell at the University of Strathclyde in Glasgow/Scottland.
+ * The most recent versions of the various codes can be retrieved from [http://amdpp.phys.strath.ac.uk/autos](http://amdpp.phys.strath.ac.uk/autos).
+ *
+ * For convenience, AUTOSTRUCTURE is also provided together with hydrocal, but not necessarily the latest version.
+ * If required, updates should be straight forward, though.
+ * The hydrocal version of AUTOSTRUCTURE comes with simple scripts, which handle the naming of the input and output files and
+ * which support an easy workflow. Some of the output files can be read in by hydrocal.
+ * The use of the scripts is explained in the [Introduction to AUTOSTRUCUTRE](../../autostructure/doc/AUTOSintro.pdf).
+ *
+ ********************************************
+ * @paragraph autosinstall Installation
+ *
+ * The [<tt>gfortran</tt>](https://gcc.gnu.org/wiki/GFortran) compiler is required for the compilation of the <tt>FORTRAN</tt>
+ * source codes. It should be available in virtually all major Linux distributions.
+ * On a Debian system <tt>gfortran</tt> can be installed with the command
+ * @verbatim
+   sudo apt-get install gfortran
+   @endverbatim
+*
+* Perform the following steps for a minimal installation of AUTOSTRUCTURE:
+ * @verbatim
+    cd ~/hydrocal/autostructure
+    make AUTOS
+    make AUTOSDR
+    make install-all
+    make doc
+ @endverbatim
+ * Further options are available. Just type
+ * @verbatim
+    make
+ @endverbatim
+ * to obtain a comprehensive list.
+ * More documentation is provided in the following documents, which are available partly only after having used <tt>'make doc'</tt>:
+ * - [WRITEUP](../../autostructure/doc/WRITEUP) (general).
+ * - [DR namelists](../../autostructure/doc/AUTOSDRnamelists) (excerpt from the DR postprocessor code).
+ * - [RR namelists](../../autostructure/doc/AUTOSRRnamelists) (excerpt from the RR postprocessor code).
+ * - [PP namelists](../../autostructure/doc/AUTOSPPnamelists) (excerpt from the general postprocessor code).
+ * - [On the use of AUTOSTRUCTURE for (near- and) neutral heavy species](../../autostructure/doc/ASWN_1.pdf) (working note by Nigel Badnell).
+ * - [On the Diagonalization of large Hamiltonian Matrices within AUTOSTRUCTURE](../../autostructure/doc/ASWN_2.pdf) (working note by Nigel Badnell).
+ * - [A FAC potential for AUTOSTRUCTURE](../../autostructure/doc/ASWN_3.pdf) (working note by Nigel Badnell).
+ * - Reference to AUTORSTRUCTURE: N.R. Badnell, [Comput. Phys. Commun. 158, 1528 (2011)](https://doi.org/10.1016/j.cpc.2011.03.023).
+ * - Reference to SUPERSTRUCTURE: W. Eissner et al., [Comput. Phys. Commun. 8, 270 (1974)](https://doi.org/10.1016/0010-4655(74)90019-8).
+ *
+ **************************************************************************************************************************
+ * @paragraph autosusage Usage
+ * After installation, the commands <tt>autos</tt> and <tt>autosdr</tt> are available for performing autostructure
+ * calulations as explained in the [Introduction to AUTOSTRUCUTRE](../../autostructure/doc/AUTOSintro.pdf) and as used in the examples below.
+ *
+ * - @subpage O2DR
+ * - @subpage O2DN1DR
+ * - @subpage Pb78DR
+ * - @subpage Sn12DR
+ *
+****************************************************************************************************************************
+ * @page O2DR Example: &Delta; N=0 DR of C-like O2+ with modeled n-cutoff
+ *
+ * -# Preparation of n-cutoff calcuation; the cutoff is due to field ionization in the storage ring magnets.
+ * Here, we perform a calculation for CRYRING\@ESR:
+ * @verbatim
+    hydrocal < O2cutoff.hcin
+   @endverbatim
+ * using  <tt>[O2cutoff.hcin](../../autostructure/examples/O2DR/O2cutoff.hcin)</tt> and producing the output files (filenames as
+ * requested in the input file)  <tt>[O2YR.txt](../../autostructure/examples/O2DR/O2YR.txt)</tt>  and
+ * <tt>[O2YR.hcin](../../autostructure/examples/O2DR/O2YR.hcin)</tt>. The former just informs about what has been requested, the
+ * latter in used as an input for the next step of the calcuation.
+ *
+ * -# Calculation of nl-dependent survival probabilites:
+ * @verbatim
+    hydrocal < O2YR.hcin
+   @endverbatim
+ * using the input file <tt>[O2YR.hcin](../../autostructure/examples/O2DR/O2YR.hcin)</tt> producing several output files
+ * from the various steps of the calculation. Of primary interest are  <tt>[O2YR.fn](../../autostructure/examples/O2DR/O2YR.fn)</tt>,
+ * which list the l-averaged survival probabilities per n, and <tt>[O2YR.fnl](../../autostructure/examples/O2DR/O2YR.fnl)</tt>, which
+ * contains the nl-specific survival probabilities to be read in by the DR postprocessor (see step 5 below).
+ *
+ * -# Intermediate-coupling (IC) calculation of energy levels of the primary ion:
+ * @verbatim
+    autos O2IC
+   @endverbatim
+ * using the input file <tt>[O2IC.in](../../autostructure/examples/O2DR/O2IC.in)</tt>.
+ * This produces the file <tt>[O2IC/LEVELS](../../autostructure/examples/O2DR/LEVELS)</tt>,
+ * which contains excitation energies and is to be appended to the input file for the DR postprocessor (see step 5 below).
+ *
+ * -# Calculation of all level energies and transitions rates required for DR:
+ * @verbatim
+    autos O2DN0
+   @endverbatim
+ * using the input file <tt>[O2DN0.in](../../autostructure/examples/O2DR/O2DN0.in)</tt>.
+ *
+ * -# Calculation of binned DR cross sections with the DR post-processor:
+ * @verbatim
+    autosdr O2DN0 O2YN
+   @endverbatim
+ * using the input files <tt>[O2DN0.drin](../../autostructure/examples/O2DR/O2DN0.drin)</tt>
+ * based on <tt>[O2IC/LEVELS](../../autostructure/examples/O2DR/LEVELS)</tt> from step 3 and
+ * <tt>[O2YR.fnl](../../autostructure/examples/O2DR/O2YR.fnl)</tt> from step 2. The maximum n-quantum number that has been
+ * consdidered in steps 1 and steps 2 (see <tt>[O2YR.txt](../../autostructure/examples/O2DR/O2YR.txt)</tt>) is passed to the DR postprocessor via 
+ * the parameter <tt>NFNLMX</tt> in namelist <tt>\&TWO</tt> of <tt>[O2DN0.drin](../../autostructure/examples/O2DR/O2DN0.drin)</tt>.
+ * The resulting binned cross sections are in the output file <tt>[O2DN0.bdr](../../autostructure/examples/O2DR/O2DN0.bdr)</tt>.
+ * The output file <tt>[O2DN0.adr](../../autostructure/examples/O2DR/O2DN0.adr)</tt> contains rate coefficients obtained by a convolution
+ * with a flattened maxwellian velocity distribution, which is characterized by the temperatures <tt>TPAR</tt> and <tt>TPER</tt> as specified in
+ * <tt>[O2DN0.drin](../../autostructure/examples/O2DR/O2DN0.drin)</tt>.
+ *
+ * -# Convolution with the cooler electron energy distribution (see also @ref conv).
+ * Here, we perform a calculation for CRYRING\@ESR:
+ * @verbatim
+    hydrocal < O2DN0cooler.hcin
+   @endverbatim
+ * using  <tt>[O2DN0.bdr](../../autostructure/examples/O2DR/O2DN0.bdr)</tt> and
+ * the hydrocal input file <tt>[O2DN0cooler.hcin](../../autostructure/examples/O2DR/O2DN0cooler.hcin)</tt>.
+ * This produces the output files <tt>[O2DN01.mcr](../../autostructure/examples/O2DR/O2DN01.mcr)</tt>,
+ *  <tt>[O2DN02.mcr](../../autostructure/examples/O2DR/O2DN02.mcr)</tt>,
+ *  <tt>[O2DN03.mcr](../../autostructure/examples/O2DR/O2DN03.mcr)</tt>, and
+ *  <tt>[O2DN04.mcr](../../autostructure/examples/O2DR/O2DN04.mcr)</tt>
+ * which contain the theoretical merged-beams rate coefficients for DR of the 4 lowest levels of the O<sup>2+</sup> parent ion.
+ * Note, that the number of initial levels for DR is specified via <tt>NTAR1=4</tt>
+ * in namelist <tt>\&ONE</tt> of <tt>[O2DN0.drin](../../autostructure/examples/O2DR/O2DN0.drin)</tt>.
+ *
+ *
+****************************************************************************************************************************
+ * @page O2DN1DR Example: &Delta; N=1 DR of C-like O2+ with modeled n-cutoff
+ *
+ * -# Preparation of n-cutoff calcuation; the cutoff is due to field ionization in the storage ring magnets.
+ * Here, we perform a calculation for CRYRING\@ESR:
+ * @verbatim
+    hydrocal < O2cutoff.hcin
+   @endverbatim
+ * using  <tt>[O2cutoff.hcin](../../autostructure/examples/O2DN1DR/O2cutoff.hcin)</tt> and producing the output files (filenames as
+ * requested in the input file)  <tt>[O2YR.txt](../../autostructure/examples/O2DN1DR/O2YR.txt)</tt>  and
+ * <tt>[O2YR.hcin](../../autostructure/examples/O2DN1DR/O2YR.hcin)</tt>. The former just informs about what has been requested, the
+ * latter in used as an input for the next step of the calcuation.
+ *
+ * -# Calculation of nl-dependent survival probabilites:
+ * @verbatim
+    hydrocal < O2YR.hcin
+   @endverbatim
+ * using the input file <tt>[O2YR.hcin](../../autostructure/examples/O2DN1DR/O2YR.hcin)</tt> producing several output files
+ * from the various steps of the calculation. Of primary interest are  <tt>[O2YR.fn](../../autostructure/examples/O2DN1DR/O2YR.fn)</tt>,
+ * which list the l-averaged survival probabilities per n, and <tt>[O2YR.fnl](../../autostructure/examples/O2DN1DR/O2YR.fnl)</tt>, which
+ * contains the nl-specific survival probabilities to be read in by the DR postprocessor (see step 5 below).
+ *
+ * -# Intermediate-coupling (IC) calculation of energy levels of the primary ion:
+ * @verbatim
+    autos O2IC
+   @endverbatim
+ * using the input file <tt>[O2IC.in](../../autostructure/examples/O2DN1DR/O2IC.in)</tt>.
+ * This produces the file <tt>[O2IC/LEVELS](../../autostructure/examples/O2DN1DR/LEVELS)</tt>,
+ * which contains excitation energies and is to be appended to the input file for the DR postprocessor (see step 5 below).
+ *
+ * -# Calculation of all level energies and transitions rates required for DR:
+ * @verbatim
+    autos O2DN1
+   @endverbatim
+ * using the input file <tt>[O2DN1.in](../../autostructure/examples/O2DN1DR/O2DN1.in)</tt>.
+ *
+ * -# Calculation of binned DR cross sections with the DR post-processor:
+ * @verbatim
+    autosdr O2DN1 O2YN
+   @endverbatim
+ * using the input files <tt>[O2DN1.drin](../../autostructure/examples/O2DN1DR/O2DN1.drin)</tt>
+ * based on <tt>[O2IC/LEVELS](../../autostructure/examples/O2DN1DR/LEVELS)</tt> from step 3 and
+ * <tt>[O2YR.fnl](../../autostructure/examples/O2DN1DR/O2YR.fnl)</tt> from step 2. The maximum n-quantum number that has been
+ * consdidered in steps 1 and steps 2 (see <tt>[O2YR.txt](../../autostructure/examples/O2DN1DR/O2YR.txt)</tt>) is passed to the DR postprocessor via 
+ * the parameter <tt>NFNLMX</tt> in namelist <tt>\&TWO</tt> of <tt>[O2DN1.drin](../../autostructure/examples/O2DN1DR/O2DN1.drin)</tt>.
+ * The resulting binned cross sections are in the output file <tt>[O2DN1.bdr](../../autostructure/examples/O2DN1DR/O2DN1.bdr)</tt>.
+ * The output file <tt>[O2DN1.adr](../../autostructure/examples/O2DN1DR/O2DN1.adr)</tt> contains rate coefficients obtained by a convolution
+ * with a flattened maxwellian velocity distribution, which is characterized by the temperatures <tt>TPAR</tt> and <tt>TPER</tt> as specified in
+ * <tt>[O2DN1.drin](../../autostructure/examples/O2DN1DR/O2DN1.drin)</tt>.
+ *
+ * -# Convolution with the cooler electron energy distribution (see also @ref conv).
+ * Here, we perform a calculation for CRYRING\@ESR:
+ * @verbatim
+    hydrocal < O2DN1cooler.hcin
+   @endverbatim
+ * using  <tt>[O2DN1.bdr](../../autostructure/examples/O2DN1DR/O2DN1.bdr)</tt> and
+ * the hydrocal input file <tt>[O2DN1cooler.hcin](../../autostructure/examples/O2DN1DR/O2DN1cooler.hcin)</tt>.
+ * This produces the output files <tt>[O2DN11.mcr](../../autostructure/examples/O2DN1DR/O2DN11.mcr)</tt>,
+ *  <tt>[O2DN12.mcr](../../autostructure/examples/O2DN1DR/O2DN12.mcr)</tt>,
+ *  <tt>[O2DN13.mcr](../../autostructure/examples/O2DN1DR/O2DN13.mcr)</tt>, and
+ *  <tt>[O2DN14.mcr](../../autostructure/examples/O2DN1DR/O2DN14.mcr)</tt>
+ * which contain the theoretical merged-beams rate coefficients for DR of the 4 lowest levels of the O<sup>2+</sup> parent ion.
+ * Note, that the number of initial levels for DR is specified via <tt>NTAR1=4</tt>
+ * in namelist <tt>\&ONE</tt> of <tt>[O2DN1.drin](../../autostructure/examples/O2DN1DR/O2DN1.drin)</tt>.
+ *
+ *
+****************************************************************************************************************************
+ * @page Pb78DR Example: &Delta; N=0 DR of Be-like Pb78+
+ *
+ * -# Intermediate-coupling (IC) calculation of energy levels of the primary ion:
+ * @verbatim
+    autos Pb78IC
+   @endverbatim
+ * using the input file <tt>[Pb78IC.in](../../autostructure/examples/Pb78DR/Pb78IC.in)</tt>.
+ * This produces the file <tt>[Pb78IC/LEVELS](../../autostructure/examples/Pb78DR/LEVELS)</tt>,
+ * which contains excitation energies and is to be appended to the input file for the DR postprocessor (see step 3 below).
+ *
+ * -# Calculation of all level energies and transitions rates required for DR:
+ * @verbatim
+    autos Pb78DR
+   @endverbatim
+ * using the input file <tt>[Pb78DR.in](../../autostructure/examples/Pb78DR/Pb78DR.in)</tt>.
+ *
+ * -# Calculation of binned DR cross sections with the DR post-processor:
+ * @verbatim
+    autosdr Pb78DR
+   @endverbatim
+ * using the input file <tt>[Pb78DR.drin](../../autostructure/examples/Pb78DR/Pb78DR.drin)</tt>
+ * based on <tt>[Pb78IC/LEVELS](../../autostructure/examples/Pb78DR/LEVELS)</tt> from step 1.
+ * The resulting binned cross sections are in the output file <tt>[Pb78DR.bdr](../../autostructure/examples/Pb78DR/Pb78DR.bdr)</tt>.
+ * The output file <tt>[Pb78DR.adr](../../autostructure/examples/Pb78DR/Pb78DR.adr)</tt> contains rate coefficients obtained by a convolution
+ * with a flattened maxwellian velocity distribution, which is characterized by the temperatures <tt>TPAR</tt> and <tt>TPER</tt> as specified in
+ * <tt>[Pb78DR.drin](../../autostructure/examples/Pb78DR/Pb78DR.drin)</tt>.
+ *
+ * -# Convolution with the cooler electron energy distribution (see also @ref conv).
+ * Here, we perform a calculation for CRYRING\@ESR:
+ * @verbatim
+    hydrocal < Pb78cooler.hcin
+   @endverbatim
+ * using  <tt>[Pb78DR.bdr](../../autostructure/examples/Pb78DR/Pb78DR.bdr)</tt> and
+ * the hydrocal input file <tt>[Pb78cooler.hcin](../../autostructure/examples/Pb78DR/Pb78cooler.hcin)</tt>.
+ * This produces the output file <tt>[Pb78autos.mcr](../../autostructure/examples/Pb78DR/Pb78autos.mcr)</tt>,
+ * which contains the theoretical merged-beams rate coefficients to be compared with the experimental one
+ *
+****************************************************************************************************************************
+ * @page Sn12DR Example: &Delta; N=0 DR of Sr-like Sn12+
+ *
+ * -# Intermediate-coupling (IC) calculation of energy levels of the primary ion:
+ * @verbatim
+    autos Sn12IC
+   @endverbatim
+ * using the input file <tt>[Sn12IC.in](../../autostructure/examples/Sn12DR/Sn12IC.in)</tt>.
+ * This produces the file <tt>[Sn12IC/LEVELS](../../autostructure/examples/Sn12DR/LEVELS)</tt>,
+ * which contains excitation energies and is to be appended to the input file for the DR postprocessor (see step 3 below).
+ *
+ * -# Calculation of all level energies and transitions rates required for DR:
+ * @verbatim
+    autos Sn12DN0
+   @endverbatim
+ * using the input file <tt>[Sn12DN0.in](../../autostructure/examples/Sn12DR/Sn12DN0.in)</tt>.
+ *
+ * -# Calculation of binned DR cross sections with the DR post-processor:
+ * @verbatim
+    autosdr Sn12DR
+   @endverbatim
+ * using the input file <tt>[Sn12DN0.drin](../../autostructure/examples/Sn12DR/Sn12DN0.drin)</tt>
+ * based on <tt>[Sn12IC/LEVELS](../../autostructure/examples/Sn12DR/LEVELS)</tt> from step 1.
+ * The resulting binned cross sections are in the output file <tt>[Sn12DN0.bdr](../../autostructure/examples/Sn12DR/Sn12DN0.bdr)</tt>.
+ * The output file <tt>[Sn12DN0.adr](../../autostructure/examples/Sn12DR/Sn12DN0.adr)</tt> contains rate coefficients obtained by a convolution
+ * with a flattened maxwellian velocity distribution, which is characterized by the temperatures <tt>TPAR</tt> and <tt>TPER</tt> as specified in
+ * <tt>[Sn12DN0.drin](../../autostructure/examples/Sn12DR/Sn12DN0.drin)</tt>.
+ *
+ * -# Convolution with the cooler electron energy distribution (see also @ref conv).
+ * Here, we perform a calculation for CRYRING\@ESR:
+ * @verbatim
+    hydrocal < Sn12cooler.hcin
+   @endverbatim
+ * using  <tt>[Sn12DR.bdr](../../autostructure/examples/Sn12DR/Sn12DN0.bdr)</tt> and
+ * the hydrocal input file <tt>[Sn12cooler.hcin](../../autostructure/examples/Sn12DR/Sn12cooler.hcin)</tt>.
+ * This produces the output file <tt>[Sn12DN0.mcr](../../autostructure/examples/Sn12DR/Sn12DN0.mcr)</tt>,
+ * which contains the theoretical merged-beams rate coefficients to be compared with the experimental one
+ *
+ */
+

@@ -1,0 +1,1629 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{bm}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{hyperref}
+\usepackage{braket}
+\usepackage{upgreek}
+
+\newcommand{\E}{\mathrm{E}}
+\newcommand{\M}{\mathrm{M}}
+\newcommand{\dif}{\mathrm{d}}
+\newcommand{\iu}{\mathrm{i}}
+\renewcommand{\vec}[1]{\bm{#1}}
+\newcommand{\dirac}{\mathrm{D}}
+\newcommand{\nr}{\mathrm{nr}}
+\newcommand{\Ryd}{\mathrm{Ryd}}
+
+\title{Relativistic hydrogenic transition rates in {\tt hydrocal}}
+\author{AI generated and edited by S. Schippers}
+\date{\today}
+
+%opencode -s ses_0155e49b7ffey0K8XXjZyQaWkf
+
+\begin{document}
+\maketitle
+
+\section{Dirac hydrogenic wavefunctions}
+
+The Dirac spinor for a hydrogenic state with principal quantum number $n$ and
+angular quantum number $\kappa$ (where $\kappa = l$ for $j=l-\tfrac12$ and
+$\kappa = -(l+1)$ for $j = l+\tfrac12$) is
+\begin{equation}
+  \psi_{n\kappa m}(\vec{r}) =
+  \frac{1}{r}\,
+  \begin{pmatrix}
+    P_{n\kappa}(r)\,\chi_{\kappa m}(\hat{r})\\[2pt]
+    \iu\,Q_{n\kappa}(r)\,\chi_{-\kappa m}(\hat{r})
+  \end{pmatrix},
+\end{equation}
+with the normalisation $\int_{0}^{\infty}(P^{2}+Q^{2})\,\dif r = 1$.
+The radial functions are
+\begin{align}
+  \begin{split}
+  P_{n\kappa}(r) &= C\,\sqrt{1+\varepsilon}\,
+                  (2\lambda r)^{\gamma}\,e^{-\lambda r}\,F(r),\\
+  Q_{n\kappa}(r) &= C\,\sqrt{1-\varepsilon}\,
+                  (2\lambda r)^{\gamma}\,e^{-\lambda r}\,G(r),
+  \end{split}
+\end{align}
+where $F(r)$ and $G(r)$ are polynomials of degree $n_{r}=n-|\kappa|$.
+The parameters are
+\begin{align}
+  \gamma &= \sqrt{\kappa^{2}-(\alpha Z)^{2}},\\
+  N' &= n_{r}+\gamma,\\
+  \lambda &= Z/N',\\
+  \varepsilon &= \bigl[1+(\alpha Z/N')^{2}\bigr]^{-1/2},\\
+  C &= \text{normalisation constant},
+\end{align}
+with $\alpha$ the fine-structure constant and $Z$ the nuclear charge.
+
+The normalisation constant $C$ follows from
+$\int_{0}^{\infty}[P^{2}+Q^{2}]\,\dif r = 1$.  Writing
+$F(r)=\sum_{i}a_{i}r^{i}$ and $G(r)=\sum_{i}b_{i}r^{i}$ with
+polynomial degree $n_{r}$, the integral is evaluated termwise:
+\begin{equation}
+  \int_{0}^{\infty}\!\bigl[P^{2}+Q^{2}\bigr]\,\dif r
+  = C^{2}\sum_{i=0}^{n_{r}}\sum_{j=0}^{n_{r}}
+    \bigl[(1+\varepsilon)a_{i}a_{j}+(1-\varepsilon)b_{i}b_{j}\bigr]\,
+    \frac{\Gamma(2\gamma+i+j+1)}{(2\lambda)^{i+j+1}},
+  \label{eq:normint}
+\end{equation}
+where the denominator follows from
+$\int_{0}^{\infty}(2\lambda r)^{2\gamma}r^{i+j}e^{-2\lambda r}\dif r
+= \Gamma(2\gamma+i+j+1)/(2\lambda)^{i+j+1}$.
+Hence $C = \bigl[S\bigr]^{-1/2}$ with $S$ the double sum in~(\ref{eq:normint}).
+
+All radial integrals below are evaluated analytically by expanding the
+polynomials and integrating termwise using
+\begin{equation}
+  \int_{0}^{\infty}\! r^{p}\,e^{-(\lambda_{1}+\lambda_{2})r}\,\dif r
+  = \frac{\Gamma(p+1)}{(\lambda_{1}+\lambda_{2})^{p+1}}.
+\end{equation}
+
+\section{Transition rates}
+
+All three multipole rates are expressed in a common form.  For an electric
+$2^{k}$-pole transition the rate in the long-wavelength approximation is
+\begin{equation}
+  A_{\E k} = \frac{2(k+1)}{k\bigl[(2k+1)!!\bigr]^{2}}\,
+    \alpha^{3}\,\omega^{2k+1}\,
+    (2j_{f}+1)\,
+    \bigl[3j(j_{f},k,j_{i};-\tfrac12,0,\tfrac12)\bigr]^{2}\,
+    \bigl|\braket{l_{f}\|C^{(k)}\|l_{i}}\bigr|^{2}\,
+    \bigl|R_{k}^{(\E)}\bigr|^{2},
+    \label{eq:genE}
+\end{equation}
+where the radial integral is
+\begin{equation}
+  R_{k}^{(\E)} = \int_{0}^{\infty}\! r^{k}\,
+    \bigl[P_{f}P_{i}+Q_{f}Q_{i}\bigr]\,\dif r.
+\end{equation}
+For a magnetic $2^{k}$-pole,
+\begin{equation}
+  A_{\M k} = \frac{2(k+1)}{k\bigl[(2k+1)!!\bigr]^{2}}\,
+    \alpha^{3}\,\omega^{2k+1}\,
+    (2j_{f}+1)\,
+    \bigl[3j(j_{f},k,j_{i};-\tfrac12,0,\tfrac12)\bigr]^{2}\,
+    \bigl|R_{k}^{(\M)}\bigr|^{2},
+    \label{eq:genM}
+\end{equation}
+but the radial integral involves the small components,
+\begin{equation}
+  R_{k}^{(\M)} = \int_{0}^{\infty}\! r^{k}\,
+    \bigl[P_{f}Q_{i}+Q_{f}P_{i}\bigr]\,\dif r,
+\end{equation}
+and the angular factor uses $\kappa$-dependent parity selectors
+$\Pi(\kappa_{f},-\kappa_{i};k)$ described below.
+
+In both cases $\omega$ is the transition energy in Hartree,
+$\omega = |E_{i}-E_{f}| / (2\Ryd)$.
+
+\subsection{Electric dipole (E1)}
+
+For $k=1$ (E1) the prefactor is
+\[
+\frac{2(1+1)}{1\cdot(3!!)^{2}} = \frac{4}{9},
+\]
+the orbital reduced matrix element is
+\[
+\bigl|\braket{l_{f}\|C^{(1)}\|l_{i}}\bigr|^{2}
+  = (2l_{i}+1)(2l_{f}+1)\,
+    \bigl[3j(l_{f},1,l_{i};0,0,0)\bigr]^{2},
+\]
+and the radial integral is $R_{1}^{(\E)}$:
+\begin{equation}
+  A_{\E1} = \frac{4}{3}\,\alpha^{3}\omega^{3}\,
+    (2j_{f}+1)\,
+    \bigl[3j(j_{f},1,j_{i};-\tfrac12,0,\tfrac12)\bigr]^{2}\,
+    \biggl|\int_{0}^{\infty}\! r\,
+      \bigl[P_{f}P_{i}+Q_{f}Q_{i}\bigr]\,\dif r\biggr|^{2}.
+  \label{eq:e1}
+\end{equation}
+(Here $\frac{4}{9}\times(2l_{i}+1)(2l_{f}+1)[3j(l_{f},1,l_{i};0,0,0)]^{2}$
+reduces to the factor $4/3$ after evaluating the Gaunt coefficient.)
+
+Selection rules:
+\begin{itemize}
+  \item $\Delta l = \pm1$ (parity change);
+  \item $\Delta j = 0,\pm1$ with $0\to0$ forbidden;
+  \item $\kappa_{f} = -\kappa_{i}$ (e.g.\ $s_{1/2}\leftrightarrow p_{1/2}$)
+    or $\kappa_{f} = \kappa_{i}\pm1$ (e.g.\ $p_{1/2}\leftrightarrow d_{3/2}$).
+\end{itemize}
+
+\subsection{Fully retarded E1 rate}
+\label{sec:retarded}
+
+Equation~(\ref{eq:e1}) is the long-wavelength (dipole) limit of the exact
+E1 rate.  It is accurate only while the photon momentum $k=\omega/c$ is
+small compared with the momentum of the radiating electron.  At $Z=92$,
+$k\sim0.2$\,a.u.\ for the $2p\to1s$ transition, and
+Eq.~(\ref{eq:e1}) overestimates the $2p_{3/2}\to1s$ rate by $\sim24\%$
+while underestimating the $2p_{1/2}\to1s$ rate by $\sim8\%$.
+{\tt dirac\_transrate()} therefore evaluates the fully retarded
+four-component plane-wave matrix element
+\begin{equation}
+  M = \bigl\langle a\,\bigl|\,\bm{\alpha}\cdot\hat{\varepsilon}\,
+      e^{-i\vec{k}\cdot\vec{r}}\,\bigr|\,b\bigr\rangle,
+\end{equation}
+expanded in spherical partial waves
+$e^{-i\vec{k}\cdot\vec{r}} = 4\pi\sum_{L,m}(-i)^{L}j_{L}(kr)\,
+Y^{*}_{Lm}(\hat{k})Y_{Lm}(\hat{r})$, and summed over the magnetic
+substates of both states and the two photon polarisations,
+\begin{equation}
+  A = \frac{2k}{2j_{b}+1}\,
+      \sum_{m_{a},m_{b},\hat{\varepsilon}}|M|^{2}\quad\text{(atomic units)},
+  \label{eq:retarded}
+\end{equation}
+with $k=\omega/c$ the photon wavenumber and $\omega$ the transition energy
+in Hartree.  The angular factor for each pair of spinor harmonics is
+reduced by {\tt ang\_int()} to coefficients of $j_{L}(kr)$ via
+$\int\dif\Omega\,Y^{*}_{l_{1}m_{1}}Y_{l_{2}m_{2}}e^{-ikr\cos\theta}
+= \sum_{L}c_{L}(l_{1},m_{1},l_{2},m_{2})\,j_{L}(kr)$; the largest order
+required is
+$L_{\max}=\max\bigl[l(\kappa_{a})+l(-\kappa_{b}),\,
+l(-\kappa_{a})+l(\kappa_{b})\bigr]$.
+The radial factors are the cross-type integrals
+\begin{align}
+  R_{+}[L] &= \int_{0}^{\infty}\!P_{a}(r)\,Q_{b}(r)\,j_{L}(kr)\,\dif r,\\
+  R_{-}[L] &= \int_{0}^{\infty}\!Q_{a}(r)\,P_{b}(r)\,j_{L}(kr)\,\dif r,
+\end{align}
+evaluated by trapezoidal quadrature on the logarithmic grid
+$r\in[10^{-10},80]$\,a.u.\ with $160000$ points.  The spherical Bessel
+functions $j_{L}$ are computed in closed form for $L\le4$, by a power
+series for $L>4$ and $kr<8$, and by upward recursion otherwise.  The
+$j_{L}$ expansion of the exponential is essential: it introduces the
+retardation that the dipole approximation of Eq.~(\ref{eq:e1}) drops.
+
+\subsection{Electric quadrupole (E2)}
+
+{\tt dirac\_e2\_rate()} returns the fully retarded plane-wave rate of
+Section~\ref{sec:retarded} for parity-conserving pairs with
+$\Delta l = \pm2$.  For such pairs E2 is the leading multipole; higher
+multipoles are suppressed by $(\alpha Z)^{2}$.  In the long-wavelength
+limit the rate reduces to the familiar formula
+\begin{equation}
+  A_{\E2} = \frac{\alpha^{3}\omega^{5}}{75}\,
+    (2j_{f}+1)\,
+    \bigl[3j(j_{f},2,j_{i};-\tfrac12,0,\tfrac12)\bigr]^{2}\,
+    \bigl|\braket{l_{f}\|C^{(2)}\|l_{i}}\bigr|^{2}\,
+    \biggl|\int_{0}^{\infty}\! r^{2}\,
+      \bigl[P_{f}P_{i}+Q_{f}Q_{i}\bigr]\,\dif r\biggr|^{2},
+  \label{eq:e2}
+\end{equation}
+where the orbital reduced matrix element is
+$\braket{l_{f}\|C^{(2)}\|l_{i}} = (2l_{i}+1)(2l_{f}+1)\,
+[3j(l_{f},2,l_{i};0,0,0)]^{2}$.  The analytic length-form evaluation of
+this expression was found to be buggy (a normalisation error made the
+$3d_{3/2}\to1s$ rate at $Z=1$ $\sim3756\times$ too large), so the
+retarded expression of Section~\ref{sec:retarded} is used instead,
+which reproduces the $3d\to1s$ rates of Jitrik \& Bunge
+\cite{JitrikBunge2004} (see Section~\ref{sec:validation}).
+
+Selection rules:
+\begin{itemize}
+  \item $\Delta l = \pm2$ (parity unchanged);
+  \item $\Delta j = 0,\pm1,\pm2$ with $0\to0$, $0\to1$, $1\to0$ forbidden;
+  \item pairs with $\Delta l = 0$ return zero from {\tt dirac\_e2\_rate()}
+    and are covered by the M1 rate instead.
+\end{itemize}
+
+\subsection{Magnetic dipole (M1)}
+
+{\tt dirac\_m1\_rate()} covers two physically distinct M1 mechanisms.
+
+\paragraph{Retarded plane-wave rate (different $n$).}
+For $\Delta l = 0$ pairs with $n_{i}\ne n_{f}$ (e.g.\
+$2s_{1/2}\to1s_{1/2}$) the M1 rate is the fully retarded plane-wave rate
+of Section~\ref{sec:retarded}.  The transition is driven by the small
+components of the Dirac wavefunctions; the long-wavelength cross-radial
+form
+\begin{equation}
+  A_{\M1} = \frac{\alpha^{3}\omega^{3}}{3}\,
+    (2j_{f}+1)\,
+    \bigl[3j(j_{f},1,j_{i};-\tfrac12,0,\tfrac12)\bigr]^{2}\,
+    \biggl|\int_{0}^{\infty}\!
+      \bigl[P_{f}Q_{i} + Q_{f}P_{i}\bigr]\,\dif r\biggr|^{2}
+  \label{eq:m1}
+\end{equation}
+is the leading-order limit.  
+
+\paragraph{Fine-structure M1 (same $n$).}
+For the two fine-structure partners of the same $(n,l)$ doublet,
+$j = l+\tfrac12 \to j' = l-\tfrac12$ ($\Delta l = 0$, $\Delta j = 1$),
+the magnetic-dipole operator is $\bm{\mu} = -\mu_{B}(\bm{L}+2\bm{S})$.
+$\bm{J}$ couples only equal-$j$ states, so the transition is driven by
+the electron spin alone.  The reduced matrix element is
+\[
+\frac{\bigl|\braket{j'\,\|\,L+2S\,\|\,j}\bigr|^{2}}{2j+1}
+  = \frac{l}{2l+1},
+\]
+and the rate is computed with the standard magnetic-dipole formula
+(in SI units),
+\begin{equation}
+  A_{\M1}^{\mathrm{fs}} = \frac{4}{3}\,
+    \frac{\omega^{3}\,\mu_{B}^{2}}{\hbar c^{3}}\,
+    \frac{l}{2l+1}.
+  \label{eq:m1fs}
+\end{equation}
+The retarded plane-wave integral of Section~\ref{sec:retarded} cannot
+resolve this rate: at the very small photon momentum of the
+near-degenerate fine-structure splitting the partial-wave expansion
+suffers catastrophic cancellation (it returns numerically meaningless
+values even at $Z=92$).  Equation~(\ref{eq:m1fs}) reproduces the
+hydrogen $2p_{3/2}\to2p_{1/2}$ rate
+$A \approx 4.4\times10^{-6}$\,s${}^{-1}$ ($\tau \approx 2.6$ days) for
+the Dirac fine-structure splitting of $10.97$\,GHz.
+
+Selection rules (both mechanisms):
+\begin{itemize}
+  \item $\Delta l = 0$ (same parity);
+  \item $\Delta j = 0,\pm1$ with $0\to0$ forbidden.
+\end{itemize}
+
+\subsection{Combined rate}
+
+The function
+\[
+A_{\text{total}}(n_{i},\kappa_{i}\to n_{f},\kappa_{f})
+= A_{\E1} + A_{\E2} + A_{\M1}
+\]
+returns the total spontaneous emission rate in s${}^{-1}$.  Although
+E1 typically dominates whenever it is allowed, all three multipoles
+are summed explicitly.  This is safe because the three selection rules
+are mutually exclusive: E1 requires a parity change ($l_{i}+l_{f}$ odd),
+E2 requires $l_{i}+l_{f}$ even with $\Delta l = \pm2$, and M1 requires
+$\Delta l = 0$.  No pair is therefore double-counted, and for
+parity-conserving pairs the sum reproduces the fully retarded
+plane-wave rate of Section~\ref{sec:retarded} (up to the analytic
+fine-structure replacement for same-$n$ M1).  Summing remains correct
+for very highly charged ions, where the relativistic corrections make
+the smaller multipoles relatively more important.
+
+\subsection{Lifetime}
+
+The lifetime of a state $(n,\kappa)$ is
+\[
+\frac{1}{\tau_{n\kappa}} =
+\sum_{n_{p}=1}^{n}\;
+\sum_{\kappa_{p}}\;
+A_{\text{total}}(n,\kappa\to n_{p},\kappa_{p}),
+\]
+summing over all lower-energy states including same-$n$ fine-structure
+partners.  Unphysical transitions are excluded by checking
+$E_{\text{upper}} < E_{\text{lower}}$ and $l < n$ (the {\tt valid\_kappa()}
+condition).
+
+\subsection{Validation against literature}
+\label{sec:validation}
+
+The point-nucleus relativistic E1 rates of {\tt dirac\_transrate()} were
+compared with independent fully relativistic calculations over a wide
+range of $Z$.
+
+\paragraph{Pal'chikov (1998).}
+Table~\ref{tab:palch} lists the twelve $n=3\to n=2$ rates for $Z=30$ and
+$Z=92$ together with the values of Pal'chikov \cite{Palchikov1998}, Table~V.  The ratio
+$A_{\text{hydrocal}}/A_{\text{Pal}}$ lies in the interval
+$[0.999993,\,1.000028]$: the two independent calculations agree to four
+significant figures or better, with no systematic offset.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\hline
+Transition & $Z$ & $A_{\text{Pal}}$ (s${}^{-1}$) & $A_{\text{hydrocal}}$ (s${}^{-1}$) \\
+\hline
+$3s_{1/2}\to2p_{1/2}$ & 92 & $2.1137\times10^{14}$ & $2.11366\times10^{14}$ \\
+$3s_{1/2}\to2p_{3/2}$ & 92 & $8.3304\times10^{14}$ & $8.33041\times10^{14}$ \\
+$3p_{1/2}\to2s_{1/2}$ & 92 & $2.3288\times10^{15}$ & $2.32882\times10^{15}$ \\
+$3p_{3/2}\to2s_{1/2}$ & 92 & $1.1988\times10^{15}$ & $1.19883\times10^{15}$ \\
+$3d_{3/2}\to2p_{1/2}$ & 92 & $4.6390\times10^{15}$ & $4.63897\times10^{15}$ \\
+$3d_{3/2}\to2p_{3/2}$ & 92 & $7.4781\times10^{14}$ & $7.47806\times10^{14}$ \\
+$3s_{1/2}\to2p_{1/2}$ & 30 & $1.7587\times10^{12}$ & $1.75868\times10^{12}$ \\
+$3s_{1/2}\to2p_{3/2}$ & 30 & $3.8733\times10^{12}$ & $3.87334\times10^{12}$ \\
+$3p_{1/2}\to2s_{1/2}$ & 30 & $1.8799\times10^{13}$ & $1.87987\times10^{13}$ \\
+$3p_{3/2}\to2s_{1/2}$ & 30 & $1.7958\times10^{13}$ & $1.79584\times10^{13}$ \\
+$3d_{3/2}\to2p_{1/2}$ & 30 & $4.4547\times10^{13}$ & $4.45474\times10^{13}$ \\
+$3d_{3/2}\to2p_{3/2}$ & 30 & $8.7049\times10^{12}$ & $8.70496\times10^{12}$ \\
+\hline
+\end{tabular}
+\caption{E1 rates (s${}^{-1}$) of {\tt dirac\_transrate()} compared with
+Pal'chikov \cite{Palchikov1998}, Table~V.}
+\label{tab:palch}
+\end{table}
+
+\paragraph{Finite nuclear size.}
+Knyazeva \emph{et al.}.~\cite{Knyazeva2022} tabulate the
+$2p_{1/2}\to1s$ and $2p_{3/2}\to1s$ rates for one-electron ions for a
+point-like nucleus ($W_{0}$) and for a Fermi nuclear charge distribution
+($W^{(\mathrm e)}$).  The point-nucleus values agree exactly with ours,
+Table~\ref{tab:knyazeva}; the finite-size correction is negligible at
+low $Z$ and reaches $\sim0.1\%$ at $Z=92$.  It is not included in the
+hydrogenic wavefunctions used here.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ccccc}
+\hline
+$Z$ & Transition & $W_{0}$ & ours & $W^{(\mathrm e)}$ \\
+\hline
+1  & $2p_{1/2}\to1s$ & $6.26835\times10^{8}$  & $6.26835\times10^{8}$  & $6.26835\times10^{8}$ \\
+1  & $2p_{3/2}\to1s$ & $6.26824\times10^{8}$  & $6.26824\times10^{8}$  & $6.26824\times10^{8}$ \\
+92 & $2p_{1/2}\to1s$ & $4.72601\times10^{16}$ & $4.72601\times10^{16}$ & $4.72033\times10^{16}$ \\
+92 & $2p_{3/2}\to1s$ & $3.95022\times10^{16}$ & $3.95022\times10^{16}$ & $3.94939\times10^{16}$ \\
+\hline
+\end{tabular}
+\caption{$2p\to1s$ rates (s${}^{-1}$): point-like ($W_{0}$) and finite-nucleus
+($W^{(\mathrm e)}$) values of Knyazeva \emph{et al.}~\cite{Knyazeva2022} compared with
+{\tt dirac\_transrate()}.}
+\label{tab:knyazeva}
+\end{table}
+
+\paragraph{High partial waves and zeros.}
+The retarded operator is not truncated in $L$.  The $5g_{7/2}\to4f_{7/2}$
+transition exercises $j_{L}$ up to $L=8$, and
+{\tt dirac\_transrate()} returns $1.52017\times10^{5}$\,s${}^{-1}$, a
+physically expected hydrogenic rate.  Selection-rule violations return
+exactly zero, e.g.\ $\Delta j=2$ ($5g_{9/2}\to4f_{5/2}$,
+$3d_{5/2}\to2p_{1/2}$), the parity-forbidden $\Delta l=2$ pair
+$4f_{5/2}\to3p_{3/2}$, degenerate same-$n$, same-$j$ pairs with
+$\omega=0$ ($3d_{3/2}\to3p_{3/2}$), and states with $l\ge n$
+(e.g.\ $1p$).
+
+\paragraph{M1 $2s_{1/2}\to1s_{1/2}$.}
+Sapirstein, Pachucki \& Cheng \cite{Sapirstein2004} tabulate the
+lowest-order one-photon $2s_{1/2}\to1s$ rate at $Z=30$ as
+$3.7551\times10^{-8}$\,a.u.\ ($=1.5524\times10^{9}$\,s${}^{-1}$);
+{\tt dirac\_m1\_rate()} returns $1.552527\times10^{9}$\,s${}^{-1}$
+(agreement $\sim0.01\%$).  Knyazeva \emph{et al.}~\cite{Knyazeva2022}
+list the sum of the M1 and two-photon rates at $Z=92$ as
+$1.96240\times10^{14}$\,s${}^{-1}$; the M1-only value of
+{\tt dirac\_m1\_rate()}, $1.946813\times10^{14}$\,s${}^{-1}$, is
+consistent (the two-photon contribution is small).  At $Z=1$ the code
+gives $2.495917\times10^{-6}$\,s${}^{-1}$, the well-known hydrogen
+value.
+
+\paragraph{E2 $3d\to1s$.}
+For $Z=1$ the hydrogenic E2 rates of Jitrik \& Bunge
+\cite{JitrikBunge2004} are $593.75$\,s${}^{-1}$ ($3d_{3/2}\to1s$) and
+$593.74$\,s${}^{-1}$ ($3d_{5/2}\to1s$).  {\tt dirac\_e2\_rate()}
+returns $5.940759\times10^{2}$ and $5.940601\times10^{2}$\,s${}^{-1}$
+(agreement $\sim0.05\%$).   At $Z=92$ the $3d\to2s$ E2 rate is
+$5.545458\times10^{13}$\,s${}^{-1}$ ($3d_{3/2}\to2s_{1/2}$) and
+$5.780657\times10^{13}$\,s${}^{-1}$ ($3d_{5/2}\to2s_{1/2}$).
+(The values $5.509576\times10^{13}$ and $5.799182\times10^{13}$\,s${}^{-1}$
+quoted in earlier versions of this document were produced by erroneous
+closed-form expressions for $j_{3}$ and $j_{4}$ in the spherical Bessel
+routine; the corrected spherical Bessel functions give the values listed
+here.)
+
+\paragraph{Fine-structure M1.}
+For the $2p_{3/2}\to2p_{1/2}$ fine-structure transition at $Z=1$,
+{\tt dirac\_m1\_rate()} returns $4.380826\times10^{-6}$\,s${}^{-1}$
+($\tau = 2.6$ days) from the analytic magnetic-dipole formula,
+Eq.~(\ref{eq:m1fs}), using the Dirac fine-structure splitting.  The
+retarded plane-wave integral cannot be trusted for these near-degenerate
+pairs, which is why the analytic branch is used for all $Z$.
+
+\section{Relativistic radiative recombination cross section}
+\label{sec:rrxsec}
+
+The RR cross section for capture into \emph{one specific magnetic
+substate} of a hydrogenic state $(n,\kappa)$ at electron kinetic energy
+$E_{\mathrm{kin}}$ is obtained via the Milne relation,
+\begin{equation}
+  \sigma_{\mathrm{RR}}^{\mathrm{vac}}(n,\kappa; E_{\mathrm{kin}})
+  = \frac{\pi^{2}\alpha a_{0}^{2}}{E_{\mathrm{kin}}}
+    \frac{g_{\mathrm{bound}}}{2}
+    \left.\frac{\dif f}{\dif E}\right|_{E_{\mathrm{kin}}},
+  \qquad g_{\mathrm{bound}} = 1,
+  \label{eq:milne}
+\end{equation}
+where $\alpha$ is the fine-structure constant, $a_{0}$ the Bohr radius,
+and $\dif f/\dif E$ the bound-free oscillator strength per unit energy
+(Eq.~\ref{eq:dfdE}). {\tt dirac\_rr\_xsec()} implements
+$\sigma_{\mathrm{RR}}^{\mathrm{vac}}$ directly, with $g_{\mathrm{bound}}=1$:
+the explicit $(2j+1)$ degeneracy of the bound level has already been
+divided back out when forming $\dif f/\dif E$ from the reduced dipole
+matrix element (see below), so including it again here would double
+count it.  The fully-retarded path of
+Section~\ref{sec:retarded-bf} keeps the same per-vacancy convention
+(its cross-section formula divides by $2j_{b}+1$).  This
+"per-vacancy" convention is what agrees with the tabulated
+Ichihara \& Eichler cross sections (Section~\ref{sec:ichiharavalidation})
+and with {\tt sigma\_IchiharaEichlerRR()}
+(Section~\ref{sec:ichihara-interp}), both of which are also per-substate.
+A caller that needs the cross section for capture into the fine-structure
+\emph{level as a whole} (i.e.\ summed over all $2j+1$ magnetic substates
+-- for example to compare against the non-relativistic full-subshell
+result below, or to build the level-population source term of
+Section~\ref{sec:cascade-population}) must multiply
+$\sigma_{\mathrm{RR}}^{\mathrm{vac}}(n,\kappa;E_{\mathrm{kin}})$ by
+$(2j+1)$ explicitly.
+
+\subsection{Bound-free oscillator strength}
+
+The dipole path described here (Eq.~\ref{eq:bfradial} and
+Section~\ref{sec:bfanalytic}) is the \emph{long-wavelength
+(electric-dipole)} route: it is the $\omega r/c \ll 1$ limit of the
+retarded multipole operators and omits the higher multipoles (E2, M1,
+\dots) entirely, so it is reliable only while $\omega r/c \ll 1$ over the
+volume in which the bound-free overlap is significant (photon energies
+well below roughly $c/z \times$ (inverse bound-state radius), i.e.\ for
+hydrogenic ions from $\sim$10\,keV at $Z=110$ up to $\sim$50\,keV at
+$Z=1$).  At higher energies the fully retarded, all-multipole calculation
+of Ichihara~\&~Eichler (Section~\ref{sec:ichiharavalidation}) grows
+relative to the dipole value -- e.g.\ a factor $\sim$500 at $Z=110$,
+$n=3$, 2\,MeV -- because retardation and the higher multipoles set in.
+{\tt dirac\_rr\_xsec()} closes this gap with the fully-retarded
+plane-wave bound-free matrix element of
+Section~\ref{sec:retarded-bf}, which is the default path; the dipole
+oscillator-strength machinery below survives as the legacy and
+validation route (and defines the non-relativistic limit).
+
+For electric-dipole photoionisation the oscillator-strength density is
+\begin{equation}
+  \frac{\dif f}{\dif E}
+  = \frac{2}{3}\,
+    \frac{(2j_{b}+1)(2j_{c}+1)}{2j_{b}+1}\,
+    \bigl[3j(j_{b},1,j_{c};-\tfrac12,0,\tfrac12)\bigr]^{2}\,
+    \bigl|\braket{l_{b}\|C^{(1)}\|l_{c}}\bigr|^{2}\,
+    \bigl|R_{\mathrm{bf}}\bigr|^{2},
+  \label{eq:dfdE}
+\end{equation}
+with the radial matrix element
+\begin{equation}
+  R_{\mathrm{bf}} = \int_{0}^{\infty}\! r\,
+    \bigl[P_{b}(r)P_{c}(r) + Q_{b}(r)Q_{c}(r)\bigr]\,\dif r.
+  \label{eq:bfradial}
+\end{equation}
+Here $(P_{b},Q_{b})$ are the bound-state Dirac radial components
+normalised to unity, and $(P_{c},Q_{c})$ are the continuum Dirac radial
+components normalised per unit energy (see below).  The angular
+factors are the same as for the bound-bound E1 rate
+(Eq.~\ref{eq:e1}) with the bound state as the upper (final) state
+and the continuum as the lower (initial) state.
+
+The oscillator-strength density is summed over the E1-coupled continuum
+channels $\kappa_{c}\in\{\kappa+1,\,\kappa-1,\,-\kappa\}$; the third
+channel is required because E1 also couples states with the same
+$|\kappa|$ but opposite sign (e.g.\ $s_{1/2}\leftrightarrow p_{1/2}$),
+so capture into a bound $p_{1/2}$ state receives contributions from both
+$d_{3/2}$ and $s_{1/2}$ continuum partial waves.  Channels of wrong
+parity or with $|\Delta j|>1$ are dropped by the angular checks, and
+non-existent bound states ($l \ge n$) are rejected via the
+{\tt valid\_kappa()} condition.
+
+\subsection{Continuum Dirac wavefunction}
+
+The radial Dirac equation for a continuum state with energy
+$E = E_{\mathrm{kin}} + m_{e}c^{2}$ is
+\begin{align}
+  \frac{\dif P}{\dif r} &= -\frac{\kappa}{r}\,P
+    + \frac{E + m_{e}c^{2} - V(r)}{\hbar c}\,Q,\\
+  \frac{\dif Q}{\dif r} &= +\frac{\kappa}{r}\,Q
+    - \frac{E - m_{e}c^{2} - V(r)}{\hbar c}\,P,
+\end{align}
+with $V(r) = -\alpha Z / r$ (point nucleus), in atomic units with
+$c=1/\alpha$ and $E_{\mathrm{kin}}$ in Hartree.  The system is
+integrated outward from a start radius $r_{0}=10^{-6}$ using an
+adaptive, error-controlled integrator (a DOPRI5 stepper, as implemented
+in {\tt boost::numeric::odeint}, with absolute and relative tolerances
+$10^{-30}$ and $10^{-10}$; without Boost, a fixed-step RK4 sized to
+resolve both the near-origin $1/r$ curvature and the asymptotic
+oscillation period $2\pi/k$ is used instead).  The starting values are
+obtained from a two-term Frobenius expansion near the origin,
+$P(r) \propto r^{\gamma}(1+p_{1}r)$ and
+$Q(r) \propto r^{\gamma}(q_{0}+q_{1}r)$, with
+\begin{equation}
+  \gamma = \sqrt{\kappa^{2}-(\alpha Z)^{2}},
+  \qquad q_{0} = \frac{c(\gamma+\kappa)}{Z},
+\end{equation}
+and the next-order coefficients $p_{1},q_{1}$ fixed by matching the
+$\mathcal{O}(r^{\gamma})$ terms of the ODE.  (The leading-order-only
+condition is numerically degenerate for $\kappa<0$ as $Z\alpha\to0$,
+where $\gamma\to|\kappa|=-\kappa$; the next-order term removes that
+degeneracy.)
+
+Because the raw functions $P,Q$ span many orders of magnitude between
+the origin ($\sim r^{\gamma}$, down to $\sim10^{-36}$ for
+$\gamma\sim6$ at $r_{0}=10^{-6}$) and the far field ($\sim$ the
+asymptotic amplitude), no single absolute-error floor for the stepper
+can resolve the near-origin transient and yet stay meaningful at large
+$r$.  {\tt integrate\_PQ()} therefore uses a hybrid representation:
+while the state is tiny it integrates the rescaled variables
+$p=P/r^{\gamma}$, $q=Q/r^{\gamma}$ --- which are $\mathcal{O}(1)$ at
+$r_{0}$ for every $\kappa$, so the absolute tolerance acts on a
+well-conditioned state --- and switches to the raw variables once
+$|P|,|Q|>10^{-25}$, where the relative tolerance governs and the raw
+state stays $\mathcal{O}$(amplitude) in the far field instead of
+collapsing like $1/r^{\gamma}$.  (Section~\ref{sec:ichiharavalidation}
+describes the runaway high-$\ell$ cross sections this change prevents.)
+
+The integration proceeds to a large radius $r_{\mathrm{max}}$ where the
+potential is negligible.  The asymptotic normalisation to the energy
+continuum,
+\begin{equation}
+  \int_{0}^{\infty} [P_{E}P_{E'} + Q_{E}Q_{E'}]\,\dif r = \delta(E-E'),
+\end{equation}
+is imposed by matching the large-$r$ numerical solution to the
+asymptotic form
+\begin{align}
+  P_{\mathrm{as}}(r) &= \sqrt{\frac{2}{\pi k}}\,
+    \sin(kr + \delta_{\kappa}),\\
+  Q_{\mathrm{as}}(r) &= -\sqrt{\frac{2}{\pi k}}\,
+    \frac{k}{\varepsilon + 2m_{e}c^{2}}\,
+    \cos(kr + \delta_{\kappa}),
+\end{align}
+where $\hbar k = \sqrt{E_{\mathrm{kin}}(E_{\mathrm{kin}}+2m_{e}c^{2})}$,
+$\varepsilon = E_{\mathrm{kin}} + m_{e}c^{2}$, and $\delta_{\kappa}$
+is the Coulomb phase shift.  The energy-normalised numerical solution
+is then $(P_{c},Q_{c}) = (P_{\mathrm{num}},Q_{\mathrm{num}})/N$ with
+the normalisation factor
+$N = A_{\mathrm{asymp}}/\mathrm{amp}_{\mathrm{rms}}$, where
+$A_{\mathrm{asymp}}=\sqrt{2/(\pi k)}\,\sqrt{1+E_{\mathrm{kin}}/m_{e}c^{2}}$
+and $\mathrm{amp}_{\mathrm{rms}}$ is the RMS envelope amplitude
+$\sqrt{P^{2}+Q^{2}}$ sampled across the converged far-region
+oscillation by the convergence loop of
+Section~\ref{sec:ichiharavalidation} (no fit of the phase is involved).
+
+\subsection{Closed-form continuum wavefunction}
+\label{sec:closedform}
+
+For a hydrogenic ion (point nucleus, $V(r)=-\alpha Z/r$) the radial Dirac
+equation above admits an exact solution in terms of the regular confluent
+hypergeometric function ${}_{1}F_{1}$, in addition to the numerical
+integration just described \cite{Mueller1973}.  Writing the solution regular at the origin
+($P,Q\sim r^{s}$ with $s=\sqrt{\kappa_{c}^{2}-(z\alpha)^{2}}$) as
+\begin{align}
+  P_{c}(r) &= N\,r^{s}\,\mathrm{Re}\bigl[u_{1}(r)+u_{2}(r)\bigr],
+  \label{eq:clP}\\
+  Q_{c}(r) &= N\,r^{s}\,\mathrm{Re}\bigl[q_{0}u_{1}(r)+q_{2}u_{2}(r)\bigr],
+  \label{eq:clQ}
+\end{align}
+with the ansatz
+\begin{equation}
+  u_{1}(r) = e^{\iu kr}\,
+    {}_{1}F_{1}\!\left(a;\,2s;\,-2\iu kr\right),
+  \qquad
+  a = s\left(1+\iu\,\frac{b_{1}}{k}\right),
+  \label{eq:clu1}
+\end{equation}
+and $u_{2}$ the linear combination of $u_{1}$ and $u_{1}'$ fixed by the
+coupled system,
+\begin{equation}
+  u_{2}(r) = \frac{u_{1}'(r) - b_{1}\,u_{1}(r)}{c_{12}}.
+  \label{eq:clu2}
+\end{equation}
+Substituting (\ref{eq:clP})--(\ref{eq:clu2}) into the radial system
+determines the real channel parameters
+\begin{equation}
+  q_{0} = \frac{(s+\kappa_{c})\,c}{z},\qquad
+  q_{2} = \frac{(\kappa_{c}-s)\,c}{z},
+  \label{eq:clq}
+\end{equation}
+and
+\begin{equation}
+  b_{1} = \frac{E_{\mathrm{kin}}+q_{0}q_{2}W_{0}}{c\,(q_{2}-q_{0})},\qquad
+  c_{12} = \frac{E_{\mathrm{kin}}+q_{2}^{2}W_{0}}{c\,(q_{2}-q_{0})},
+  \label{eq:clb}
+\end{equation}
+where $W_{0}=2c^{2}+E_{\mathrm{kin}}$ (energies in Hartree, $c=1/\alpha$)
+and $\hbar k=\sqrt{E_{\mathrm{kin}}(E_{\mathrm{kin}}+2m_{e}c^{2})}$ is the
+relativistic wavenumber of Section~\ref{sec:rrxsec}.  The complex
+hypergeometric parameter $a$ has $\mathrm{Re}\,a=s$, so both
+$|r^{s}(-2\iu kr)^{a-2s}|$ and $|r^{s}(2\iu kr)^{-a}|$ are $\mathcal{O}(1)$
+for $r\to\infty$: the representation stays bounded in the far field.
+
+Because ${}_{1}F_{1}$ is known, the asymptotic form of the solution is
+known exactly, so the energy normalisation
+$\int_{0}^{\infty}[P_{E}P_{E'}+Q_{E}Q_{E'}]\,\dif r=\delta(E-E')$ can be
+imposed directly, without the envelope-amplitude matching used by the ODE
+solver.  The two-term Poincaré expansion of $u_{1}$ gives, for
+$r\to\infty$,
+\begin{equation}
+  u_{1}(r) \sim C_{\mathrm{in}}\,r^{a-2s}\,e^{-\iu kr}
+            + C_{\mathrm{out}}\,r^{-a}\,e^{+\iu kr},
+  \label{eq:clasym}
+\end{equation}
+with
+\begin{equation}
+  C_{\mathrm{in}}  = \frac{\Gamma(2s)}{\Gamma(a)}\,(-2\iu k)^{a-2s},\qquad
+  C_{\mathrm{out}} = \frac{\Gamma(2s)}{\Gamma(2s-a)}\,(2\iu k)^{-a},
+  \label{eq:clC}
+\end{equation}
+and, since $u_{1}'\simeq\pm\iu k\,u_{1}$ on the two branches, $u_{2}$ carries
+the branch ratios
+\begin{equation}
+  t_{\mathrm{in}} = -\frac{\iu k + b_{1}}{c_{12}},\qquad
+  t_{\mathrm{out}} = \frac{\iu k - b_{1}}{c_{12}}.
+  \label{eq:clt}
+\end{equation}
+The far-field amplitudes of $P_{c}$ and $Q_{c}$ are therefore
+\begin{align}
+  C_{\mathrm{in}}^{(P)} &= (1+t_{\mathrm{in}})\,C_{\mathrm{in}},
+    & C_{\mathrm{out}}^{(P)} &= (1+t_{\mathrm{out}})\,C_{\mathrm{out}},\\
+  C_{\mathrm{in}}^{(Q)} &= (q_{0}+q_{2}t_{\mathrm{in}})\,C_{\mathrm{in}},
+    & C_{\mathrm{out}}^{(Q)} &= (q_{0}+q_{2}t_{\mathrm{out}})\,C_{\mathrm{out}},
+\end{align}
+and the normalisation constant is
+\begin{equation}
+  N = \frac{A_{\mathrm{asymp}}}{
+    \sqrt{\bigl|C_{\mathrm{in}}^{(P)}\bigr|^{2}
+         +\bigl|C_{\mathrm{out}}^{(P)}\bigr|^{2}
+         +\bigl|C_{\mathrm{in}}^{(Q)}\bigr|^{2}
+         +\bigl|C_{\mathrm{out}}^{(Q)}\bigr|^{2}}},
+  \qquad
+  A_{\mathrm{asymp}} = \sqrt{\frac{2}{\pi k}}\,
+    \sqrt{1+\frac{E_{\mathrm{kin}}}{m_{e}c^{2}}},
+  \label{eq:clN}
+\end{equation}
+with $A_{\mathrm{asymp}}$ the same asymptotic amplitude used for the
+numerical solution above.
+
+Numerically, ${}_{1}F_{1}(a;b;z)$ with $z=-2\iu kr$ is evaluated by a
+three-stage scheme.  A Taylor series in double precision tracks the largest
+intermediate term; the result is trusted only while the roundoff estimate
+$\mathrm{peak}\times\varepsilon_{\mathrm{double}}/|{}_{1}F_{1}|\lesssim
+10^{-8}$ ($\varepsilon_{\mathrm{double}}=2.2\times10^{-16}$), since the
+series converges through heavy cancellation at large $|z|$.  Where that
+estimate fails, the same series is evaluated in quad precision (34 decimal
+digits, mantissa rounding $2^{-110}$), which covers the moderate-$|z|$ band
+in which the double series has lost $\sim10$ digits but the asymptotic
+expansion has not yet converged.  For larger $|z|$ the two-term Poincaré
+expansion (\ref{eq:clasym}) is used, truncated at its smallest term
+(DLMF 13.7.1).
+
+The closed form is exact in principle.  Its implementation was verified
+pointwise against an independent arbitrary-precision (50-digit) evaluation
+of (\ref{eq:clP})--(\ref{eq:clN}): the wavefunction $(P_c,Q_c)$ and the
+energy normalisation $N$ agree to $\sim10^{-8}$ relative over
+$E_{\mathrm{kin}}=10^{-5}$--$1$\,eV for every E1-coupled $\kappa_c$
+(Section~\ref{sec:ichiharavalidation}).  Where the numerical ODE solver of
+the previous subsection is converged it agrees with the closed form to the
+ODE's own envelope-convergence accuracy (better than $0.5\%$ at low energy
+and moderate $Z$); at extreme low $E_{\mathrm{kin}}$ and high $Z$ the ODE
+energy normalisation is under-converged (Section~\ref{sec:ichiharavalidation}),
+a limitation the closed form does not share.  At high $E_{\mathrm{kin}}$
+the bound-free overlap integral
+(\ref{eq:bfradial}) becomes a near-total cancellation between contributions
+of magnitude $\gtrsim1$, with a residual
+$|R_{\mathrm{bf}}|/S_{\max}\sim10^{-5}$ or smaller; resolving that residual
+to the few-percent level requires the continuum wavefunction to be accurate
+to $\sim10^{-9}$ relative, beyond the $\sim10^{-4}$ relative accuracy of the
+(asymptotic-truncation-limited) double-precision evaluation.  The production
+implementation therefore uses the two solvers in a hybrid scheme keyed on
+the Sommerfeld parameter $\eta=Z(1+E_{\mathrm{kin}}/c^{2})/k$: the closed
+form is the default for $\eta>350$ (the low-energy/high-$Z$ corner, where
+it is exact and the ODE normalisation is least reliable) and the numerical
+ODE approach of the previous subsection, with its Gordon fallback of
+Section~\ref{sec:rrxsec}, for $\eta\le350$ (the deep-cancellation regime).
+The switch and its tuning are described in
+Section~\ref{sec:ichiharavalidation}.
+
+\subsection{Analytic (relativistic-Gordon) bound-free radial integral}
+\label{sec:bfanalytic}
+
+The bound-free radial integral~(\ref{eq:bfradial}) can be evaluated
+exactly in closed form, without quadrature, by combining the closed-form
+continuum of Section~\ref{sec:closedform} with the polynomial bound state
+of Section~1.  Substituting (\ref{eq:clP})--(\ref{eq:clQ}) and
+$P_{b}=C\sqrt{1+\varepsilon}\,(2\lambda r)^{\gamma}e^{-\lambda r}F(r)$,
+$Q_{b}=C\sqrt{1-\varepsilon}\,(2\lambda r)^{\gamma}e^{-\lambda r}G(r)$
+with $F=\sum_{i}a_{i}r^{i}$, $G=\sum_{i}b_{i}r^{i}$ into the integrand
+$r\,[P_{b}P_{c}+Q_{b}Q_{c}]$ turns every polynomial term into an integrand
+of the universal form
+\begin{equation}
+  r^{\gamma+s+1+i}\,e^{-(\lambda-\iu k)r}\,
+  {}_{1}F_{1}\!\left(a';\,b';\,-2\iu kr\right),
+  \label{eq:bf1f1term}
+\end{equation}
+with $(a',b')=(a,2s)$ or $(a{+}1,2s{+}1)$.  Each such term integrates
+exactly with the Laplace transform of ${}_{1}F_{1}$ (DLMF 13.10.7),
+\begin{equation}
+  \int_{0}^{\infty}\!t^{\nu-1}e^{-\mu t}\,
+  {}_{1}F_{1}(a';b';\kappa t)\,\dif t
+  =\Gamma(\nu)\,\mu^{-\nu}\,
+  {}_{2}F_{1}\!\left(a',\nu;b';\frac{\kappa}{\mu}\right),
+  \qquad \mathrm{Re}\,\nu>0,
+  \label{eq:laplace1f1}
+\end{equation}
+with $\mu=\lambda-\iu k$, $\kappa=-2\iu k$ and $\nu=\gamma+s+i+2>0$.
+The radial integral is therefore the \emph{finite} sum of $n_{r}+1$
+hypergeometric terms,
+\begin{equation}
+  R_{\mathrm{bf}}=N\,(2\lambda)^{\gamma}\,
+  \mathrm{Re}\sum_{i=0}^{n_{r}}
+  \frac{\Gamma(\nu_{i})}{\mu^{\nu_{i}}}\,
+  \bigl[A_{i}\,{}_{2}F_{1}(a,\nu_{i};2s;z)
+      +B_{i}\,{}_{2}F_{1}(a{+}1,\nu_{i};2s{+}1;z)\bigr],
+  \label{eq:bfanalytic}
+\end{equation}
+with $z=-2\iu k/(\lambda-\iu k)$ and $N$ the continuum normalisation
+(\ref{eq:clN}).  Since $R_{\mathrm{bf}}$ is real by construction, taking
+the real part outside the sum is legitimate.
+
+The coefficients $A_{i},B_{i}$ assemble the branch structure of the
+continuum.  The $r$-derivative of $u_{1}$ follows from the identity
+$\frac{\dif}{\dif z}{}_{1}F_{1}(a;b;z)=\frac{a}{b}\,
+{}_{1}F_{1}(a{+}1;b{+}1;z)$,
+\begin{equation}
+  u_{1}'=\iu k\,e^{\iu kr}\Bigl[f(r)-\frac{a}{s}\,g(r)\Bigr],
+  \qquad
+  f={}_{1}F_{1}(a;2s;-2\iu kr),\quad
+  g={}_{1}F_{1}(a{+}1;2s{+}1;-2\iu kr),
+  \label{eq:bfu1p}
+\end{equation}
+which with $u_{2}=(u_{1}'-b_{1}u_{1})/c_{12}$ of~(\ref{eq:clu2}) gives
+the channel combinations
+\begin{align}
+  c_{f0}&=\frac{\iu k-b_{1}}{c_{12}}, &
+  c_{g0}&=-\frac{\iu k\,a}{s\,c_{12}},\\
+  c_{Qf}&=q_{0}+q_{2}\,c_{f0}, &
+  c_{Qg}&=q_{2}\,c_{g0},
+  \label{eq:bfcoeffs}
+\end{align}
+so that $u_{1}+u_{2}=e^{\iu kr}\bigl[(1+c_{f0})f+c_{g0}g\bigr]$ and
+$q_{0}u_{1}+q_{2}u_{2}=e^{\iu kr}\bigl[c_{Qf}f+c_{Qg}g\bigr]$.
+Combining with the bound-state factors $\sqrt{1\pm\varepsilon}\,a_{i}$,
+$\sqrt{1\pm\varepsilon}\,b_{i}$ and the normalisation constant $C$ of
+Section~1,
+\begin{align}
+  A_{i}&=C\Bigl[\sqrt{1+\varepsilon}\,a_{i}\,(1+c_{f0})
+    +\sqrt{1-\varepsilon}\,b_{i}\,c_{Qf}\Bigr],\\
+  B_{i}&=C\Bigl[\sqrt{1+\varepsilon}\,a_{i}\,c_{g0}
+    +\sqrt{1-\varepsilon}\,b_{i}\,c_{Qg}\Bigr].
+  \label{eq:bfAmp}
+\end{align}
+
+The ${}_{2}F_{1}$ values are computed recursively.  The Gauss series
+\begin{equation}
+  {}_{2}F_{1}(a,b;c;z)=\sum_{n=0}^{\infty}
+    \frac{(a)_{n}(b)_{n}}{(c)_{n}\,n!}\,z^{n},
+  \qquad (x)_{n}=x(x+1)\cdots(x+n-1),
+  \label{eq:gaussseries}
+\end{equation}
+is summed term by term with the recurrence
+$t_{n}=t_{n-1}\,(a+n-1)(b+n-1)\big/[(c+n-1)\,n]\cdot z$, each step exact
+up to roundoff.  The series converges geometrically only for $|z|<1$,
+but at high $E_{\mathrm{kin}}$ the argument
+$z=-2\iu k/(\lambda-\iu k)$ has
+$|z|=2k/\sqrt{\lambda^{2}+k^{2}}<2$ and leaves the unit disk
+($k\gg\lambda$).  The portable engine therefore \emph{recurses} through
+closed-form transformations to pull the argument back into the
+convergent region: the Pfaff transformation (DLMF 15.8.4),
+\begin{equation}
+  {}_{2}F_{1}(a,b;c;z)=(1-z)^{-a}\,
+    {}_{2}F_{1}\!\left(a,c-b;c;\frac{z}{z-1}\right),
+  \label{eq:pfaff}
+\end{equation}
+covers $|z|\lesssim1$, and the reciprocal connection formula
+(DLMF 15.8.2),
+\begin{equation}
+  {}_{2}F_{1}(a,b;c;z)=A_{1}(-z)^{-a}\,
+    {}_{2}F_{1}\!\left(a,a{+}1{-}c;a{+}1{-}b;\frac{1}{z}\right)
+    +A_{2}(-z)^{-b}\,
+    {}_{2}F_{1}\!\left(b,b{+}1{-}c;b{+}1{-}a;\frac{1}{z}\right),
+  \label{eq:conn2f1}
+\end{equation}
+with $A_{1},A_{2}$ ratios of gamma functions, covers $|z|>1$.  Each
+transformed argument is evaluated by re-entering the same summing
+routine, hence the recursion; the depth is bounded so the chain always
+terminates, and a stage is accepted only when its roundoff estimate
+$\mathrm{peak}\times\varepsilon/|{}_{2}F_{1}|\lesssim10^{-8}$ holds
+(double precision, with a quad-precision re-summation in the band around
+$|z|=1$).  In builds with FLINT the exact ball-arithmetic engine
+{\tt acb\_hypgeom\_2f1} evaluates all the ${}_{2}F_{1}$'s by automatic
+analytic continuation instead.  If no stage is trustworthy (portable
+engine only), the analytic element returns failure and the caller falls
+back to the numerical path.
+
+The analytic element is the relativistic analog of the nonrelativistic
+Gordon element: it is exact at every $E_{\mathrm{kin}}$, so it is free of
+the deep-cancellation loss that limits the numerical quadrature at high
+energy.  Within the dipole path of {\tt dirac\_rr\_xsec()} it is the
+default whenever the code is built with FLINT (the fully-retarded path
+of Section~\ref{sec:retarded-bf} takes precedence when available);
+{\tt HYDROCAL\_DIRAC\_GORDON} selects the dipole radial-integral path
+explicitly ($0$ = legacy numerical path of the next subsection, $1$ =
+analytic path).  It was verified against an independent 50-digit
+(mpmath) evaluation of~(\ref{eq:bfanalytic}) on the {\tt Ds3p32DiracRR}
+$Z=110$ scan: agreement is within $\sim3\times10^{-11}$ relative at every
+energy $E_{\mathrm{kin}}=10^{-5}$--$10^{3}$\,eV for all three E1-coupled
+channels $\kappa_{c}=-1,-3,+2$, including the deep-cancellation
+high-energy points, and the identity~(\ref{eq:laplace1f1}) was confirmed
+against direct quadrature of~(\ref{eq:bf1f1term}) to $10^{-19}$ relative.
+
+\subsection{Fully-retarded (plane-wave) bound-free matrix element}
+\label{sec:retarded-bf}
+
+{\tt dirac\_rr\_xsec()} closes the dipole gap discussed at the start of
+this section with the fully-retarded plane-wave matrix element of
+Section~\ref{sec:retarded}, applied to the bound-free case.
+The retarded operator $e^{-i\vec{k}_{p}\cdot\vec{r}}$ (photon wavenumber
+$k_{p}=\omega/c$, with $\omega$ in Hartree) replaces the dipole $r$
+factor; expanding the plane wave in spherical partial waves
+\begin{equation}
+  e^{-i\vec{k}_{p}\cdot\vec{r}}
+  = \sum_{L}(2L+1)(-i)^{L}j_{L}(k_{p}r)\,P_{L}(\cos\theta),
+\end{equation}
+the channel radial integrals are the cross-type elements
+\begin{align}
+  R_{+}[L] &= \int_{0}^{\infty}\!
+    P_{c}(r)\,Q_{b}(r)\,j_{L}(k_{p}r)\,\dif r,\\
+  R_{-}[L] &= \int_{0}^{\infty}\!
+    Q_{c}(r)\,P_{b}(r)\,j_{L}(k_{p}r)\,\dif r,
+  \label{eq:bfret_radial}
+\end{align}
+with $(P_{c},Q_{c})$ the continuum and $(P_{b},Q_{b})$ the bound state.
+Both parities and all multipole orders are allowed --- the angular
+coefficients of {\tt ang\_int()} decide --- so the continuum channel set
+$|j_{c}-j_{b}|=0,1,2,\ldots$ is complete, each $j_{c}$ realised by both
+$\kappa_{c}=\pm(j_{c}+\tfrac12)$; the largest multipole order of a
+channel is
+$L_{\max}=\max\bigl[l(\kappa_{c})+l(-\kappa),\,
+l(-\kappa_{c})+l(\kappa)\bigr]$, exactly as in
+Section~\ref{sec:retarded}.  The per-channel matrix-element sum
+\begin{equation}
+  \mathit{tot}(\kappa_{c})
+  = \sum_{m_{c},m_{b},\hat{\varepsilon}}|M|^{2},
+  \label{eq:bfret_tot}
+\end{equation}
+is assembled precisely as the bound-bound {\tt retarded\_total()} of
+Section~\ref{sec:retarded}: the angular factor of each pair of spinor
+harmonics is reduced by {\tt ang\_int()} to coefficients of
+$j_{L}(k_{p}r)$, and the two photon polarisations are combined with the
+$M_{x},M_{y}$ phase conventions of that section
+($M_{x}=\iu[(A_{0}B_{3})+(A_{1}B_{2})-(A_{2}B_{1})-(A_{3}B_{0})]$,
+$M_{y}=(A_{0}B_{3})-(A_{1}B_{2})-(A_{2}B_{1})+(A_{3}B_{0})$, with $+\iu$
+for large$\times$small and $-\iu$ for small$\times$large pairs).
+
+The radial integrals (\ref{eq:bfret_radial}) are evaluated by three
+routes.
+\emph{(i) Closed form.}  With the closed-form continuum of
+Section~\ref{sec:closedform} and the polynomial bound state of Section~1,
+the decomposition
+\begin{equation}
+  j_{L}(k_{p}r)=\frac12\sum_{m=0}^{L}C_{Lm}(k_{p}r)^{-(m+1)}
+    \bigl[\iu^{m-L-1}e^{+\iu k_{p}r}
+         +(-\iu)^{m-L-1}e^{-\iu k_{p}r}\bigr],
+  \qquad
+  C_{Lm}=\frac{(L+m)!}{2^{m}\,m!\,(L-m)!},
+  \label{eq:bfret_jl}
+\end{equation}
+turns every polynomial term of the integrand into the universal form
+$r^{\gamma+s+i-m-1}e^{-\mu r}{}_{1}F_{1}(a';b';-2\iu k_{c}r)$ with
+$\nu=\gamma+s+i-m$ and the two branches
+$\mu_{\pm}=\lambda-\iu(k_{c}\pm k_{p})$ (the $e^{\pm\iu k_{p}r}$
+branches), which integrates exactly via the Laplace transform of
+${}_{1}F_{1}$ (DLMF 13.10.7, Eq.~\ref{eq:laplace1f1}) to
+$\Gamma(\nu)\mu^{-\nu}{}_{2}F_{1}(a',\nu;b';-2\iu k_{c}/\mu)$.
+$R_{\pm}[L]$ are therefore finite sums of
+$\Gamma(\nu)\mu^{-\nu}{}_{2}F_{1}(\cdots)$ values --- the retarded
+generalisation of the dipole analytic element of
+Section~\ref{sec:bfanalytic}, exact at every energy, all multipoles, no
+quadrature.  The alternating $m$-sum is accumulated with Kahan
+compensation and screened: a multipole whose cancellation depth
+$\mathrm{peak}/|\text{sum}|$ exceeds $10^{12}$, or that lies beyond the
+bound-state turning point $L>k_{p}\,r_{\mathrm{bound}}$ with
+$r_{\mathrm{bound}}=2(n_{r}+\gamma)/\lambda$ and shows any residual
+cancellation, is flagged unreliable and recomputed by route (iii).
+\emph{(ii) Small-$k_{p}$ Taylor form.}  Below $k_{p}\approx0.5$ the
+branch terms of order $k_{p}^{-(m+1)}$ cancel to leave
+$j_{L}\sim(k_{p}r)^{L}$ at a depth beyond double precision ($Z=1$,
+$E_{\mathrm{kin}}=1$\,eV, $k_{p}\sim0.004$: depth $\sim10^{229}$), and
+$\Gamma(\nu)$ approaches a pole as $\nu=\gamma+s+i-m\to0$ (i.e.\
+$m\sim s+i$ at low $Z$); the whole channel is then evaluated with the
+convergent Taylor series
+\begin{equation}
+  j_{L}(x)=\sum_{t}(-1)^{t}\,
+    \frac{x^{L+2t}}{2^{t}\,t!\,(2L+2t+1)!!},
+  \label{eq:bfret_taylor}
+\end{equation}
+and the power-law integrals
+$I_{\pm}[p]=\int_{0}^{\infty}r^{p}P_{c}Q_{b}\,\dif r$,
+$I_{-}[p]=\int_{0}^{\infty}r^{p}Q_{c}P_{b}\,\dif r$ in closed form via
+the same Laplace-transform trick with the always-positive exponent
+$\nu=\gamma+s+i+p+1$ (never a pole, no $k_{p}^{-(m+1)}$ factors):
+\begin{equation}
+  R_{\pm}[L]=\sum_{t}(-1)^{t}\,
+    \frac{k_{p}^{L+2t}}{2^{t}\,t!\,(2L+2t+1)!!}\,I_{\pm}[L+2t],
+\end{equation}
+cached per exponent $p=L+2t$; the route fails (and the caller falls
+back) if the $t$-series does not converge within $t_{\max}=40$ terms or
+suffers deep cancellation.
+\emph{(iii) Grid quadrature.}  Flagged multipoles --- or the whole
+channel, when the closed-form ${}_{2}F_{1}$ evaluation was not
+trustworthy (portable engine without FLINT) --- are computed by
+trapezoidal quadrature on the radial grid with the ODE continuum of
+Section~\ref{sec:rrxsec} and pointwise $j_{L}$.  The direct quadrature
+has no branch conditioning and reproduces the validated channel totals
+to well below $1\%$.
+
+The fully-retarded cross section per vacancy follows by summing the
+channel contributions over $j_{c}$:
+\begin{equation}
+  \sigma_{\mathrm{RR}}^{\mathrm{ret}}(n,\kappa;E_{\mathrm{kin}})
+  = \frac{2\pi^{2}}{\alpha\,\omega}\,
+    \frac{\sum_{c}\mathit{tot}(\kappa_{c})}{2j_{b}+1}\,
+    \frac{\alpha^{2}\omega^{2}}{2k_{\mathrm{el}}^{2}}\,a_{0}^{2},
+  \label{eq:bfret_sigma}
+\end{equation}
+the fully-retarded analogue of the long-wavelength Milne formula
+(\ref{eq:milne}); as $k_{p}\to0$ it reduces to the dipole result.  The
+per-channel contributions are positive definite, so the $j_{c}$ shells
+are added in ascending order until one shell adds less than $10^{-4}$ of
+the running total (the series is capped at $|j_{c}-j_{b}|=80$); the
+independent per-channel closed-form evaluations are parallelised
+(OpenMP) over the shells.
+
+The retarded path is the default in {\tt dirac\_rr\_xsec()} when the
+exact ${}_{2}F_{1}$ engine (FLINT) is available, since the closed-form
+retarded integrals need it; without FLINT the dipole path of
+Section~\ref{sec:bfanalytic} is the default.  {\tt HYDROCAL\_DIRAC\_RETARDED}=0
+forces the dipole path (validation/legacy), any other non-empty value
+forces the retarded path, and {\tt HYDROCAL\_DIRAC\_RETARDED\_NUMERIC}=1
+forces the grid quadrature of route (iii) for every channel (validation
+cross-check).
+
+\subsection{Radial integral and cross section}
+
+In the dipole path the bound-free radial integral~(\ref{eq:bfradial}) is
+evaluated by the analytic closed form of Section~\ref{sec:bfanalytic},
+which is the default of that path when the code is built with FLINT.
+The legacy numerical path of this section --- the trapezoidal
+integration on the common logarithmic grid used for the continuum
+integration, with the bound-state radial functions $(P_{b},Q_{b})$
+evaluated analytically at each grid point via the polynomial expansion
+of Section~1, and with the nonrelativistic analytic Gordon element
+substituted (via a runtime-calibrated conversion factor) wherever the
+oscillatory cancellation of the integral exceeds what double precision
+can sustain at high $E_{\mathrm{kin}}$ and high $\ell$ (see
+Section~\ref{sec:ichiharavalidation}, \emph{High-energy $\ell$
+channels}) --- is retained as the fallback for builds without FLINT and
+as a cross-check.  Finally, the RR cross section is obtained
+from~(\ref{eq:milne}).
+In the non-relativistic limit it reduces to the familiar form
+\begin{equation}
+  \sigma_{\mathrm{RR}}^{\mathrm{nr}}(n,l; E_{\mathrm{kin}})
+  = \frac{4\pi\alpha a_{0}^{2}}{3}\,
+    \frac{2l+1}{2}\,
+    \frac{1}{E_{\mathrm{kin}}}\,
+    \bigl|\braket{l\|C^{(1)}\|l_{c}}\bigr|^{2}\,
+    \bigl|R_{\mathrm{bf}}^{\mathrm{nr}}\bigr|^{2},
+\end{equation}
+which reproduces the Kramer--Kramers formula after summing over $l$.
+
+\subsection{Validation against Ichihara \& Eichler (2000)}
+\label{sec:ichiharavalidation}
+
+The point-nucleus $Z=1$ cross sections of {\tt dirac\_rr\_xsec()} were
+compared against the ``exact relativistic'' tabulated cross sections of
+Ichihara and Eichler \cite{Ichihara2000} for capture into the
+$1s_{1/2}$--$3d_{5/2}$ states, over the full set of 38 electron kinetic
+energies (1\,eV--50\,keV) printed for $Z=1$ in that table. Agreement 
+with the $Z=1$ table is within a few percent or less across the tabulated 
+energy range.
+
+\paragraph{High-$\ell$ capture channels: near-origin under-resolution.}
+The comparisons above exercise only capture into $1s$--$3d$ bound
+states, whose E1-coupled continuum partial waves have
+$|\kappa_{c}|\le4$ (Section~\ref{sec:rrxsec}); they therefore never
+exercise the channels that a second, independent defect destroys.
+Comparing {\tt dirac\_rr\_xsec()} instead against the non-relativistic
+Kramers-type formula {\tt sigmarrqm()} of the non-relativistic code
+(RRDRxsec.cxx) at $Z=1$, $E_{\mathrm{kin}}=0.1$\,eV showed agreement
+with the physically sensible QMD values to $\sim0.3\%$ for $l\le3$, but
+catastrophic disagreement for $l\ge4$: the DIR cross sections were
+$\sim40\times$ too small at $l=4$ and $10^{6}$--$10^{16}\times$ too
+small for $l=5$--$7$, the error growing with both $l$ and $n$.
+
+\paragraph{Root cause (high $\ell$).} The radial ODE is integrated
+outward from $r_{0}=10^{-6}$, where the true solution scales as
+$P,Q\sim r^{\gamma_{c}}$ with
+$\gamma_{c}=\sqrt{\kappa_{c}^{2}-(Z\alpha)^{2}}$.  For the continuum
+channels coupled to high-$\ell$ bound states, $|\kappa_{c}|$ is large
+and $\gamma_{c}\simeq|\kappa_{c}|$ (e.g.\ $\gamma_{c}\approx6$ for
+$|\kappa_{c}|=6$ at $Z=1$), so the starting values are
+$P_{0},Q_{0}\sim10^{-36}$ --- six orders of magnitude below the
+stepper's absolute error floor of $10^{-30}$.  The error controller
+there treats the near-origin transient as numerical noise: the first,
+unavoidably coarse steps seed a spurious mode that persists to the far
+field and corrupts both the amplitude and the phase of the
+energy-normalised continuum wavefunction.  The defect is in the
+\emph{representation}, not in the convergence of the envelope loop:
+tightening that loop's tolerance a further $50\times$ made the
+high-$\ell$ ratios \emph{worse} (down to $\sim0.2$--$0.24$ instead of
+$0.9974$), and a purely rescaled integration fixed $l\le n-2$ but left
+a residual drift at $l=n-1$ --- in rescaled variables $p,q\sim A/r^{\gamma}$
+the far-field state itself collapses back below the absolute floor, so
+the raw variables are the correct far-field representation.
+
+\paragraph{Fix (high $\ell$).} {\tt integrate\_PQ()} now integrates the
+rescaled variables $p=P/r^{\gamma_{c}}$, $q=Q/r^{\gamma_{c}}$ ---
+$\mathcal{O}(1)$ at $r_{0}$ for every $\kappa_{c}$, so the absolute
+tolerance acts on a well-conditioned state --- while the raw state is
+small, and switches to the raw variables once $|P|,|Q|>10^{-25}$,
+beyond which the relative tolerance governs.  With this change the
+agreement becomes uniform: $QMD/DIR=0.9974$ for \emph{every} $\ell$
+at $Z=1$, $E_{\mathrm{kin}}=0.1$\,eV, including the previously worst
+case $\ell=n-1$ (e.g.\ $n=8$, $\ell=7$); spot checks at $Z=8$,
+$E_{\mathrm{kin}}=0.1$\,eV and $Z=1$, $E_{\mathrm{kin}}=10$\,eV are
+likewise uniform across all $\ell$ ($\sim0.991$ and $\sim0.9995$,
+respectively), with no residual $\ell$-dependence.  The uniform
+$\sim0.3\%$ offset from unity at $Z=1$, $E_{\mathrm{kin}}=0.1$\,eV
+reflects the relativistic treatment of {\tt dirac\_rr\_xsec()}, which
+the non-relativistic Kramers formula does not include; it shrinks as
+$E_{\mathrm{kin}}$ rises ($\sim0.05\%$ at $10$\,eV).  The
+envelope-convergence parameters themselves were left at the values
+described in the \emph{Fix} paragraph above.
+
+\paragraph{High-energy $\ell$ channels: catastrophic cancellation and the Gordon fallback.}
+The validations above exercise only $E_{\mathrm{kin}}\lesssim100$\,eV at
+$Z=1$ (or the most compact states at higher $Z$), and so never expose a
+third, independent defect of the bound-free radial integral. Comparing
+{\tt dirac\_rr\_xsec()} against the non-relativistic Kramers-type
+formula {\tt sigmarrqm()} at $Z=1$, $E_{\mathrm{kin}}\ge100$\,eV showed
+smooth, uniform agreement at low $\ell$ ($QMD/DIR\simeq1.0045$ at
+$1$\,keV and $\simeq1.035$--$1.046$ at $10$\,keV, growing with
+$E_{\mathrm{kin}}$ as the relativistic treatment departs from the
+Kramers limit), but wildly inconsistent values for high-$\ell$ channels:
+at $100$\,eV, capture into $n=8,\ell=7$ gave $QMD/DIR\simeq1.12$, and at
+$1$--$10$\,keV the high-$\ell$ ratios ranged from $0.0000$ to
+$\sim10^{9}$, with no smooth energy or $\ell$ trend.
+
+\paragraph{Root cause (high energy).} The bound-free integral
+(\ref{eq:bfradial}) is oscillatory: the continuum partial wave
+oscillates over its full energy range, and the trapezoidal scan
+accumulates a running sum whose peak magnitude $S_{\max}$ is of order
+$R_{\mathrm{bf}}\times(\text{number of periods})$ --- enormously larger
+than the final, physically meaningful value, which emerges only through
+near-total cancellation of equal positive and negative lobes.  At $Z=1$,
+$E_{\mathrm{kin}}=10$\,keV, $n=8$, $\kappa=-8$ the partial sums build to
+$|S_{\max}|\sim0.05$ while the true integral is $R_{\mathrm{bf}}\sim
+2\times10^{-22}$: the cancellation depth is $\sim5\times10^{20}$, far
+beyond the $\sim10^{16}$ that double precision can sustain, and the
+residual trapezoidal value is dominated by accumulated roundoff.  This
+is a \emph{representation} defect, not a convergence one: refining the
+radial grid, tightening the ODE tolerance, or accumulating in long
+double all leave the error essentially unchanged (indeed an $8\times$
+grid refinement at $10$\,keV made the high-$\ell$ answer
+\emph{worse}).
+
+\paragraph{Fix (high energy).} The non-relativistic bound-free radial
+matrix element has an exact closed form --- the Gordon
+(Infeld--Hull) recursion, already implemented in the code as
+{\tt CalcRbc()} in {\tt osci.cxx}.  For $Z=1$ the relativistic
+correction to the radial element itself is only
+$\mathrm{O}\bigl((Z\alpha)^{2}\bigr)\simeq5\times10^{-5}$, so
+substituting the analytic element is asymptotically correct in exactly
+the regime where the numerics fail.  In {\tt dirac\_rr\_xsec()} each
+channel's trapezoidal $R_{\mathrm{bf}}$ is kept only if
+$|R_{\mathrm{bf}}|>10^{-8}S_{\max}$, i.e.\ the cancellation depth leaves
+it at least eight orders of magnitude above the roundoff floor;
+otherwise the analytic Gordon element is substituted via
+\begin{equation}
+  R_{\mathrm{bf}} = c\,\frac{2}{z^{2}}\,
+    R_{\mathrm{Gordon}}\!\left(\frac{1}{\sqrt{E_{\mathrm{kin}}/(z^{2}\,\Ryd)}}\right),
+\end{equation}
+using the $l\to l+1$ column ${\tt Rbcm}[l{+}1]$ for $\Delta l=+1$
+channels and the $l\to l-1$ column ${\tt Rbcp}[l]$ for $\Delta l=-1$
+channels (mapping verified against the numerical integration to
+$\sim0.05\%$ where the latter is reliable).  The residual factor $c$ is
+calibrated at runtime from the \emph{reliable} channels of the same
+$(E_{\mathrm{kin}},Z)$ --- $c=\bigl\langle
+R_{\mathrm{bf}}^{\mathrm{num}}\big/\bigl((2/z^{2})R_{\mathrm{Gordon}}
+\bigr)\bigr\rangle$ averaged over channels passing the reliability test
+--- because $c$ carries the relativistic continuum normalisation and
+drifts from $\sim1.0003$ at low energy to $\sim0.978$ at $10$\,keV for
+$Z=1$.  The substitution is applied only where it is a legitimate
+asymptotic approximation: $(Z\alpha)^{2}<0.1$ (i.e.\ $Z\lesssim43$; a closed
+form exists for the hydrogenic \emph{continuum wavefunction} itself,
+Section~\ref{sec:closedform}, but not for the bound-free overlap integral of
+two Dirac radial functions), and the calibrated $c$ must be consistent
+across the reliable channels
+(relative scatter $<20\%$, computed from the running mean and second
+moment of $c$).  When the guard fails, the unreliable channel is
+\emph{dropped} (it contributes exactly zero) rather than assigned a
+wrong value.  Finally, the $R_{\mathrm{bf}}^{2}$ of the highest-$\ell$
+high-energy channels falls below the old
+${\tt total\_me\_sq}<10^{-30}$ early-return floor; that floor was
+lowered to $10^{-100}$ (safe, because every contribution is a
+non-negative square of a reliable-or-analytic element).
+
+\paragraph{Result (high energy).} The agreement is now uniform across
+all $\ell$ at every energy.  At $Z=1$: $QMD/DIR\simeq1.0001$--$1.0007$
+at $100$\,eV, $\simeq1.0017$--$1.0047$ at $1$\,keV, and
+$\simeq1.0346$--$1.0455$ at $10$\,keV, with no residual $0.0000$ or
+$10^{9}$ rows; the previously failing $n=8,\ell=7$ channel went from
+$0.0000$ to $1.0017$ at $1$\,keV.  Spot checks at $Z=2$, $1$\,keV are
+likewise uniform ($\sim1.0007$--$1.006$).  The small spread within each
+energy --- high-$\ell$ ratios running slightly \emph{below} the
+$\ell=0$ value (e.g.\ $1.0348$ vs $1.0455$ at $10$\,keV) --- is the
+known limitation of substituting a single calibrated scalar $c$ for all
+channels: the true per-channel factor has a weak $\ell$- and
+$j$-dependence (the two $\kappa_{c}$ sub-channels of one transition
+differ by $\sim0.3\%$ at $1$\,keV and $\sim3\%$ at $10$\,keV for $Z=1$,
+a genuine relativistic splitting that a scalar cannot reproduce).  The
+low-energy behaviour documented above ($0.9974$/$0.9995$/$0.991$,
+  $Z=1$/$Z=1$/$Z=8$ at $0.1$/$10$/$0.1$\,eV) is unchanged.
+
+\paragraph{Validity regime of the fallback (high $Z$).} The substitution
+is only as accurate as the non-relativistic element it inserts, so its
+asymptotic validity is set by the smallness of $(Z\alpha)^{2}$ ($5\times
+10^{-5}$ at $Z=1$, $\sim45\%$ at $Z=92$); the guard of the previous
+paragraph is what enforces this regime.  At $Z=92$ the fallback is inert
+up to at least $100$\,keV: there is no catastrophic cancellation there
+(all $43$ channels of the $100$\,keV scan pass the reliability test), so
+the numerical integrals are kept unchanged.  At $1$\,MeV the
+cancellation does set in for $\ell\ge5$, but the per-channel
+relativistic restructuring is so strong that no single scalar $c$ can
+represent it --- the calibrated mean is $c\simeq1.109$ while the
+individual reliable channels scatter from $-0.50$ to $+4.35$, far beyond
+the $20\%$ guard, and substituting would both err by
+$\mathrm{O}\bigl((Z\alpha)^{2}\bigr)\simeq45\%$ and erase the genuine
+$\ell,j$ dependence (the pre-guard code collapsed all of $\ell=5,6,7$
+onto one identical ratio).  The guard therefore drops those channels
+rather than substitutes; the resulting undercount is preferable to
+silently wrong physics.  In short, the Gordon fallback is validated only
+for $Z\lesssim43$; for higher $Z$ the comparison to {\tt sigmarrqm()}
+is not meaningful above $E_{\mathrm{kin}}\sim$ a few hundred keV, where
+the code was never validated against data.  In builds with FLINT the
+fully relativistic analytic element of
+Section~\ref{sec:bfanalytic} replaces this calibrated fallback
+entirely: it is exact at every $Z$ and $E_{\mathrm{kin}}$, so none of
+the $(Z\alpha)^{2}$, calibration-scatter, or $Z\lesssim43$ restrictions
+of this paragraph apply.
+
+\paragraph{Extended validation, $Z=1$--$112$.} The comparison was
+extended to higher $Z$ using the per-$Z$ tables printed by
+\cite{Ichihara2000} (its Tables for $Z=1$ through $Z=112$;
+the $Z=61$ and $Z=70$ tables could not be digitized because of a
+text-layer defect specific to those two pages in the source PDF), drawing
+a representative sample of Z values and energies from the digitized data
+rather than an exhaustive point-by-point sweep of all $112$ tables.
+Table~\ref{tab:ichihara-allz} summarises the ratio
+$\sigma_{\mathrm{RR}}^{\mathrm{dirac\_rr\_xsec}}/\sigma_{\mathrm{RR}}^{\mathrm{Ichihara}}$
+for the $1s_{1/2}$ state over $E_{\mathrm{kin}}=1$\,eV--$10$\,keV, at a
+representative spread of $Z$, before and after the fix above (before:
+using the original fixed-period, single-comparison convergence loop).
+
+\begin{table}[h]
+\centering
+\begin{tabular}{cccc}
+\hline
+$Z$ & median ratio (before) & median ratio (after) & mean abs.\ dev.\ (after) \\
+\hline
+1   & 0.94--1.08 & 0.997 & 1.0\% \\
+30  & $\sim$1.30 & 0.998 & 1.1\% \\
+50  & $\sim$1.52 & 1.005 & 1.3\% \\
+90  & $\sim$1.7--2.1$\times$ & 1.038 & 3.3\% \\
+110 & $\sim$1.6--2$\times$ (worst points off by $\gtrsim2\times$) & 1.100 & 9.2\% \\
+112 & worst points off by up to $\sim2.3\times$ & 1.109 & 10.1\% \\
+\hline
+\end{tabular}
+\caption{Ratio of {\tt dirac\_rr\_xsec()} to the tabulated Ichihara \&
+Eichler $1s_{1/2}$ cross section, before and after the convergence-loop
+fix, at representative $Z$ (5 energies per $Z$, $1$\,eV--$10$\,keV).
+``Before'' figures are approximate, summarising the spread seen for the
+uncorrected code; ``after'' figures are the median ratio and mean
+absolute fractional deviation over the same energy set, using the final
+convergence tolerance described above.}
+\label{tab:ichihara-allz}
+\end{table}
+
+The fix removes the dominant, rapidly-$Z$-growing error (up to
+$\sim130\%$ at $Z=112$ under the old code) and brings agreement back to
+the few-percent level found for $Z=1$, generalising cleanly across other
+tabulated states ($2s$--$3d$), not only $1s_{1/2}$. A smaller residual
+trend remains, growing smoothly (no discontinuity or sudden onset) from
+$\sim1\%$ at $Z=1$ to $\sim9$--$10\%$ at $Z\gtrsim110$, concentrated at
+the lowest tabulated energies.
+
+
+
+\paragraph{Closed-form continuum cross-check.}
+{\tt dirac\_rr\_xsec()} selects its continuum solver by the Sommerfeld
+parameter $\eta=Z(1+E_{\mathrm{kin}}/c^{2})/k$: by default (no environment
+variable set) the exact ${}_{1}F_{1}$ construction of
+Section~\ref{sec:closedform} is used for $\eta>350$ and the numerical ODE
+integration of Section~\ref{sec:rrxsec} for $\eta\le350$.  Setting {\tt
+HYDROCAL\_DIRAC\_CLOSED=0} forces the ODE everywhere (the legacy
+behaviour); any other non-empty value forces the closed form everywhere
+(the validation cross-check; it is slower per grid point, and the exact
+${}_{1}F_{1}$ engine is used only when built with FLINT).
+
+Two checks were made with the closed form on the $Z=110$,
+capture-to-$3p_{3/2}$ scan of the {\tt Ds3p32DiracRR} example
+($E_{\mathrm{kin}}=10^{-5}$--$10^{3}$\,eV).  First, the closed-form
+wavefunction $(P_c,Q_c)$ and its energy normalisation $N$ were compared
+pointwise against an independent 50-digit (mpmath) evaluation of
+(\ref{eq:clP})--(\ref{eq:clN}); they agree to $\sim10^{-8}$ relative at
+both $E_{\mathrm{kin}}=10^{-5}$ and $1$\,eV for all three E1-coupled
+continuum channels $\kappa_c=-1,-3,+2$, across the entire radial range of
+the overlap integral --- the residual is set by the double/quad-precision
+${}_1F_1$ evaluation, not by the formula.  Second, the cross sections were
+compared against the ODE path.  The ratio
+$\sigma_{\mathrm{closed}}/\sigma_{\mathrm{ODE}}$ is $0.455$ at
+$E_{\mathrm{kin}}=10^{-5}$\,eV and rises monotonically through $0.983$ at
+$1$\,eV to $0.997$ at $10^{3}$\,eV.  The closed-form and ODE continuum
+wavefunctions have \emph{identical} $r$-dependence (the two are
+proportional at every radius), so the cross-section gap is a pure
+normalisation effect: at $E_{\mathrm{kin}}=10^{-5}$\,eV the ODE
+envelope-matched solution is $\sim1.4$--$1.5\times$ the exact (closed-form)
+one depending on the channel, $1.009\times$ at $1$\,eV, and $1.001\times$ at
+$10^{3}$\,eV.  Since the closed form is the exact solution, it is the ODE
+energy normalisation of Section~\ref{sec:rrxsec} that is in error at this
+extreme Sommerfeld parameter $\eta=Z(1+E_{\mathrm{kin}}/c^{2})/k$: its
+envelope-convergence loop stops while the RMS amplitude is still slowly
+drifting (the same limitation already documented above at $Z=112$), and
+the gap closes monotonically as $E_{\mathrm{kin}}$ rises and $\eta$
+shrinks.  The low-energy closed-form $R_{\mathrm{bf}}$ passes the
+$|R_{\mathrm{bf}}|>10^{-8}S_{\max}$ reliability test, so the discrepancy is
+not the Gordon-fallback logic; it is the ODE normalisation.  The closed
+form therefore provides an exact reference precisely in the
+low-energy--high-$Z$ corner where the ODE envelope loop is least reliable,
+and the two paths agree everywhere the ODE is converged --- which is why
+the default hybrid scheme of the previous paragraph (closed form for
+$\eta>350$) puts the exact solution exactly where the numerical solver is
+weakest.  In a build with FLINT this whole comparison is moot in the
+default configuration: the bound-free element is computed by the closed
+forms of Section~\ref{sec:bfanalytic} (dipole path) or
+Section~\ref{sec:retarded-bf} (fully-retarded path) without any
+continuum wavefunction, so the normalisation-gap analysis above applies
+only to the legacy numerical path.
+
+\paragraph{Fully-retarded cross section.}
+The fully-retarded plane-wave path of Section~\ref{sec:retarded-bf} is
+the physically complete all-multipole bound-free calculation, and it is
+what {\tt dirac\_rr\_xsec()} uses by default.  The Ichihara \& Eichler
+tables \cite{Ichihara2000} are themselves ``exact relativistic'' ---
+they include all multipole orders as well as finite nuclear size --- so
+the fully-retarded path reproduces them to the level of the point-nucleus
+idealisation, including the high-energy regime in which the dipole path
+described above falls short by orders of magnitude (e.g.\ a factor
+$\sim$500 at $Z=110$, $n=3$, 2\,MeV).  As a validation cross-check,
+{\tt HYDROCAL\_DIRAC\_RETARDED\_NUMERIC}=1 forces the grid quadrature
+(route iii of Section~\ref{sec:retarded-bf}) for every channel; the
+direct quadrature has no branch conditioning at all and reproduces the
+closed-form channel totals to well below $1\%$.
+
+\paragraph{Grid-quadrature continuum: normalisation bias below 100\,eV.}
+The fully-retarded path also evaluates the radial integrals on a grid
+whenever the closed-form $m$-branch sum flags a multipole (route iii of
+Section~\ref{sec:retarded-bf}); at $Z=92$ that happens for the majority of
+multipoles of \emph{every} channel, so the grid quadrature is in practice
+the production engine there.  Until now that quadrature always took its
+continuum from the ODE solver of Section~\ref{sec:rrxsec}, and the two
+continua differ only by a constant (their $r$-dependence is identical), so
+the quadrature inherited precisely the energy-normalisation bias quantified
+in the previous paragraph.  Measured for capture into $3d_{5/2}$ at
+$Z=92$ (point-nucleus DIR against the table):
+$\sigma_{\rm DIR}/\sigma_{\rm IE}=1.0154$ at 1.5\,eV, $1.0089$ at 10\,eV,
+$1.0057$ at 50\,eV, $1.0037$ at 100\,eV, $1.0026$ at $10^{3}$\,eV --- a
+smooth threshold-like excess equal to twice the measured normalisation
+error ($+0.72\%$ in $(P_c,Q_c)$ at 1.5\,eV $\Rightarrow+1.44\%$ in
+$\sigma$, $+0.24\%\Rightarrow+0.47\%$ at 100\,eV, and so on).  Taking the
+continuum from the exact ${}_{1}F_{1}$ construction
+({\tt dirac\_continuum\_PQ\_closed}) inside the grid quadrature whenever
+FLINT is available removes the bias entirely: the same 14 energies from
+1.5\,eV to 10\,MeV then give $\sigma_{\rm DIR}/\sigma_{\rm IE}$ between
+$0.9980$ and $1.0022$, flat at the three-significant-digit rounding width
+of the printed table (cost a factor $\sim1.5$--2 per energy point; the
+regression tests are unaffected).  This also corrects the earlier reading
+of the residual as a point-nucleus versus finite-nuclear-size effect: for
+$3d_{5/2}$ that effect is below the precision of the table once the
+normalisation bias is gone.  In a build without FLINT the exact engine is
+unavailable, so a residual $+0.2$--$1.4\%$ excess remains below 1\,keV
+and is the documented accuracy limit of the no-FLINT fully-retarded cross
+sections at high $Z$.
+
+\section{Tabulated Ichihara \& Eichler cross sections by interpolation}
+\label{sec:ichihara-interp}
+
+For applications that need the literature values themselves, rather
+than the Dirac-equation calculation of Section~\ref{sec:rrxsec},
+{\tt sigma\_IchiharaEichlerRR()} (declared in {\tt
+DiracRR.h}) returns $\sigma_{\mathrm{RR}}(Z,n,l,j;
+E_{\mathrm{kin}})$ (cm$^{2}$) at an arbitrary electron kinetic energy
+by interpolating the digitized tables of \cite{Ichihara2000} for
+$Z=1$--$112$ and the nine tabulated states $1s_{1/2}$, $2s_{1/2}$,
+$2p_{1/2}$, $2p_{3/2}$, $3s_{1/2}$, $3p_{1/2}$, $3p_{3/2}$,
+$3d_{3/2}$, $3d_{5/2}$ (the digitized values themselves live in {\tt
+IchiharaEichlerRRdata.h}).
+
+Since the tabulated cross sections span many orders of magnitude and
+are close to power-law in $E_{\mathrm{kin}}$, each $(Z,\text{state})$
+pair's data are interpolated with a natural cubic spline ({\tt
+spline()}/{\tt splint()}, {\tt hydromath.h}), in
+$\log_{10}E_{\mathrm{kin}}$--$\log_{10}(\sigma\, E_{\mathrm{kin}})$
+space rather than $\log_{10}\sigma$ directly: since
+$\sigma_{\mathrm{RR}}\sim 1/E_{\mathrm{kin}}$ near threshold,
+$\sigma\,E_{\mathrm{kin}}$ is a smoother interpolant than $\sigma$
+itself. Because the printed table stops listing digits for a state
+once $\sigma$ becomes too small for the page format, each state's
+spline is built only over its own sub-range of the tabulated energy
+grid for that $Z$, not the full range. {\tt
+sigma\_IchiharaEichlerRR()} returns exactly $0$ for an energy outside
+a given state's own tabulated range, or for a $(Z,n,l,j)$ that is not
+one of the nine tabulated states or outside $Z=1$--$112$, rather than
+clamping to the nearest tabulated point: clamping was found to
+overestimate the (rapidly falling) true cross section by more than an
+order of magnitude when queried far beyond a state's tabulated range.
+
+\section{Data flow in the cascade calculation}
+
+The cascade calculation in {\tt RRphotons.cxx} treats the population of
+excited states as a quasi-stationary linear system.  The code path for
+$Z > 50$ (or when the environment variable {\tt HYDROCAL\_NREL} is set)
+uses a mixed basis: states with $n \le N_{\mathrm{rel}}$ are treated
+relativistically (Dirac spinors), while higher-$n$ states use the
+non-relativistic hydrogenic approximation.
+
+\subsection{State ordering}
+
+The basis states are a mixture of relativistic Dirac states (with
+definite $\kappa$, i.e.\ definite $j$) and non-relativistic hydrogenic
+states (with orbital $l$ only).  All states are sorted by increasing
+binding energy (the ground state has index~0).  Relativistic states
+within a given $n$ shell are ordered by $|\kappa|$ (which correlates
+with energy), so that higher-energy states always have larger indices.
+This guarantees that all transitions flow from higher to lower indices,
+simplifying the cascade matrix to lower-triangular form.
+
+\subsection{Rate matrix}
+\label{sec:ratematrix}
+
+In the relativistic part every state has a well-defined total angular
+momentum $j$ (encoded in $\kappa$).  All transitions are therefore
+$j$-resolved: a rate $A(n,\kappa\to n',\kappa')$ connects individual
+fine-structure levels, and the photon energy
+$\omega = |E_{n\kappa} - E_{n'\kappa'}|$ depends on both $j$ values.
+This differs from the non-relativistic treatment, where rates are
+$l$-averaged and later partitioned by statistical weight.
+
+For each upper state $i$ (in order of increasing energy), the diagonal of the
+rate matrix is
+\[
+M_{ii} = -1/\tau_{i},
+\]
+where $\tau_{i}$ is the total lifetime summing E1, E2, and M1 decays to
+all lower $j$-resolved states.
+For relativistic lower states $j$,
+\[
+M_{ji} \mathrel{+}= A_{\text{total}}(i\to j),
+\]
+so that E1, E2, and M1 transitions each enter as individual matrix
+entries and feed the population of the lower fine-structure level.
+This is consistent with the emitted cascade lines, which are built from
+the same $A_{\text{total}}(i\to j)$, so that no decay channel is
+missing in the population redistribution.
+For non-relativistic upper states decaying to relativistic fine-structure
+components, the non-relativistic E1 rate is partitioned by statistical weight:
+\[
+M_{ji} \mathrel{+}= A_{\E1}^{\nr}(n_{i},l_{i}\to n_{j},l_{j})\,
+\frac{2j_{j}+1}{2(2l_{j}+1)}.
+\]
+
+The ground state (index~0) is excluded from the solved system because it has
+no radiative decay.  Removing its row and column gives the reduced matrix
+$M_{\mathrm{exc}}$ of size $(N_{\mathrm{states}}-1)\times(N_{\mathrm{states}}-1)$.
+
+\subsection{Population solution}
+\label{sec:cascade-population}
+
+The right-hand side vector is the state-resolved, fine-structure
+\emph{level-total} radiative recombination cross section,
+\[
+\mathit{rhs}_{i-1} = -\sigma_{\mathrm{RR}}(i),\qquad i=1,\ldots,N_{\mathrm{states}}-1.
+\]
+For relativistic states,
+\begin{equation}
+  \sigma_{\mathrm{RR}}(i) = (2j_{i}+1)\,
+    \sigma_{\mathrm{RR}}^{\mathrm{vac}}(n_{i},\kappa_{i}; E_{\mathrm{kin}}),
+  \label{eq:rrlevel}
+\end{equation}
+where $\sigma_{\mathrm{RR}}^{\mathrm{vac}}$ is the per-vacancy cross
+section returned by {\tt dirac\_rr\_xsec()} (Eq.~\ref{eq:milne}, obtained
+from the Milne relation via a numerical continuum integration and
+bound-free radial integral, Section~\ref{sec:rrxsec}); the explicit
+$(2j_{i}+1)$ factor sums the per-vacancy cross section over the fine-structure
+level's magnetic substates to give the level-total capture cross section,
+consistent with the level-total lifetimes $\tau_{i}$ and rates $A(i\to j)$
+used elsewhere in $M$. For non-relativistic states, {\tt sigmarrqm()}
+(the Kramers--Kramers formula) already returns the full $nl$-subshell
+total directly, with no extra factor needed; it is partitioned among
+fine-structure components by statistical weight when the destination is
+relativistic, exactly as in the rate matrix (Section~\ref{sec:ratematrix}).
+The quasi-stationary populations $x_{i}$ (populations per unit electron flux)
+satisfy
+\[
+M_{\mathrm{exc}}\,\vec{x} = \vec{rhs},
+\]
+solved by LU decomposition.  The resulting populations enter the spectrum
+building as described below.
+
+\subsection{Construction of the photon spectrum}
+
+Each recombination event produces either a direct RR photon or a cascade
+photon.
+
+\subsubsection*{Direct RR lines}
+For every state $i$ (including the ground state), a line at energy
+\[
+E_{\text{photon}} = E_{\text{kin}} - E_{\text{bind}}(i)
+\]
+is recorded with strength $\sigma_{\mathrm{RR}}(i)$ (zero width), the
+same level-total cross section defined in
+Section~\ref{sec:cascade-population} (Eq.~\ref{eq:rrlevel} for
+relativistic states, already including the $(2j+1)$ degeneracy factor).
+
+\subsubsection*{Cascade lines}
+For each excited state $i>0$ with population $x_{i-1}$ and each lower
+state $j<i$, the cascade line parameters are
+\begin{align}
+\text{strength} &= A(i\to j) \times x_{i-1},\\
+\text{energy}   &= E_{\text{bind}}(i) - E_{\text{bind}}(j),\\
+\text{width}    &= \hbar\,(1/\tau_{i} + 1/\tau_{j}),
+\end{align}
+where the transition rate $A(i\to j)$ uses the appropriate function
+depending on the type of the two states:
+\[
+A(i\to j) =
+\begin{cases}
+A_{\text{total}}(n_{i},\kappa_{i}\to n_{j},\kappa_{j}) &
+  \text{relativistic} \to \text{relativistic} \\[4pt]
+A_{\E1}^{\nr}(n_{i},l_{i}\to n_{j},l_{j})\,
+\displaystyle\frac{2j_{j}+1}{2(2l_{j}+1)} &
+  \text{non-rel.} \to \text{relativistic} \\[4pt]
+A_{\E1}^{\nr}(n_{i},l_{i}\to n_{j},l_{j}) &
+  \text{non-rel.} \to \text{non-relativistic}
+\end{cases}
+\]
+In the relativistic case the rate and the binding energies are
+$j$-resolved: each state is labelled by $(n,\kappa)$ and the photon
+energy $\omega = |E_{n_{i}\kappa_{i}} - E_{n_{j}\kappa_{j}}|$ depends on
+both fine-structure components.  For non-relativistic upper states
+decaying to relativistic lower states, the $l$-averaged rate is
+distributed among the fine-structure levels by their statistical weights,
+ensuring that every line in the final spectrum connects states with
+definite $j$ wherever the lower state is relativistic.
+
+Each ordered pair $(i,j)$ of upper and lower state produces exactly one
+line in the output.  When the E1 channel is forbidden between the two
+states, $A_{\text{total}}$ returns either the M1 rate, the E2 rate, or
+their sum, and the line is recorded with that rate and the corresponding
+$j$-resolved photon energy.  Hence, M1 and E2 transitions are not
+averaged or lumped with other decays but appear as individually resolved
+spectral lines at their characteristic fine-structure energies.  This is
+essential for correctly predicting, for example, the $2p_{3/2}\to2p_{1/2}$
+M1 line in highly charged ions.
+
+The natural line width is the sum of the decay widths of upper and lower
+state (the lower-state contribution is zero for the $1s$ ground state).
+
+\subsection{Output}
+
+The lines are sorted by energy and written to a {\tt .RRlines} file with
+columns: energy (eV), cross-section (cm$^{2}$), width (eV), and a transition
+label.
+
+\section{Implementation notes}
+
+All bound-bound rate functions, the combined dispatch, and the lifetime
+are declared in {\tt DiracRate.h} and implemented in {\tt DiracRate.cxx}.
+The RR cross section and the Ichihara \& Eichler interpolation are
+declared in {\tt DiracRR.h} and implemented in {\tt DiracRR.cxx}
+(the digitized Ichihara \& Eichler data itself lives in
+{\tt IchiharaEichlerRRdata.h}). The E1, E2, and (different-$n$) M1 rates are all
+evaluated with the fully retarded plane-wave matrix element of
+Section~\ref{sec:retarded} ({\tt retarded\_total()}), which avoids the
+normalisation and selection-rule bugs of the former long-wavelength
+multipole formulas.  The RR cross section {\tt dirac\_rr\_xsec()} uses by
+default the fully-retarded plane-wave bound-free matrix element of
+Section~\ref{sec:retarded-bf} ({\tt dirac\_rr\_xsec\_retarded()}); the
+dipole bound-free machinery of
+Sections~\ref{sec:bfanalytic}--\ref{sec:ichiharavalidation} is retained
+as the legacy and validation path.  The same-$n$ fine-structure M1 rate uses the
+analytic magnetic-dipole formula Eq.~(\ref{eq:m1fs})
+({\tt fine\_structure\_m1()}), because the retarded integral is
+numerically unstable at the tiny fine-structure photon momentum.
+
+All bound-bound rate functions and the RR cross section guard against
+non-existent states with $l \ge n$ (e.g.\ a $1p$ state) by returning
+zero, using the {\tt valid\_kappa()} condition.  The rate functions
+accept a state $(n,\kappa)$ only if $l(\kappa) < n$, so the combined
+rate $A_{\text{total}}$ vanishes for any pair involving such a state.
+
+\begin{tabular}{lp{9.5cm}}
+\hline
+Function & Purpose \\
+\hline
+{\tt retarded\_total()} & Fully retarded plane-wave rate (s${}^{-1}$); basis for E1, E2, M1 \\
+{\tt fine\_structure\_m1()} & Analytic same-$n$ M1 rate (s${}^{-1}$) \\
+{\tt dirac\_transrate()} & E1 rate (s${}^{-1}$) \\
+{\tt dirac\_e2\_rate()} & E2 rate (s${}^{-1}$) \\
+{\tt dirac\_m1\_rate()} & M1 rate (s${}^{-1}$) \\
+{\tt dirac\_total\_transrate()} & Combined E1+E2+M1 rate (s${}^{-1}$) \\
+{\tt dirac\_lifetime()} & Lifetime $\tau_{n\kappa}$ (s) including all multipoles \\
+{\tt dirac\_branch()} & Branching ratio $\tau \times A_{\E1}$ (E1 only) \\
+{\tt valid\_kappa()} & Checks $l<n$ for a given $\kappa$ \\
+{\tt dirac\_continuum\_PQ()} & Energy-normalised continuum Dirac radial functions $P,Q$: adaptive DOPRI5 integration with a rescaled $r^{\gamma}$ near-origin representation and envelope-amplitude asymptotic matching (internal, {\tt static} to DiracRR.cxx) \\
+{\tt dirac\_rr\_xsec()} & Per-vacancy RR cross section via Milne relation (cm${}^{2}$); fully-retarded plane-wave path by default, dipole path otherwise \\
+{\tt dirac\_rr\_xsec\_retarded()} & Fully-retarded (plane-wave, all-multipole) per-vacancy RR cross section (cm${}^{2}$); sums {\tt retarded\_channel\_tot()} over the $|j_{c}-j_{b}|=0,1,2,\ldots$ shells (internal, {\tt static} to DiracRR.cxx) \\
+{\tt retarded\_channel\_tot()} & Per-channel fully-retarded matrix-element sum $\sum_{m_{c},m_{b},\hat{\varepsilon}}|M|^{2}$, combining the retarded radial integrals with the {\tt ang\_int()} coefficients (internal, {\tt static} to DiracRR.cxx) \\
+{\tt dirac\_rr\_bf\_retarded()}, \newline {\tt \ldots\_taylor()}, \newline {\tt \ldots\_numeric()} & Retarded bound-free radial integrals $R_{+}[L],R_{-}[L]$: closed-form branch sum, small-$k_{p}$ Taylor series, and grid-quadrature fallback (internal, {\tt static} to DiracRR.cxx) \\
+{\tt sigma\_IchiharaEichlerRR()} & Tabulated Ichihara \& Eichler cross section by interpolation (cm${}^{2}$) \\
+\hline
+\end{tabular}
+
+
+\begin{thebibliography}{1}
+\bibitem{Palchikov1998}
+   V.G. Pal’chikov,  \href{https://doi.org/10.1088/0031-8949/57/5/006}{Phys. Scr. {\bf 57}, 581 (1998)}.
+   \bibitem{Knyazeva2022}
+   V.A. Knyazeva, K.N. Lyashchenko, M. Zhang, D. Yu, and O.Yu. Andreev, \href{https://doi.org/10.1103/PhysRevA.106.012809}{Phys. Rev. A {\bf 106}, 12809 (2022)}.
+\bibitem{Sapirstein2004}
+   J. Sapirstein, K. Pachucki, and K.T. Cheng, \href{https://doi.org/10.1103/PhysRevA.69.022113}{Phys. Rev. A {\bf 69}, 022113 (2004)}.
+\bibitem{JitrikBunge2004}
+   O. Jitrik and C.F. Bunge, \href{https://doi.org/10.1063/1.1796671}{J. Phys. Chem. Ref. Data {\bf 33}, 1059 (2004)}.
+\bibitem{Mueller1973} 
+    B. Müller, J. Rafelski, and W. Greiner, \href{https://doi.org/10.1007/BF02722798}{Il Nuovo Cimento A {\bf 18}, 551 (1973)}.
+\bibitem{Ichihara2000}
+   A. Ichihara and J. Eichler, \href{https://doi.org/10.1006/adnd.1999.0825}{At. Data Nucl. Data Tables {\bf 74}, 1 (2000)}.
+\end{thebibliography}
+
+\end{document}
+$ 4f_{7/2}\to 3d_{5/2}$  & 92 & & $9.8219\times10^{14}$\\   
+$ 4f_{7/2}\to 3d_{3/2}$  & 92 & & $4.2916\times10^{+12}$\\  
+$ 4d_{5/2}\to 3d_{5/2}$  & 92 & & $5.6388\times10^{+11}$\\  
+$ 4d_{5/2}\to 3p_{3/2}$  & 92 & & $4.9623\times10^{+14}$\\  
+$ 4d_{5/2}\to 3s_{1/2}$  & 92 & & $3.6111\times10^{+12}$\\  
+$ 4d_{5/2}\to 3d_{3/2}$  & 92 & & $1.5083\times10^{+11}$\\  
+$ 4p_{3/2}\to 3d_{5/2}$  & 92 & & $3.4430\times10^{+13}$\\  
+$ 4p_{3/2}\to 3p_{3/2}$  & 92 & & $8.2627\times10^{+11}$\\  
+$ 4p_{3/2}\to 3s_{1/2}$  & 92 & & $1.2949\times10^{+14}$\\  
+$ 4p_{3/2}\to 3p_{1/2}$  & 92 & & $8.8706\times10^{+11}$\\  
+$ 4p_{3/2}\to 3d_{3/2}$  & 92 & & $2.7385\times10^{+12}$\\  
+$ 4s_{1/2}\to 3d_{5/2}$  & 92 & & $4.5703\times10^{+11}$\\  
+$ 4s_{1/2}\to 3p_{3/2}$  & 92 & & $2.2426\times10^{+14}$\\  
+$ 4s_{1/2}\to 3s_{1/2}$  & 92 & & $1.8668\times10^{+09}$\\  
+$ 4s_{1/2}\to 3p_{1/2}$  & 92 & & $5.7575\times10^{+13}$\\  
+$ 4s_{1/2}\to 3d_{3/2}$  & 92 & & $3.2632\times10^{+11}$\\  
+$ 4p_{1/2}\to 3p_{3/2}$  & 92 & & $1.5968\times10^{+12}$\\  
+$ 4p_{1/2}\to 3s_{1/2}$  & 92 & & $3.0244\times10^{+14}$\\  
+$ 4p_{1/2}\to 3p_{1/2}$  & 92 & & $5.8813\times10^{+08}$\\  
+$ 4p_{1/2}\to 3d_{3/2}$  & 92 & & $7.9817\times10^{+13}$\\  
+$ 4d_{3/2}\to 3d_{5/2}$  & 92 & & $2.0996\times10^{+11}$\\  
+$ 4d_{3/2}\to 3p_{3/2}$  & 92 & & $8.9816\times10^{+13}$\\  
+$ 4d_{3/2}\to 3s_{1/2}$  & 92 & & $3.6292\times10^{+12}$\\  
+$ 4d_{3/2}\to 3p_{1/2}$  & 92 & & $3.7087\times10^{+14}$\\  
+$ 4d_{3/2}\to 3d_{3/2}$  & 92 & & $5.2897\times10^{+11}$\\  
+$ 4f_{5/2}\to 3d_{5/2}$  & 92 & & $6.4201\times10^{+13}$\\  
+$ 4f_{5/2}\to 3p_{3/2}$  & 92 & & $8.9820\times10^{+11}$\\  
+$ 4f_{5/2}\to 3p_{1/2}$  & 92 & & $5.8310\times10^{+12}$\\  
+$ 4f_{5/2}\to 3d_{3/2}$  & 92 & & $9.7344\times10^{+14}$\\  

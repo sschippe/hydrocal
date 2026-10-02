@@ -1,0 +1,322 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\newcommand{\bM}{\boldsymbol{M}}
+\newcommand{\bp}{\boldsymbol{p}}
+
+\begin{document}
+
+\title{Calculation of RR Photon Spectrum including Radiative Cascades in \texttt{hydrocal/src/RRphotons.cxx}}
+\author{AI generated and edited by S. Schippers}
+\date{\today}
+\maketitle
+
+\section{Problem}
+
+When a free electron is captured by a hydrogenic ion via radiative
+recombination (RR), two kinds of photons are emitted:
+\begin{enumerate}
+\item \textbf{Free-bound (RR) photon}: emitted during the capture of
+  a free electron with kinetic energy $E_{\rm kin}$ and angular
+  momentum $l'$ into a bound state $|n,l\rangle$ with
+  $l = l' \pm 1$.
+\item \textbf{Cascade photons}: emitted as the excited ion decays
+  through a chain of dipole transitions down to the ground state.
+\end{enumerate}
+The goal is to compute a complete line list---photon energies,
+intensities, and natural linewidths---that can later be convolved with
+a Gaussian instrumental profile using the existing \texttt{sum\_of\_peaks}
+tool.
+
+\section{Free-Bound (RR) Photons}
+
+\subsection{Photon Energy}
+
+The RR photon energy in the ion rest frame is determined by energy
+conservation.  For high-$z$ ions, relativistic (Dirac) energies are
+used instead of the non-relativistic Bohr formula.  The Dirac binding
+energy of a hydrogenic state $|n,l\rangle$ is computed by averaging over
+the two fine-structure levels $j = l - 1/2$ and $j = l + 1/2$ with
+statistical weights $(2j{+}1)$:
+\begin{equation}
+  E_{\rm Dirac}(n,l) = \frac{2l\; E(n,l,j{=}l{-}\tfrac{1}{2})
+    + 2(l{+}1)\; E(n,l,j{=}l{+}\tfrac{1}{2})}{4l + 2}
+  \label{eq:Dirac}
+\end{equation}
+(for $l = 0$ only $j = 1/2$ exists).  Each component is
+given by:
+\begin{equation}
+  E(n,l,j) = m_e c^2
+  \left(\frac{1}{\sqrt{1 + \kappa^2}} - 1\right)
+  \label{eq:Diraccomp}
+\end{equation}
+where
+\begin{equation}
+  \kappa = \frac{z\,\alpha}{n - k + \sqrt{k^2 - (z\,\alpha)^2}}
+  \label{eq:kappa}
+\end{equation}
+with $\alpha$ the fine-structure constant, $k = j + 1/2$, and the
+result averaged over the two allowed $j$ values for $l > 0$.  The RR
+photon energy is then:
+\begin{equation}
+  E_{\rm RR}(n,l) = E_{\rm kin} - E_{\rm Dirac}(n,l)
+  \label{eq:ERR}
+\end{equation}
+where $E_{\rm Dirac}(n,l) < 0$ is the (negative) binding energy.  The
+energy now depends on both $n$ and~$l$ due to fine-structure splitting,
+lifting the $l$-degeneracy of the non-relativistic formula.
+
+\subsection{Line Strength}
+
+The RR cross section $\sigma_{\rm RR}(n,l,E_{\rm kin})$ is obtained
+from the quantum-mechanical calculation implemented in
+\texttt{sigmarrqm()}~\cite{Schippers2002c}.  The line strength of each
+RR photon equals the cross section for capture into $(n,l)$:
+\begin{equation}
+  S_{\rm RR}(n,l) = \sigma_{\rm RR}(n,l,E_{\rm kin})
+  \qquad [\text{cm}^2]
+  \label{eq:SRR}
+\end{equation}
+The output lists one entry per $(n,l)$ state (not grouped by $n$), so
+the $l$-distribution of the initial capture is preserved.
+
+\subsection{Natural Linewidth}
+
+The RR photon has no natural broadening from the final state lifetime
+(the photon energy is fixed by energy conservation), so the natural
+width is set to zero.  Any broadening comes from the experimental
+electron energy spread and is applied later via convolution.
+
+\subsection{Label Convention}
+
+Each RR line is labelled $(E,l{-}1)/(E,l{+}1) \to (n,l)$ for $l > 0$,
+or $(E,1) \to (n,0)$ for $l = 0$, indicating the allowed free-electron
+angular momenta consistent with the dipole selection rule $\Delta l =
+\pm 1$.  The letter ``$E$'' represents the continuum electron.  For a
+relativistic target state ($n \le n_{\rm rel}$) the label additionally
+carries $2j$: $(E,l{-}1)/(E,l{+}1) \to (n,l,2j)$; the continuum
+partial waves then correspond to the E1-coupled channels
+$\kappa_c = \kappa \pm 1$ and $\kappa_c = -\kappa$.
+
+\section{Cascade Photons}
+
+\subsection{Rate Matrix}
+
+The radiative cascade is governed by the coupled rate equations
+\begin{equation}
+  \frac{d p_i}{dt} = \sum_j M_{ij}\, p_j
+  \label{eq:rate}
+\end{equation}
+where $p_i$ is the population of state $i$ (index $i = n(n{-}1)/2 + l$)
+and $\bM$ is the rate matrix:
+\begin{equation}
+  M_{ii} = -\frac{1}{\tau_i}\,, \qquad
+  M_{ji} = \frac{B(i \to j)}{\tau_i} \quad (j \ne i)
+  \label{eq:M}
+\end{equation}
+with $\tau_i$ the radiative lifetime of state~$i$ and $B(i \to j)$ the
+branching ratio for the transition $i \to j$ (the sum of the E1, E2,
+and M1 rates; parity keeps E1 separate from E2/M1).  The ground state
+$(1,0)$ has $\tau = \infty$ (no decay), so its column in $\bM$ is zero.
+Among relativistic states ($n \le n_{\rm rel}$) each fine-structure
+level $j$ is a separate state, and E1 as well as E2/M1 transitions
+enter the rate matrix as individual entries $M_{ji} = A(i\to j)$.
+
+\subsection{Time-Integrated Populations}
+
+The total photon yield from each transition requires the time-integrated
+population of the upper state:
+\begin{equation}
+  \bar{p}_i = \int_0^\infty p_i(t)\, dt
+  \label{eq:pb}
+\end{equation}
+Since the ground state makes $\bM$ singular, we restrict to the
+excited-state submatrix $\bM_{\rm exc}$ of dimension
+$N_{\rm exc} = n_{\rm max}(n_{\rm max}{+}1)/2 - 1$ (all states except
+$(1,0)$).  Then:
+\begin{equation}
+  \bar{\bp}_{\rm exc} = -\bM_{\rm exc}^{-1}\, \bp_0
+  \label{eq:barp}
+\end{equation}
+where $\bp_0$ is the initial population vector (RR cross sections) and
+$\bM_{\rm exc}$ is invertible because all its eigenvalues have negative
+real parts.
+
+The linear system
+\begin{equation}
+  \bM_{\rm exc}\, \bar{\bp}_{\rm exc} = -\bp_0
+  \label{eq:lin}
+\end{equation}
+is solved by Gaussian elimination with partial pivoting
+(\texttt{matrixSolve()}).
+
+\subsection{Photon Energy}
+
+For each dipole-allowed transition $(n_1,l_1) \to (n_2,l_2)$ with
+$n_2 < n_1$ and $l_2 = l_1 \pm 1$:
+\begin{equation}
+  E_{\gamma} = E_{\rm Dirac}(n_1,l_1) - E_{\rm Dirac}(n_2,l_2)
+  \label{eq:Ecasc}
+\end{equation}
+where $E_{\rm Dirac}(n,l)$ is given by Eq.~(\ref{eq:Dirac}).  For
+high-$z$ ions the fine-structure splitting of both states is taken into
+account, so cascade photon energies differ from the non-relativistic
+Balmer/Ritz formula.
+
+\subsection{Line Strength}
+
+The total number of photons emitted in transition $i \to j$,
+integrated over all time, is:
+\begin{equation}
+  S(i \to j) = A(i \to j)\; \bar{p}_i
+  \label{eq:Scasc}
+\end{equation}
+where $A(i \to j) = \texttt{trans}(n_1,l_1,n_2,l_2)$ is the
+Einstein~$A$ coefficient (transition rate in~s$^{-1}$) and
+$\bar{p}_i$ is the time-integrated population of the upper state in
+units of s$\cdot$cm$^2$.  The product has units of cm$^2$.
+
+\subsection{Natural Linewidth}
+
+The natural Lorentzian FWHM of a spectral line is determined by the
+lifetimes of both the upper and lower states:
+\begin{equation}
+  \Gamma_{ij} = \hbar \left(\frac{1}{\tau_i} + \frac{1}{\tau_j}\right)
+  \label{eq:width}
+\end{equation}
+For transitions to the ground state ($n_2 = 1$), $\tau_j \to \infty$
+and the width reduces to $\Gamma = \hbar / \tau_i$.
+
+\subsection{Label Convention}
+
+Each cascade line is labelled $(n_1,l_1) \to (n_2,l_2)$ with the
+actual quantum numbers.  For relativistic states ($n \le n_{\rm rel}$)
+the label is $j$-resolved, $(n_1,l_1,2j_1) \to (n_2,l_2,2j_2)$, and
+the rate is $A_{\text{total}} = A_{\text{E1}}$ or
+$A_{\text{E2}}+A_{\text{M1}}$ depending on the
+selection rules.  E2/M1 lines (e.g.\ the fine-structure transition
+$2p_{3/2}\to2p_{1/2}$) therefore appear as individual spectral lines
+at their characteristic energy.
+
+\section{Relativistic treatment for $n \le n_{\rm rel}$}
+
+For high-$z$ ions (or when $n_{\rm rel} > 0$) the states with
+$n \le n_{\rm rel}$ are described by Dirac hydrogenic spinors with a
+definite total angular momentum $j$ (encoded in $\kappa$), while
+higher-$n$ states keep the non-relativistic treatment of the previous
+sections.  For such states:
+\begin{itemize}
+\item The binding energy is the Dirac value $E(n,\kappa)$; the two
+  fine-structure components of an $(n,l)$ shell are treated as
+  individual states and labelled $(n,l,2j)$ (e.g.\ $(2,1,1)$ for
+  $2p_{1/2}$ and $(2,1,3)$ for $2p_{3/2}$).
+\item The RR cross section for capture into $(n,\kappa)$ is obtained
+  from the relativistic Milne relation, summed over the E1-coupled
+  continuum channels $\kappa_c = \kappa\pm1$ and $\kappa_c = -\kappa$.
+  The direct-RR label is $(E,l{-}1)/(E,l{+}1) \to (n,l,2j)$.
+\item Cascade transitions between two relativistic states are
+  $j$-resolved: the rate is $A_{\text{total}}(n_i,\kappa_i \to
+  n_j,\kappa_j)$ (sum of E1, E2, and M1; E1 never coincides with
+  E2/M1 because of parity, so the sum equals the allowed multipole),
+  the photon energy
+  is the difference of the two Dirac binding energies, and the E2/M1
+  transitions enter both the rate matrix and the line list as
+  individual entries.
+\item Decays from a non-relativistic upper state into a relativistic
+  fine-structure doublet are distributed by statistical weight
+  $(2j{+}1)/[2(2l{+}1)]$.
+\end{itemize}
+
+The rate matrix, population solution, and line construction are
+otherwise unchanged; every transition in the final line list connects
+states with definite $j$ wherever the lower state is relativistic.
+
+\section{Output Format}
+
+The output file (\texttt{*.RRlines}) is a columnar text file compatible
+with the existing \texttt{read\_peak()} / \texttt{sum\_of\_peaks()}
+infrastructure.  Each data line is preceded by a \texttt{\#\#\#} comment
+line carrying the transition label:
+\begin{verbatim}
+#####################################################################
+### Photon spectrum resulting from the radiative cascade following
+### radiative recombination (RR lines + cascade lines)
+###
+###  hydrocal SVN revision : 2089:2090M
+###               filename : Pb82RRphotons.RRlines
+###  number of spec. lines : 2680
+###      start date & time : Fri Jul 31 11:28:21 2026
+###    nuclear charge Zeff : 82
+###   electron energy (eV) : 1e-05
+###                   nmax : 20
+### min photon energy (eV) : 0
+###  relativistic for n<=  : 0
+#####################################################################
+#### energy (eV) [1]   cross_section (cm^2) [2]   line-width (eV) [3]
+###-----------------------------------------------------------------
+### (20,0)->(19,1)
+  2.34962616e+01   6.17478755e-18   1.60586110e-01
+### (20,1)->(19,2)
+  2.36837825e+01   1.11557824e-18   1.78156903e-01
+  ...
+\end{verbatim}
+Lines starting with \texttt{\#} are skipped by \texttt{read\_peak()}
+via the \texttt{skip\_comment\_lines()} function.  The three numeric
+columns are:
+\begin{enumerate}
+\item \textbf{Energy} (eV): photon energy in the ion rest frame.
+\item \textbf{Strength} (cm$^2$): integrated line intensity
+  (cross section for RR lines; transition rate $\times$ time-integrated
+  population for cascade lines).
+\item \textbf{Width} (eV): natural Lorentzian FWHM (zero for RR lines).
+\end{enumerate}
+Lines are sorted by photon energy.
+
+\section{Convolution}
+
+The line list can be convolved with a Gaussian instrumental profile using
+\texttt{sum\_of\_peaks} (mode~2~= Lorentz).  The tool reads the
+\texttt{*.RRlines} file, prompts for a Gaussian FWHM, and produces a
+broadened spectrum as a function of photon energy.  Voigt profiles
+(Lorentzian $\otimes$ Gaussian) are obtained automatically when the
+input contains non-zero Lorentzian widths.
+
+\section{Implementation Notes}
+
+\begin{itemize}
+\item All cascade computations (fully non-relativistic and mixed
+  relativistic/non-relativistic) are handled by a single code path
+  (\texttt{cascade\_spectrum\_rel()} in \texttt{RRphotons.cxx}).  For
+  $n_{\rm rel}=0$ all states are treated non-relativistically; for
+  $n_{\rm rel}>0$ the states with $n \le n_{\rm rel}$ are treated with the
+  Dirac rates and the higher-$n$ states with the non-relativistic rates.
+\item The rate matrix $\bM$ carries the individual
+  relativistic E1, E2 and M1 transition rates (from
+  \texttt{dirac\_total\_transrate()}) and the non-relativistic dipole
+  branching ratios (from \texttt{RADRATE::branch()}) as its off-diagonal
+  entries.  Decays from non-relativistic upper states require
+  $\Delta l = \pm 1$ (dipole selection rule); decays between relativistic
+  states are restricted by the Dirac parity and angular-momentum
+  selection rules.
+\item The \texttt{RADRATE} class provides transition rates, branching
+  ratios, and lifetimes computed from hydrogenic oscillator strengths.
+  The rates are in~s$^{-1}$ and the lifetimes in~s.
+\item The linear system $\bM_{\rm exc}\, \bar{\bp} = -\bp_0$ is solved
+  by Gaussian elimination with partial pivoting
+  (\texttt{matrixSolve()} in \texttt{hydromath.cxx}).
+\item For zero electron energy ($E_{\rm kin} < 10^{-10}$~eV), the RR
+  cross section is evaluated at $E = 10^{-12}$~eV to avoid the $1/E$
+  singularity of the Wigner threshold law.
+\item The \texttt{calc\_spectrum()} function is accessible from the
+  hydrocal menu as RR cross sections group, option~4.
+\end{itemize}
+
+\begin{thebibliography}{1}
+\bibitem{Schippers2002c}
+   S. Schippers, Experimente zur Photorekombination Atomarer Ionen an Schwerionenspeicherringen (\href{https://doi.org/10.22029/jlupub-15034}{Habilitation Thesis}), Justus-Liebig-Universit\"at Gie{\ss}en, Germany, 2002, Chapter~3.
+\end{thebibliography}
+
+\end{document}

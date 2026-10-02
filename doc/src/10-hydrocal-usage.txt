@@ -1,0 +1,203 @@
+/** 
+    @file 10-hydrocal-usage.txt
+    @brief Main page of the documentation
+ 
+    @par CREATION
+    @author Stefan Schippers
+    
+    @par VERSION
+    $Id: 00-hydrocal-intro.txt 1867 2025-11-13 08:12:07Z iamp $
+
+ */ 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/** @page usage Usage and Examples
+ *
+ * The program can be invoked by simply typing <tt>hydrocal</tt> on the command line. There are no command-line parameters.
+ * There are several groups of subprograms which can be selected from a tree-like menu structure (just explore or see <tt>[hydrocal.cxx](../../src/hydrocal.cxx)</tt> for details).
+ * The program prompts for all necessary input. This input can also be contained in a file, e.g. <tt>example.hcin</tt>. You can then
+ * run hydrocal as follows
+ * @verbatim
+  hydrocal < example.hcin
+  @endverbatim
+ *
+ * Here below are links to some examples for input and the associated generated output.
+ * - @subpage Hlifetimes (TEST=Hlifetimes)
+ * - @subpage U91DiracRates (TEST=U91DiracRates)
+ * - @subpage Ds110RR (TEST=Ds3p32DiracRR)
+ * - @subpage U92RR (TEST=U92RR)
+ * - @subpage Pb82RRphotons (TEST=Pb82RRphotons)
+ * - @subpage fieldionization (TEST=S3soft)
+ * - @subpage flatmax (TEST=Xe52lorentz)
+ * - @subpage conv   (TEST=O2cooler)
+ * - @subpage deconv (TEST=Ne2deconv)
+ * - @subpage FranckCondon (TEST=CNplus)
+ *
+ * The examples are also used a test cases. This is useful for checking the correctnes of the computations after having made changes to the code.
+ * The output of hydrocal can be compared with the output of the test cases using
+ * @verbatim
+   cd ~/hydrocal/build
+   make run-tests (to run all tests)
+   make run-tests TEST=S3soft (to run only the test S3soft)
+   @endverbatim
+ *
+ * Note that some tests are rather time consuming. Be patient!
+ *
+ ***************************************************************************************************************
+ * @page Hlifetimes Lifetimes of H(n,l) levels
+ *
+ * To run this example use
+ * @verbatim
+  hydrocal < Hlifetimes.hcin
+  @endverbatim
+ *
+ * Hydrocal input file (<tt>Hlifetimes.hcin</tt>):
+ * @verbinclude Hlifetimes.hcin
+ *
+ * Hydrocal output file (<tt>Hlifetimes.tau</tt>):
+ * @verbinclude Hlifetimes.tau
+ * Lifetimes of H(n,l) levels in seconds.
+ ***************************************************************************************************************
+ * @page U91DiracRates Fully relativistic transition rates in H-like U91+
+ *
+ * To run this example use
+ * @verbatim
+  hydrocal < U91DiracRates.hcin
+  @endverbatim
+ *
+ * Hydrocal input file: <tt>U91DiracrRates.hcin</tt>  @verbinclude U91DiracRates.hcin
+ *
+ * Hydrocal output file: <tt>U91DiracRates.dtr</tt> @verbinclude U91DiracRates.dtr
+ *
+ * For computational details see [DiracTransitionRates.pdf](../misc/DiracTransitionRates.pdf).
+ *
+ ***************************************************************************************************************
+ * @page Ds110RR Relativistic hydrogenic cross section for RR into Ds110+(3p3/2)
+ *
+ * To run this example use
+ * @verbatim
+  hydrocal < Ds3p32DiracRR.hcin
+  @endverbatim
+ *
+ * Hydrocal input file: <tt>Ds3p32DiracRR.hcin</tt>  @verbinclude Ds3p32DiracRR.hcin
+ *
+ * Comparision between relativistic RR cross section (Dirac, full retardation, point nucleus, see DiracRR.cxx)
+ * with interpolated cross sections using the tabulated values of Ichihara @& Eichler,
+ * [At. Data. Nucl. Data Tab. 54, 1 (2000)](https://doi.org/10.1006/adnd.1999.0825), who accounted
+ * for the finite nuclear size in addition (causing discrepancies on the (sub-)percent level).
+ * The latter cross sections are zero at energies where there are no tabulated values.
+ *
+ * Hydrocal output file: <tt>Ds3p32DiracRR.sig</tt>  @verbinclude Ds3p32DiracRR.sig
+ *
+ *
+ ***************************************************************************************************************
+ * @page U92RR Total merged-beams rate coefficient for RR of bare U92+
+ *
+ * To run this example use
+ * @verbatim
+  hydrocal < U92RR.hcin
+  @endverbatim
+ *
+ * Hydrocal input file: <tt>U92RR.hcin</tt>  @verbinclude U92RR.hcin
+ *
+ * Hydrocal output file: <tt>U92RR.crr</tt>  @verbinclude U92RR.crr
+ *
+ ***************************************************************************************************************
+ * @page Pb82RRphotons Photon spectrum resulting from RR of Pb82+ and the ensuing emission cascade
+ *
+ * To run this example use
+ * @verbatim
+  hydrocal < Pb82RRphotons.hcin
+  @endverbatim
+ *
+ * Hydrocal input file: [<tt>Pb82RRphotons.hcin</tt>](../examples/Pb82RRphotons.hcin).
+ *
+ * The spectrum is calcluated in two steps. First a list of lines
+ * is produced: [<tt>Pb82RRphotons.RRlines</tt>](../examples/Pb82RRphotons.RRlines)
+ * (for details see [RRPhotonSpectrum.pdf](../misc/RRPhotonSpectrum.pdf)).
+ * Subsequently each line is colvolved with a gauission. This results in the spectrum in the file 
+ * [<tt>Pb82RRphotons.dat</tt>](../examples/Pb82RRphotons.dat).
+ *
+ ***************************************************************************************************************
+ * @page fieldionization Modelling field ionization in a storage ring
+ *
+ * To run this example use
+ * @verbatim
+  hydrocal < S3soft.hcin
+  @endverbatim
+ *
+ * The code can also follow dexcitation cascades. Some explanations of the computational methods are
+ * provided by the document [Cascade Calculation Methods in Cooler Fractions](../misc/CascadeCalculationInCoolerFractions.pdf).
+ *
+ * The rather complex input file (<tt>S3soft.hcin</tt>) can be created with <tt>hydrocal->4->5</tt>.
+ * This also produces the file <tt>[S3soft.txt](../examples/S3soft.txt)</tt>,
+ * which contains the list of input parameter values used in the setup of the hydrocal input file <tt>S3soft.hcin</tt>:
+ * @verbinclude S3soft.hcin
+ *
+ * Hydrocal output files (<tt>S3soft.fn</tt> und <tt>S3soft.fnl</tt>):
+ * @verbinclude S3soft.fn
+ * @verbinclude S3soft.fnl
+ *
+ ***************************************************************************************************************
+ * @page flatmax Convolution of cross section data with a flattened maxwellian
+ *
+ * This example requires additional the input data file <tt>[Xe53DRtheo4.dat](../examples/Xe53DRtheo4.dat)</tt>,
+ * which contains DR resoance parameters (energy, strength, width).
+ *
+ * Copy this file to your working directory and run the example with 
+ * @verbatim
+  hydrocal < Xe53lorentz.hcin
+  @endverbatim
+ *
+ * Hydrocal input file (<tt>Xe53lorentz.hcin</tt>):
+ * @verbinclude Xe53lorentz.hcin
+ *
+ * Hydrocal output file (<tt>Xe53lorentz.cdr</tt>):
+ * @verbinclude Xe53lorentz.cdr
+ *
+ * ***************************************************************************************************************
+ * @page conv Cooler convolution of Autostructure DR data
+ *
+ * This example requires additional the input data file <tt>[O2DN1.bdr](../examples/O2DN1.bdr)</tt>,
+ * which has been created by @ref pageAUTOS. Copy this file to your working directory and run the example wrrrrrrrrith 
+ * @verbatim
+  hydrocal < O2cooler.hcin
+  @endverbatim
+ *
+ * Hydrocal input file (<tt>O2cooler.hcin</tt>):
+ * @verbinclude O2cooler.hcin
+ *
+ * Hydrocal output file (<tt>O2DN11.mcr</tt>):
+ * @verbinclude O2DN11.mcr
+ *
+ ***************************************************************************************************************
+ * @page deconv Cooler deconvolution of experimental merged-beams rate coefficients
+ *
+ * This example requires additional the input data file <tt>[Ne2deconv.inp](../examples/Ne2deconv.inp)</tt>. Copy this file to your working directory and run the example with 
+ * @verbatim
+  hydrocal < Ne2deconv.hcin
+  @endverbatim
+ *
+ * Hydrocal input file (<tt>Ne2deconv.hcin</tt>):
+ * @verbinclude Ne2deconv.hcin
+ *
+ * Hydrocal output file (<tt>Ne2deconv.dcv</tt>):
+ * @verbinclude Ne2deconv.dcv
+ *
+ ***************************************************************************************************************
+ * @page FranckCondon Frank Condon factors and vibrationally resolved absorption spectra
+ *
+ * To run this example use
+ * @verbatim
+  hydrocal < CNplus.hcin
+  @endverbatim
+ *
+ * Hydrocal input file (<tt>CNplus.hcin</tt>):
+ * @verbinclude CNplus.hcin
+ *
+ * Hydrocal output file (<tt>Ne2join.dcv</tt>):
+ * @verbinclude CNplus.fcf
+ *
+ */
+

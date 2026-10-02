@@ -1,0 +1,38 @@
+/** 
+    @file 20-hydrocal-gui.txt
+    @brief Documentation of hydrocalgui
+ 
+    @par CREATION
+    @author Stefan Schippers
+    
+    @par VERSION
+    $Id: 20-hydrocal-gui.txt 2052 2026-07-20 15:39:35Z iamp $
+
+ */ 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/** @page pageGUI hydrocal GUI
+ *
+ * In addition to terminal input, there is also the possibility to use a GUI for some of the most frequently used program options.
+ * The hydrocalgui is a stand-alone program, which interacts with hydrocal via shell commands.
+ * Note that the gui code needs to be adapted whenever the hydrocal input for one of the served options changes.
+ * To invoke the GUI use the command <tt>'hydrocalgui'</tt>. The following window will pop up:
+ *
+ * @image html img/hcgui-entry.png
+ *
+ * Select the desired option by clicking on the respective blue bar. For example, clicking 'CRYRING Monte-Carlo' will bring up the following window:
+ *
+ * @image html img/hcgui-cryring.png
+ *
+ * Note that each input must be terminated by hitting the <tt>'return'</tt> key. After having filled in all input values,
+ * just click the green <tt>'execute'</tt> button to run hydrocal.
+ * The <tt>'execute'</tt> button turns grey und stays so during the execution of hydrocal.
+ * At the same time, all input values will be stored on disk (location: <tt>~/.hydrocalgui</tt>), from where they will be reloaded upon restarting the GUI.
+ * After the termination of the hydrocal run, its terminal output will appear in the rectangular field
+ * below the <tt>'execute'</tt> button, which at this occasion will turn green again.
+ *
+ * The settings can be stored and retrieved with the <tt>'save'</tt> and  <tt>'load'</tt> buttons, respectively.
+ *
+ * For selecting another GUI option, use the grey <tt>'reset'</tt> button at the top left, which will revert the view to the entry view of the GUI.
+ */

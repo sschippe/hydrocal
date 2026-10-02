@@ -1,0 +1,3133 @@
+C N. R. BADNELL     PROGRAM ADASPI       UoS v1.26              02/08/22
+C
+C***********************************************************************
+C
+C         POST-PROCESSOR FOR  ** AUTOSTRUCTURE ** (ADAS ONLY)
+C         ***************************************************
+C
+C  CALCULATES LS/IC PHOTOIONIZATION DATA IN ADF39 FORMAT.
+C
+C***********************************************************************
+C
+      PROGRAM MAIN
+C SUN TIME
+      REAL*4 TARRY(2),TIME
+C
+CC      OPEN(5,FILE='adasin')          !STDIN
+      OPEN(6,FILE='adasout')          !STDOUT
+C      OPEN(10,FILE='adf39l')          !ADAS LEVEL OUTPUT
+C      OPEN(11,FILE='adf39px')         !ADAS PARTIAL XSCN OUTPUT
+C      OPEN(12,FILE='adf39tx')         !ADAS TOTAL XSCN OUTPUT      !TOT
+C      OPEN(20,FILE='adf39lu',FORM='UNFORMATTED')
+C      OPEN(21,FILE='adf39pxu',FORM='UNFORMATTED')
+C      OPEN(22,FILE='adf39txu',FORM='UNFORMATTED')                  !TOT
+C
+C on, onu FILES CONTAIN LEVEL INFO. 
+C               IF NOT PRESENT adf39l IS NOT WRITTEN.
+C               IF PRESENT THEN NV,LV SET MUST MATCH THOSE OF opn, opnu.
+C
+C      OPEN(70,FILE='on')             !AUTOS DATA FILE (FORMATTED)
+C OR
+C      OPEN(70,FILE='onu',FORM='UNFORMATTED') !AUTOS DATA FILE (UNFORM)
+C
+C opn, opnu CONTAIN PHOTOIONIZATION DATA.
+C      OPEN(80,FILE='opn')             !AUTOS DATA FILE (FORMATTED)
+C OR
+C      OPEN(80,FILE='opnu',FORM='UNFORMATTED') !AUTOS DATA FILE (UNFORM)
+C
+      CALL POSTP
+C
+C SUN TIME
+      DUM=DTIME(TARRY)
+      TIME=TARRY(1)
+C
+C CRAY TIME
+CCRAY CALL SECOND(TIME)
+C
+      TIME=TIME/60.0
+      WRITE(6,999)TIME
+ 999  FORMAT(//1X,'CPU TIME=',F9.3,' MIN')
+C
+      WRITE(6,*) 'PROGRAM ADASPI: NORMAL END'
+C
+      CLOSE(6)
+C      CLOSE(10)
+C      CLOSE(11)
+C      CLOSE(12)
+C      CLOSE(20)
+C      CLOSE(21)
+C      CLOSE(22)
+C      CLOSE(70)
+C      CLOSE(80)
+C
+      END
+C
+C***********************************************************************
+C
+      SUBROUTINE POSTP
+C
+      IMPLICIT REAL*8 (A-H,O-Z)
+C
+      PARAMETER (NDIM5=500001)                   !ELECTRON TARGET LEVELS
+      PARAMETER (NDIM13=2000000)              !NO OF LEVELS EXC CORR ETC
+C
+      PARAMETER (DZERO=0.0D0)
+      PARAMETER (DONE=1.0D0)
+      PARAMETER (TINYF=1.D-5)
+      PARAMETER (TINYE=1.D-3)                                       !TOT
+C
+      PARAMETER (TOLC=1.1D-7)
+C
+      CHARACTER*4 NAME,RADBF,COD(20),RESOLV
+      CHARACTER MATCH*3,RAD*6,PABS*3,PRINT*6
+C
+      LOGICAL BCA,BLS,BIC,BMATCH,BFORM,BPRINT,boldf
+C
+      DIMENSION IWS(NDIM5),IWL(NDIM5),IWJ(NDIM5),JCF(20),E1C(NDIM5)
+     X         ,TOLBI(0:NDIM5)
+C
+      NAMELIST/ONE/NTAR,NTAR0,IPRINT,NCUT,LCUT,JCFJ,NRSLMX,IRSLMX,PRINT
+     X            ,NMIN,LMIN,NMAX,LMAX,MATCH,JCF,NTARP,NTART,RADBF,UNITS
+     X            ,NTAR1,NTAR2,LSPI,J2PI        !COMPATIBILITY ADASRR/PE
+     X            ,RAD,PABS,RESOLV,JRSLMX,nc !COMPATIBILITY ADASPE
+     x   ,boldf
+C
+      NAMELIST/TWO/EBDMIN,EBDMAX,TOLR,TOLB,DELTAF,DELTAE,PFACT,TEAPOT
+     X            ,NLAG,EWIDTH,NGAUSS,EMIN,EMAX
+     X            ,NBIN,ERES,NR1,RMIN,NR2,TOLN     !COMPATIBILITY ADASPE
+     X            ,NNCOR,NLCOR,ACOR,RCOR           !COMPATIBILITY ADASPE
+C
+C
+C SET-UP DEFAULTS IF NO UNIT5 FILE READ
+C
+      RADBF='   '
+      MATCH='NO'
+      NTAR0=0
+      NTAR1=0
+      NTAR2=0
+      NTARP=NDIM5
+C      NTART=0                         !UNCOMMENT IF TOT COMMENTED-OUT
+      NTART=NDIM5                                                 !TOT
+C
+      IRD=0
+      BCA=.FALSE.
+      BLS=.FALSE.
+      BIC=.FALSE.
+      DO I=1,20
+        COD(I)='    '
+        JCF(I)=0
+      ENDDO
+C
+C READ HEADER TO DETERMINE IF CA, LS OR IC RUN (/CA/, /LS/ OR /IC/), 
+C THE REST OF THE LINE IS FOR COMMENT, IT IS ADDED TO THE END OF ADF39.
+C
+C      INQUIRE (FILE='adasin',EXIST=EX)
+C      IF(.NOT.EX)GO TO 1003
+C      OPEN(5,FILE='adasin')          !STDIN
+C
+      READ(5,1000)COD
+ 1000 FORMAT(20A4)
+      WRITE(6,1001)COD
+ 1001 FORMAT(1X,50('-'),'ADASPI',50('-')//1X,20A4//1X,50('-'),'(V1.26)'
+     X,50('-')//)
+C
+      IRD=1
+      BCA=COD(1).EQ.'/CA/'
+      BLS=COD(1).EQ.'/LS/'
+      BIC=COD(1).EQ.'/IC/'
+      IF(.NOT.BCA.AND..NOT.BLS.AND..NOT.BIC.AND.COD(1).NE.'/  /')THEN
+        WRITE(6,1002)COD(1)
+ 1002   FORMAT(' ***INPUT CODE ERROR: ONLY /  /, /CA/, /LS/ OR /IC/ ARE'
+     X  ,' ALLOWED, WHILE YOUR INPUT IS "',A4,'"')
+        STOP 'INPUT ERROR ON UNIT5'
+      ENDIF
+C 1003 CONTINUE
+C
+      NTAR=IRD-1
+C
+C
+C***********************NAMELIST-ONE************************************
+C
+C ***NOTHING IS COMPULSORY, BUT...NTAR HIGHLY RECOMMENDED
+C-----------------------------------------------------------------------
+C
+C  ***OPTIONAL INPUT DESCRIBING ELECTRON TARGET: IF
+C
+C               ****IN ALL CASES ABS(NTAR) ELECTRON TARGET
+C               STATISTICAL WEIGHTS ARE READ AND ASSIGNED
+C               TO, MAYBE, THE LOWEST ABS(NTAR) TARGETS.****
+C
+C     NTAR  .NE. 0 |NTAR| ELECTRON CONTINUUM TARGETS LABELLED & WRITTEN. 
+C           .EQ. 0 IS ALLOWED, NO CONTINUUM INFO WRITTEN THEN (DEFAULT).
+C           .LT. 0 ALL ELECTRON TARGETS FOUND ARE WRITTEN, NO STAT.
+C                  WEIGHTS ABOVE -NTAR, OF COURSE.
+C                  USEFUL IF NMETAP/J USED IN AS, THEN NEAR DEGENERATE
+C                  TARGETS GET COMBINED BY AS TOLB.
+C
+C                  *N.B.* OLD STYLE OP INPUT ALSO SET NTAR0=NTAR 
+C                  INTERNALLY THEN (SEE NEXT). NTAR0 NOW SET EXPLICITLY
+C                  BY USER IF NEEDED. UNCOMMENT OLD CODE "COP" IF NEED
+C                  TO RUN OLD INPUT FILES UNMODIFIED.
+C
+C     MATCH = 'NO' DEFAULT, 'YES' - ACTION DEPENDS ON NTAR0:
+C
+C     NTAR0 = 0 ASSUMES THE SAME SET OF  ELECTRON TARGETS IN ALL DATA
+C               BLOCKS (DEFAULT). THEN
+C            MATCH = 'YES'   ALLOWS FOR A COLLISION RUN RESTRICTED
+C               BY SYMMETRY (E.G. NAST/J) SO THAT NOT ALL TARGETS
+C               CAN FORM THESE CHANNELS. UNIT5 TARGETS ARE SKIPPED
+C               UNTIL A MATCH IS FOUND.
+C            MATCH = 'NO'    JUST FLAGS ANY MIS-MATCHES AND STOPS IF NOT
+C               ALL REQUESTED TARGETS HAVE BEEN FOUND.
+C
+C     NTAR0 <> 0 DOES NOT ASSUME SAME SET OF TARGETS IN ALL DATA BLOCKS.
+C                HISTORICALLY, FLAGGED BY NTAR<0 THEN NTAR0=NTAR. BUT
+C                SIGN NO LONGER MATTERS, UNLESS "COP" UNCOMMENTED.
+C            MATCH = 'NO'   THEN IN THIS CASE THE LOWEST |NTAR0|
+C               TARGETS ARE ASSUMED TO BE COMMON.
+C               IF SAME TARGET >|NTAR0| IS IN TWO DATA BLOCKS IT WILL BE
+C               LISTED  TWICE (OR MORE) - NO ERROR, JUST LONGER ADF39L
+C               FILE.
+C               SET |NTAR0|=1 IF ALL DISTINCT.                 
+C            MATCH = 'YES' ALL COMMON TARGETS ARE COMBINED.
+C               THIS MAY COMBINE NEAR DEGENERATE TARGETS-NO GREAT ERROR.
+C               ACTUAL (NON-ZERO) VALUE OF NTAR0 IS NOT USED (CURRENTLY)
+C
+C     NTARP = NO. OF ELECTRON TARGETS FOR WHICH PARTIALS ARE WRITTEN.
+C             DEFAULT, ALL POSSIBLE.
+C
+C     NTART= NO. OF ELECTRON TARGETS FOR WHICH PARTIALS ARE SUMMED-OVER
+C            TO FORM TOTALS. DEFAULT, ALL POSSIBLE.
+C
+C   CURRENTLY, NTAR, NTARP, NTART ARE INDEPENDENT OF EACH OTHER. SO, IF
+C         NTARP .GT. NTAR THEN THERE IS NO LABELLING OF THOSE .GT. NTAR
+C         AND IF NTART .NE. NTARP THEN THE SUM OF THE PARTIALS FILE
+C         WILL NOT GIVE THE TOTALS FILE (CAN HAVE NTART.GT.NTARP).
+C
+C     IF HEADER /CA/, /LS/ OR /IC/ THEN, *AFTER* NAMELIST-TWO, READ
+C     ABS(NTAR) CFG/TERM/LEVEL INFO AS OUTPUT BY AS CAVES/TERMS/LEVELS
+C     FILES. VIZ.
+C   ***            IW  IPAR       CA
+C       OR
+C   ***      IWS  IWL  IPAR       LS
+C       OR
+C   ***      IWJ  IPAR IWS  IWL   IC  (HERE IWJ=2J).
+C     THIS INFO IS WRITTEN TO THE ADF39L FILE.
+C
+C     IF HEADER /  / THEN NO TARGET INFO READ/WRITTEN, 
+C                    DEFAULT IF NO UNIT5
+C
+C     NRSLMX -- IS THE MAX N OF RESOLVED DATA, DEFAULT=6. 
+C               N.B. THERE IS NO BUNDLED-N DATA FOR HIGHER-N, UNLIKE RR.
+C
+C     IRSLMX -- IS THE MAX IRSL INDEX OF RESOLVED DATA.
+C               THIS IS ON A PER-FILE BASIS (SINCE THE MASTER LEVEL LIST
+C               IS ONLY COMPILED AFTER ALL DATA HAS BEEN READ-IN AND 
+C               PROCESSED). SO, IF THE FIRST IRLSMX LEVELS ARE NOT THE
+C               SAME IN ALL FILES THEN THERE WILL BE SOME ADDITIONAL
+C               MASTER LEVELS PRESENT (OR MISSING, DEPENDING ON WHICH
+C               FILE YOU BASED YOUR CHOICE). 
+C               AGAIN, ONLY RESOLVED DATA EXISTS FOR PI.
+C
+C     RADBF .EQ. 'B-F'  INCLUDE ONLY PHOTOIONIZATION FROM TRUE BOUND 
+C                       STATES. DEFAULT
+C           .EQ. 'F-F' OR 'ALL'  B-F PLUS PHOTOIONIZATION FROM 
+C                                         AUTOIONIZING STATES
+C
+C-----------------------------------------------------------------------
+C
+C  ***VARIABLES HERE-ON ARE NORMALLY FOR TESTING ETC. ONLY***
+C
+C     JCFJ .GT. 0   NEGLECTS PI INTO CONFIGS .GT. JCFJ.
+C                            DEFAULT: INCLUDE ALL.
+C     JCF(J) AS JCFJ BUT FOR UNIT J SO DIFFERENT VALUES CAN BE USED.
+C
+C     IPRINT=UNIT6 PRINT LEVEL
+C           .GE. 0, DETAILED PRINTOUT OF EACH PARTIAL CROSS SECTION
+C           .EQ.-1, NL CROSS SECTIONS
+C
+C     PRINT='FORM' FORMATTED adf39l,px,tx files (DEFAULT)
+C          ='UNFORM' UNFORMATTED adf39lu,pxu,txu files.
+C
+C     NCUT(OR MAX) .GT. 0 IGNORES CONTRIBUTIONS FROM N .GT. NCUT(OR MAX)
+C     LCUT(OR MAX) .GE. 0         "         "        L .GT. LCUT(OR MAX)
+C     NMIN .GT. 0, IGNORES CONTRIBUTIONS FROM N .LT. NMIN
+C     LMIN .GE. 0,         "         "        L .LT. LMIN
+C                            DEFAULT: INCLUDE ALL.
+C
+C     UNITS ENERGY UNITS USED FOR EWIDTH AND CONVOLUTED ENERGIES *ONLY*:
+C           13.606 FOR EV,1.0 FOR RYDBERGS (DEFAULT).
+C
+C
+C****************************END-ONE************************************
+C
+C
+      PRINT='FORM'
+      IPRINT=-1
+      NCUT=-66
+      LCUT=-77
+      JCFJ=0
+      NRSLMX=6
+      IRSLMX=-1
+      NMIN=-10
+      LMIN=-10
+      NMAX=-10
+      LMAX=-10
+      UNITS=DONE
+      boldf=.false.
+C
+C-----------------------------------------------------------------------
+C
+      IF(IRD.NE.0)READ(5,ONE)
+C
+C-----------------------------------------------------------------------
+C
+      IF(UNITS.EQ.DZERO)STOP 'ERROR: UNITS MUST BE NON-ZERO!'
+      UNITS=ABS(UNITS)                           !NEGATIVE FLAG NOT USED
+C
+      IF(IRSLMX.GE.NDIM13)IRSLMX=NDIM13-1       !CATCH USER SET ALL LBIN
+      IF(IRSLMX.LT.0)IRSLMX=NDIM13                   !LBIN=1
+C
+      IF(NTAR.GE.0)NTAR=MAX(NTAR,NTAR1,NTAR2)        !COMPATIBILITY MODE
+      NTAR0=-IABS(NTAR0)                             !EITHER SIGN INPUT
+C
+      IF(NTAR.LT.0.AND.NTAR0.EQ.0)THEN
+C       WRITE(0,*)'N.B. TO OBTAIN OLD-STYLE OP OPERATION SET NTAR0=NTAR'
+        WRITE(6,*)'N.B. TO OBTAIN OLD-STYLE OP OPERATION SET NTAR0=NTAR'
+      ENDIF
+C
+COP      NTAR0=NTAR                                  !HISTORIC VIA NTAR
+COP      NTAR=ABS(NTAR)
+C
+      IF(NTART.LT.0)NTART=0
+      IF(NTARP.LT.0)NTARP=0
+C
+      BMATCH=MATCH.EQ.'YES'
+C
+      IF(RADBF.EQ.'   ')RADBF='B-F'
+      IF(RADBF.EQ.'B-F')THEN      !BOUND-FREE ONLY
+        TOLR=0
+      ELSEIF(RADBF.EQ.'F-F'.OR.RADBF.EQ.'ALL')THEN   !B-F PLUS FREE-FREE
+        TOLR=99999
+      ELSE
+        WRITE(0,*)'***ERROR: UNRECOGNIZED RADBF OPTION:',RADBF
+        STOP'***ERROR: UNRECOGNIZED RADBF OPTION!'
+      ENDIF
+C
+      IF(NMAX.GT.0)NCUT=NMAX
+      IF(NCUT.LE.0)NCUT=NRSLMX
+      IF(LMAX.GT.-1)LCUT=LMAX
+C
+      IF(JCFJ.LE.0)JCFJ=999999
+      JCFX=0
+      NAME='JCF*'
+      IF(JCFJ.NE.999999)THEN
+        JCFX=JCFJ
+        NAME='JCFJ'
+      ENDIF
+C
+      WRITE(6,11) NTAR,NTAR0,NMIN,LMIN,NCUT,LCUT,NAME,JCFX
+  11  FORMAT(/' NTAR=',I5,3X,'NTAR0=',I5,3X,'NMIN=',I4,3X,'LMIN=',I3
+     X,3X,'NMAX=',I4,3X,'LMAX=',I3,3X,A4,'=',I6)
+C
+      IF(NCUT.LT.1)NCUT=100000
+      IF(LCUT.LT.0)LCUT=100000
+C
+C
+C*************************NAMELIST-TWO**********************************
+C
+C ***NOTHING IS COMPULSORY
+C-----------------------------------------------------------------------
+C
+C    NECOR .EQ. 0: THEORETICAL POSITIONS ARE USED - FIXED IN ADASPI.
+C
+C    TEAPOT :      IF GROUND STATE OF ION MISSING, SET TEAPOT TO
+C                  TO ITS TOTAL ENERGY (RYD) SO CODE CAN DIFFERENTIATE
+C                  BETWEEN TRUE BOUND AND AUTOIONIZING STATES.
+C
+C-----------------------------------------------------------------------
+C
+C    |EWIDTH| .GT. TOLC (1.1D-7 RYD, CURRENTLY) THEN CONVOLUTE CROSS
+C                  SECTIONS WITH GAUSSIAN DISTRIBUTION OF EWIDTH UNITS.
+C                  PARTIALS AND TOTALS OUTPUT TO XDPIPAR AND XDPITOT.
+C             .LE. TOLC THEN NO CONVOLUTION.
+C                  SIGN IS FOR CONSISTANCY WITH ADASPE (NO DIFF. HERE)
+C
+C     EMIN -- MINIMUM PHOTON ENERGY IN UNITS (DEFAULT ZERO)
+C             N.B. ANY CROSS SECTIONS LESS THAN EMIN ARE OMITTED 
+C                  FROM XDPIPAR, XDPITOT.
+C
+C     EMAX -- MAXIMUM PHOTON ENERGY IN UNITS (DEFAULT MAX ELECTRON ENRG)
+C             N.B. ANY CROSS SECTIONS GREATER THAN EMAX ARE OMITTED
+C                  FROM XDPIPAR, XDPITOT.
+C
+C     EMIN, EMAX ARE THE SAME FOR *ALL* PHOTON TARGETS, SINCE THE
+C     RELEVANT QUANTITY IS THE PHOTON ENERGY RELATIVE TO THE INITIAL
+C     STATE, *NOT* RELATIVE TO THE GROUND STATE. SO, ENSURE EMIN IS
+C     SMALL ENOUGH TO INCLUDE ANY/ALL  DESIREDCROSS SECTIONS ACCESSED 
+C     FROM EXCITED PHOTON TARGETS. I.E. EMIN=ZERO IS THE SAFE CHOICE.
+C
+C-----------------------------------------------------------------------
+C
+C  ***VARIABLES HERE-ON ARE NORMALLY FOR TESTING ETC. ONLY***
+C
+C     NGAUSS .GT. 0 CONVOLUTION POINTS BETWEEN EMIN AND EMAX.
+C            .LT. 0 -NGAUSS CONVOLUTION POINTS PER EWIDTH.
+C            .EQ. 0 200/1000 CONVOLUTION POINTS BETWEEN EMIN AND EMAX.
+C
+C     EBDMIN, EBDMAX -- ONLY EVALUATE PHOTOIONIZATION CROSS SECTION
+C         FROM INITIAL ATOM (BINDING) ENERGIES (RELATIVE TO LOWEST
+C         CONTINUUM) IN THIS ENERGY (RYD) RANGE.
+C         DEFAULT: (-1.0D30, 1.0D30) I.E. NO RESTRICTION.
+C
+C     TOLR  CONTROLS INITIAL STATES TO PHOTOIONIZE FROM:
+C           INITIAL STATES UP TO TOLR RYD ABOVE THE IONIZATION LIMIT.
+C           DEFAULT = 0.0 SO ONLY TRUE BOUND INITIAL STATES CONSIDERED.
+C
+C     TOLB=MAX(1.5D-7,1.0D-9*DZ*NZ), DEFAULT, UNLESS ENERGIES IN adasin.
+C         SET TOLB COARSER TO HANDLE USER SUPPLIED IMBALANCED CONTINUUM
+C         EXPANSIONS, I.E. IF NOT ALL PARTIAL WAVES HAVE SAME TARGET CI.
+C
+C     DELTAF IS THE MINIMUM VALUE OF THE OSCILLATOR STRENGTH RETAINED
+C            FOR OUTPUT TO ADF39PX/TX. DEFAULT 1.D-5.
+C
+C     DELTAE IS THE FRACTIONAL CHANGE FROM THE LAST (THRESHOLD) ENERGY
+C            POINT BEFORE A NEW THRESHOLD PAIR IS ADDED. SHOULD BE
+C            CHOSEN SO THAT THE ABSOLUTE CHANGE IS SMALLER THAN THE
+C            RESOLUTION REQUIRED FOR APPLICATION. DEFAULT 1.D-5
+C
+C     PFACT: IF PFACT*PCS(IE).GT.PCS(IE-1) THEN DROP ENERGY IE FROM
+C         PCS TABULATION. TEST IS DONE ON FIRST PCS ONLY.
+C         DEFAULT: -1., ALL ENERGIES INCLUDED.
+C     PFACT=1.2 IS A REASONABLE TEST.
+C
+C     NLAG: NO OF POINTS USED IN LAGRANGE INTERPOLATION OF ELECTRON
+C           ENERGY MESH ONTO PHOTON ENERGY MESH, FOR TOTALS. DEFAULT 2.
+C           IF USING (DEFAULT) AS ENERGY MESH OF EQUAL POINTS PER DECADE
+C           IF .LE.0 THEN, USES 2 IF .LE. 4 ENERGIES PER DECADE, ELSE 4.
+C
+C***************************END-TWO*************************************
+C
+C
+      TOLB=-1.0D0
+      EBDMIN=-1.0D30
+      EBDMAX=1.0D30
+      PFACT=-1.0D0
+      DELTAF=TINYF
+      DELTAE=TINYE                                                  !TOT
+      TEAPOT=DZERO
+      NLAG=2
+      EWIDTH=DZERO
+      NGAUSS=0
+      EMIN=DZERO
+      EMAX=-DONE
+C
+C-----------------------------------------------------------------------
+C
+      IF(IRD.NE.0)READ(5,TWO)
+C
+C-----------------------------------------------------------------------
+C
+      TOLB0=TOLB
+      IF(TOLR.LT.-1.D5)TOLR=DZERO
+      TOLBI(0)=DZERO
+      DO I=1,NDIM5
+        TOLBI(I)=TOLB0
+      ENDDO
+C
+      WRITE(6,13)EBDMIN,EBDMAX,TOLB,TOLR,DELTAF,DELTAE,TEAPOT
+  13  FORMAT(/1X,'EBDMIN=',1PE10.3,3X,'EBDMAX=',E10.3
+     X,3X,'TOLB=',0PF12.8,3X,'TOLR=',F10.4,3X,'DELTAF=',F10.7
+     X,3X,'DELTAE=',F10.7,3X,'TEAPOT=',F10.1)
+C
+      EWIDTH=ABS(EWIDTH)
+      IF(EWIDTH.GT.DZERO)THEN
+        IF(EWIDTH/UNITS.GT.TOLC)WRITE(6,10)EWIDTH
+  10    FORMAT(/' CROSS SECTIONS CONVOLUTED WITH EWIDTH=',F8.4,
+     X          ' FWHM GAUSSIAN DISTRIBUTION')
+        EWIDTH=EWIDTH/UNITS
+        EMIN=EMIN/UNITS
+        EMAX=EMAX/UNITS
+        OPEN(13,FILE='XDPIPAR')
+        OPEN(14,FILE='XDPITOT')
+        IF(NTARP.LE.0.OR.NTARP.EQ.NDIM5)THEN
+          LMAX=IABS(NTAR)               !NOTE CHANGE OF MEANING FOR LMAX
+        ELSE
+          LMAX=NTARP                  !PARTIAL ELECTRON TARGETS RESOLVED
+        ENDIF
+        LBIN=1                                           !PHOTON TARGETS
+        IF(IRSLMX.LT.NDIM13)LBIN=IRSLMX
+        WRITE(13,32)LBIN,LMAX
+  32    FORMAT('# PARTIAL PHOTOIONIZATION CROSS SECTIONS FROM',I5,
+     X         ' PHOTON TARGETS TO',I5,' ELECTRON TARGETS')
+        WRITE(14,34)LBIN
+  34    FORMAT('# TOTAL PHOTOIONIZATION CROSS SECTIONS FROM  ',I5,
+     X         ' PHOTON TARGETS ')
+      ELSE                                            !ONLY ADF39 OUTPUT
+        LMAX=0
+        LBIN=0
+        EWIDTH=DZERO
+      ENDIF
+
+      ISIGN=1
+      IF(NTAR.LT.0)ISIGN=-1
+      IMAX=MIN(ISIGN*NTAR,NDIM5)
+      DO I=1,NDIM5
+        E1C(I)=DZERO
+      ENDDO
+C
+      IF(BLS)THEN
+        READ(5,825,END=850)NAME
+ 825    FORMAT(28X,A4)
+        BFORM=NAME.NE.'    '                          !OLD- OR NEW-STYLE
+        IF(.NOT.BFORM)WRITE(6,816)
+ 816    FORMAT(/1X,'(2S+1) L  P')
+        IF(BFORM)WRITE(6,814)
+ 814    FORMAT(/1X,'(2S+1) L  P        E1C(RYD)')
+        BACKSPACE(5)
+        DO I=1,IMAX
+          IF(.NOT.BFORM)READ(5,*,END=821)IWS(I),IWL(I),IPAR
+          IF(BFORM)READ(5,827,END=821)IWS(I),IWL(I),IPAR,IDM,IDM,E1C(I)
+ 827      FORMAT(3I2,I5,I5,F18.6)
+          IF(IWS(I).EQ.0.AND.IMAX.NE.1)GO TO 821
+          IWS(I)=IABS(IWS(I))
+          IF(.NOT.BFORM)WRITE(6,817)IWS(I),IWL(I),IPAR
+          IF(BFORM)WRITE(6,817)IWS(I),IWL(I),IPAR,E1C(I)
+ 817      FORMAT(I6,2I3,3X,F13.6)
+        ENDDO
+        IF(IMAX.EQ.NDIM5)THEN
+          WRITE(6,847)
+          STOP 'INCREASE NDIM5'
+        ENDIF
+        GO TO 820                                   !ALL ASKED-FOR FOUND
+ 821    NTAR=ISIGN*(I-1)
+        WRITE(6,822)NTAR
+ 822    FORMAT(/,'*** ATTENTION: NTAR REDUCED TO',I6,
+     X          ' NON-DEGENERATE TERMS')
+      ENDIF
+ 847  FORMAT(/' *** TOO MANY TARGETS TO BE READ, INCREASE NDIM5')
+C
+      IF(BCA)THEN
+        WRITE(6,811)
+ 811    FORMAT(/1X,'    W  P        E1C(RYD)')
+        DO I=1,IMAX
+          READ(5,*,END=831)IWS(I),IPAR,IDM,E1C(I)
+          WRITE(6,837)IWS(I),IPAR,E1C(I)
+ 837      FORMAT(I6,I3,3X,F13.6)
+          IWL(I)=0                                   !TO USE BLS
+        ENDDO
+        IF(IMAX.EQ.NDIM5)THEN
+          WRITE(6,847)
+          STOP 'INCREASE NDIM5'
+        ENDIF
+        GO TO 820                                   !ALL ASKED-FOR FOUND
+ 831    NTAR=ISIGN*(I-1)
+        WRITE(6,832)NTAR
+ 832    FORMAT(/,'*** ATTENTION: NTAR REDUCED TO',I6,
+     X          ' NON-DEGENERATE CFGS')
+      ENDIF
+C
+      IF(BIC)THEN
+        READ(5,826,END=850)NAME
+ 826    FORMAT(30X,A4)
+        BFORM=NAME.NE.'    '                          !OLD- OR NEW-STYLE
+        IF(.NOT.BFORM)WRITE(6,818)
+ 818    FORMAT(/1X,'2J P',3X,'(2S+1) L')
+        IF(BFORM)WRITE(6,813)
+ 813    FORMAT(/1X,'2J P',3X,'(2S+1) L          E1C(RYD)')
+        BACKSPACE(5)
+        DO I=1,IMAX
+          IF(.NOT.BFORM)READ(5,*,END=823)IWJ(I),IPAR,IWS(I),IWL(I)
+          IF(BFORM)READ(5,828,END=823)IWJ(I),IPAR,IWS(I),IWL(I)
+     X                               ,IDUM,IDUM,E1C(I)
+ 828      FORMAT(2I2,2X,2I2,2I5,3X,F15.8)
+          IF(IWS(I).EQ.0.AND.IMAX.NE.1)GO TO 823
+          IWS(I)=IABS(IWS(I))
+          IF(.NOT.BFORM)WRITE(6,819)IWJ(I),IPAR,IWS(I),IWL(I)
+          IF(BFORM)WRITE(6,819)IWJ(I),IPAR,IWS(I),IWL(I),E1C(I)
+ 819      FORMAT(I3,I2,3X,I5,I3,3X,F15.8)
+        ENDDO
+        IF(IMAX.EQ.NDIM5)THEN
+          WRITE(6,847)
+          STOP 'INCREASE NDIM5'
+        ENDIF
+        GO TO 820                                   !ALL ASKED-FOR FOUND
+ 823    NTAR=ISIGN*(I-1)
+        WRITE(6,824)NTAR
+ 824    FORMAT(/,'*** ATTENTION: NTAR REDUCED TO',I6,
+     X          ' NON-DEGENERATE LEVELS')
+      ENDIF
+C
+C CHECK/SET TOLB
+C
+ 820  IF(E1C(1).NE.DZERO.OR.E1C(2).GT.DZERO)THEN
+        IF(E1C(1).EQ.DZERO)E1C(1)=1.D-70
+        TOLB=1.D10
+        DO I=2,IABS(NTAR)
+          T=E1C(I)-E1C(I-1)
+          IF(T.GT.DZERO)THEN
+            IF(TOLB0.eq.DZERO)TOLBI(I-1)=T/2             !RYD HALF SPLIT
+            IF(T.LT.TOLB)THEN
+              TOLB=T
+              ITOLB=I
+c              write(0,*)i,t
+            ENDIF
+          ENDIF
+        ENDDO
+        IF(TOLB.LT.TOLB0)THEN   !WRITE WARNING, BUT ALLOW USER SET VALUE
+          WRITE(0,829)itolb-1,itolb,TOLB0,TOLB
+          WRITE(6,829)itolb-1,itolb,TOLB0,TOLB
+ 829      FORMAT(/' *** WARNING: YOUR INPUT TOLB IS LARGER THAN THE',
+     X    ' MINIMUM TARGET',2I6,' SPLITTING:',1P2E10.3/' *** RECOMMEND',
+     X    ' UNSETTING TOLB AND LET CODE DETERMINE IT!'/)
+          TOLB=TOLB0                              !RE-INSTATE USER VALUE
+        ELSE
+          IF(TOLB0.LE.DZERO.AND.TOLB.GT.DZERO)THEN
+            TOLB=TOLB/2                    !RYD HALF MIN SPLIT
+          ELSE                             !ORIGINAL INPUT (MAYBE UNSET)
+            TOLB=TOLB0
+          ENDIF
+        ENDIF
+      ENDIF
+C
+C RE-SET NTAR
+C
+ 850  NTARX=MAX(NTARP,NTART)
+      IF(NTARX.LT.0)NTARX=0
+      NTAR=ISIGN*MIN(ISIGN*NTAR,NTARX)
+C
+C NOT NECESSARY TO RESTRICT LMAX BASED ON TARGET INFO READ
+C      LMAX=MIN(LMAX,NTAR)
+C      LMAX=MAX(LMAX,NTARP)
+C
+COP      IF(NTAR0.LT.0)THEN
+COP        NTAR0=-NTAR
+COP        ISIGN=-1
+COP      ELSE
+COP        NTAR0=NTAR
+COP        ISIGN=1
+COP      ENDIF
+C
+      IF(NTAR0.EQ.0)NTAR0=IABS(NTAR)
+C
+      IF(.NOT.BCA.AND..NOT.BLS.AND..NOT.BIC
+     X                         .OR.ISIGN*IABS(NTAR).LT.0)THEN
+        DO I=IABS(NTAR)+IRD,NDIM5
+          IWS(I)=0
+          IWL(I)=0
+          IWJ(I)=0
+        ENDDO
+      ENDIF
+C
+      BPRINT=PRINT.NE.'UNFORM'
+      IF(BPRINT)THEN
+        OPEN(10,FILE='adf39l')          !ADAS LEVEL OUTPUT
+        OPEN(11,FILE='adf39px')         !ADAS PARTIAL XSCN OUTPUT
+        OPEN(12,FILE='adf39tx')         !ADAS TOTAL XSCN OUTPUT     !TOT
+      ELSE
+        OPEN(20,FILE='adf39lu',FORM='UNFORMATTED')
+        OPEN(21,FILE='adf39pxu',FORM='UNFORMATTED')
+        OPEN(22,FILE='adf39txu',FORM='UNFORMATTED')                 !TOT
+      ENDIF
+C
+C
+C SUM OVER CROSS SECTIONS
+C
+      CALL CROSSJ(NTAR,NTAR0,NMIN,LMIN,NCUT,LCUT,NRSLMX,IRSLMX,NLAG
+     X     ,DELTAF,DELTAE,TEAPOT,IPRINT,BPRINT,TOLR,EBDMIN,EBDMAX,PFACT
+     X     ,E1C,TOLB0,TOLB,TOLBI,IWS,IWL,IWJ,BCA,BLS,BIC,BMATCH,JCFJ,JCF
+     X     ,NTARP,NTART,LMAX,LBIN,EMIN,EMAX,EWIDTH,NGAUSS,UNITS,boldf)
+C
+C
+C COMMENTS
+C
+C USE EITHER
+      IF(BPRINT)THEN
+        WRITE(10,*)' '                      !TERMINATOR
+C OR
+c      WRITE(10,1005)(COD(I),I=2,20)       !COMMENT-OUT IF CATTING LATER
+C TO END LEVEL LIST (adf39l)
+C
+        IF(NTARP.GT.0)WRITE(11,1005)(COD(I),I=2,20)
+        IF(NTART.GT.0)WRITE(12,1005)(COD(I),I=2,20)                 !TOT
+        CLOSE(10)
+        CLOSE(11)
+        CLOSE(12)                                                   !TOT
+      ELSE
+        WRITE(20)' '                        !TERMINATOR
+        IF(NTARP.GT.0)WRITE(21)(COD(I),I=2,20)
+        IF(NTART.GT.0)WRITE(22)(COD(I),I=2,20)                      !TOT
+        CLOSE(20)
+        CLOSE(21)
+        CLOSE(22)                                                   !TOT
+      ENDIF
+C
+      RETURN
+C
+ 1005 FORMAT(/'C',110('-')/'C'/'C',19A4/'C'/'C',110('-'))
+C
+      END
+C
+C***********************************************************************
+C
+      REAL*8 FUNCTION CONVLGP(E,EWIDTH,ENERGP,PCS,NENGP,LX,J0)
+      IMPLICIT REAL*8 (A-H,O-Z)
+C
+C  CONVOLUTE PARTIAL CROSS SECTIONS WITH GAUSSIAN DISTRIBUTION
+C
+      PARAMETER (NDIM30=500)                         !COARSE MESH ENERGP
+C
+      PARAMETER (DZERO=0.0D0)
+      PARAMETER (DTWO=2.0D0)
+C
+      PARAMETER (TOLC=1.1D-7)
+C
+      DIMENSION ENERGP(*),PCS(*)
+      DIMENSION PVEC(NDIM30)
+C
+      SUM=DZERO
+C
+      IF(E.GE.ENERGP(NENGP))THEN
+        LXTRP=MAX(LX,0)
+        T=ENERGP(NENGP)/E
+        SUM=PCS(NENGP)*SQRT(T)*T**(LXTRP+3)
+        GO TO 30
+      ENDIF
+C
+      IF(EWIDTH.LE.TOLC.OR.E-2*EWIDTH.GT.ENERGP(1))THEN     !JUST INTERP
+        IF(E.GE.ENERGP(1))SUM=XINTP(E,ENERGP,NENGP,PCS,J0)
+        GO TO 30
+      ENDIF
+C
+      A=1.6651092D0/EWIDTH                                !2*sqrt(ln(2))
+C
+      EMIN=E-DTWO*EWIDTH
+      IF(EMIN.LT.ENERGP(1))EMIN=ENERGP(1)
+      EMAX=E+DTWO*EWIDTH
+      IF(EMAX.LT.DZERO)GO TO 30
+C
+      NT=25                                  !NO. QUAD POINTS PER EWIDTH
+      DT=NT
+      DT=EWIDTH/DT
+C
+      E1=EMAX
+      E0=EMIN
+      DE=E1-E0
+      NE=NINT(DE/DT)+1
+      NE=NE+MOD(NE,2)                                              !EVEN
+      IF(NE.GE.NDIM30)STOP 'CONVLGP: INCREASE NDIM30'
+      H=NE
+      H=DE/H
+C
+      II=0
+      I0=2
+      DO J=0,NE
+        TE=E0+J*H
+        II=II+1
+        PX=XINTP(TE,ENERGP,NENGP,PCS,I0)
+        T=A*(TE-E)
+        T=T*T
+        T=EXP(-T)
+        PVEC(II)=PX*T
+      ENDDO
+C
+      SUM=SUM+SIMP(H,PVEC,II)
+      SUM=SUM*A*0.5641895D0                                  !1/sqrt(pi)
+C
+  30  CONVLGP=SUM
+      RETURN
+      END
+C
+C***********************************************************************
+C
+      REAL*8 FUNCTION CONVLGT(E,EWIDTH,ENERGT,PCST,NENGT,LX)
+      IMPLICIT REAL*8 (A-H,O-Z)
+C
+C  CONVOLUTE TOTAL CROSS SECTIONS WITH GAUSSIAN DISTRIBUTION
+C
+      PARAMETER (NDIM40=5000)                          !FINE MESH ENERGT
+C
+      PARAMETER (DZERO=0.0D0)
+      PARAMETER (DTWO=2.0D0)
+C
+      PARAMETER (TOLC=1.1D-7)
+C
+      DIMENSION ENERGT(-1:*),PCST(*)
+      DIMENSION PVEC(NDIM40)
+C
+      SUM=DZERO
+C
+      IF(E.GE.ENERGT(NENGT))THEN
+        LXTRP=MAX(LX,0)
+        T=ENERGT(NENGT)/E
+        SUM=PCST(NENGT)*SQRT(T)*T**(LXTRP+3)
+        GO TO 30
+      ENDIF
+C
+      IF(EWIDTH.LE.TOLC)THEN                           !JUST INTERPOLATE
+        IF(E.LT.ENERGT(1))GO TO 30
+        DO I=2,NENGT
+          IF(ENERGT(I).GT.E)THEN
+            SUM=XINTT(E,ENERGT,NENGT,PCST,I)
+            GO TO 30
+          ENDIF
+        ENDDO
+        GO TO 30
+      ENDIF
+C
+      A=1.6651092D0/EWIDTH                                !2*sqrt(ln(2))
+C
+      EMIN=E-DTWO*EWIDTH
+      IF(EMIN.LT.ENERGT(1))EMIN=ENERGT(1)
+      EMAX=E+DTWO*EWIDTH
+      IF(EMAX.LT.DZERO)GO TO 30
+C
+      IMAX=NENGT
+      IF(EMAX.GT.ENERGT(NENGT))IMAX=IMAX+1
+C
+      NT=25                                  !NO. QUAD POINTS PER EWIDTH
+      DT=NT
+      DT=EWIDTH/DT
+C
+      DO I=1,NENGT
+        IF(ENERGT(I).GT.EMIN)THEN
+          I0=MAX(I-1,1)
+          GO TO 10
+        ENDIF
+      ENDDO
+      I0=NENGT
+C
+  10  E0=EMIN
+C
+      I0=I0+1
+      IF(I0.GT.NENGT)THEN
+        E1=EMAX
+      ELSE
+        E1=ENERGT(I0)
+      ENDIF
+C
+      DE=EMAX-EMIN
+      NE=NINT(DE/DT)+10                                   !FOR ROUND-OFF
+      IF(NE.GT.NDIM40)THEN
+        WRITE(6,200)NE
+        STOP 'FN.CONVOLG: TOO MANY TOTAL PI CONVOLUTION ENERGIES'
+      ENDIF
+C
+      DO I=I0,IMAX
+        E1=MIN(EMAX,E1)
+        DE=E1-E0
+        T=DE/DT
+        NE=NINT(T)+1
+        NE=NE+MOD(NE,2)                                            !EVEN
+        H=NE
+        H=DE/H
+        II=0
+        DO J=0,NE
+          TE=E0+J*H
+          II=II+1
+          PX=XINTT(TE,ENERGT,NENGT,PCST,I)
+          T=A*(TE-E)
+          T=T*T
+          T=EXP(-T)
+          IF(II.LE.NDIM40)PVEC(II)=PX*T
+        ENDDO
+C
+        IF(II.GT.NDIM40)THEN
+          WRITE(6,200)II
+          STOP 'FN.CONVOLG: TOO MANY TOTAL PI CONVOLUTION ENERGIES'
+        ENDIF
+C
+        IF(II.GT.2)THEN
+          SUM=SUM+SIMP(H,PVEC,II)
+        ELSEIF(II.GT.1)THEN
+          SUM=SUM+TRAP(H,PVEC,II)
+        ENDIF
+C
+        IF(ENERGT(I).GT.EMAX)GO TO 20
+C
+        IF(II.GT.0)THEN
+          PVEC(1)=PVEC(II)
+        ELSE
+          PVEC(1)=DZERO
+        ENDIF
+        E0=E1
+        IF(I.LT.NENGT)THEN
+          E1=ENERGT(I+1)
+        ELSE
+          E1=EMAX
+        ENDIF
+      ENDDO
+C
+  20  SUM=SUM*A*0.5641895D0                                  !1/sqrt(pi)
+C
+  30  CONVLGT=SUM
+C
+      RETURN
+C
+ 200  FORMAT('***TOO MANY TOTAL PHOTOIONIZATION CONVOLUTION ENERGIES,'
+     X       ,' INCREASE NDIM40 TO: ',I6)    
+C         
+      END
+C
+C***********************************************************************
+C
+      SUBROUTINE CROSSJ(NTAR,NTAR0,NMN,LMN,NCUT,LCUT,NRSLMX,IRSLMX,NLAG
+     X     ,DELTAF,DELTAE,TEAPOT,IPRINT,BPRINT,TOLR,EBDMIN,EBDMAX,PFACT
+     X     ,E1C,TOLB0,TOLB,TOLBI,IWS,IWL,IWJ,BCA,BLS,BIC,BMATCH,JCFJ,JCF
+     X     ,NTARP,NTART,LMAX,LBIN,EMIN,EMAX,EWIDTH,NGAUSS,UNITS,boldf)
+C
+      IMPLICIT REAL*8 (A-H,O-Z)
+C
+      PARAMETER (NDIM5=500001                    !ELECTRON TARGET LEVELS
+     X          ,NDIM10=4000000               !NO OF LEVELS INC CORR ETC
+     X          ,NDIM13=2000000               !NO OF LEVELS EXC CORR ETC
+     X          ,NDIM14=2500                 !NO OF CONFIGS
+     X          ,NDIM15=150000       !PHOTON TARGETS PER ELECTRON TARGET
+     X          ,NDIM16=NDIM13/20    !LOCAL PHOTON TARGETS,=1 IF NO !TOT
+     X          ,NDIM17=150000               !GLOBAL PHOTON TARGETS
+     X          ,NDIM24=54                   !NO OF ELEMENTS LABELLED:XE
+     X          ,NDIM26=60                       !MAX NO. OF AS ORBITALS
+     X          ,NDIM33=101)                 !ELECTRON ENERGIES      !PX
+C
+      PARAMETER (MXD0=5000                   !ELECTRON ENERGIES     !TOT
+     X          ,MXD4=2*NDIM5+NDIM33         !TRY AND REDUCE        !TOT
+     X          ,MXD5=MXD0/MXD4                                     !TOT
+     X          ,MXD6=MXD4/MXD0                                     !TOT
+     X          ,MXD7=MXD5+MXD6                                     !TOT
+     X          ,NDIM34=MXD0*MXD6/MXD7+MXD4*MXD5/MXD7)    !MIN(0,4) !TOT
+C
+      PARAMETER (MXD1=NDIM13/NDIM17
+     X          ,MXD2=NDIM17/NDIM13
+     X          ,MXD3=MXD1+MXD2
+     X          ,MX1317=NDIM13*MXD1/MXD3+NDIM17*MXD2/MXD3+1) !MAX(13,17)
+C
+      PARAMETER (MXD8=NDIM10/NDIM17
+     X          ,MXD9=NDIM17/NDIM10
+     X          ,MXD10=MXD8+MXD9
+     X          ,MX1017=NDIM10*MXD8/MXD10+NDIM17*MXD9/MXD10+1)!MAX(10,17
+C
+      PARAMETER (DZERO=0.0D0)
+      PARAMETER (ONE=1.0D0)
+      PARAMETER (NLIT=60)
+      PARAMETER (MXORB0=60)            !NO. NL READ FROM AS, .LE. NDIM26
+      PARAMETER (TINY=1.D-5)
+      PARAMETER (ALFP=2.568D-18)                    !4*pi*a_0^2*alpha
+      PARAMETER (TOLC=1.1D-7)
+      PARAMETER (DKCM=109737.4D0)
+C
+      integer*4 MTEST4,MBLNK4              !keep I*4 for backward compat
+C
+      INTEGER SS,SSR,QS0,QL0,QSB,QLB,QL,QN,QSP,QLP,QSR,QLR,QNV,QLV
+     X       ,QNVP,QLVP,QND,QLD,QS00,QL00,QSR0
+C
+      CHARACTER LAB4*4,LAB2*2,LSQ*2,FILNAM*5,MPP*1,CMBLNK*4,CMSTAR*4
+      CHARACTER*1 CLABL(20),CLIT(0:NLIT)
+C
+      LOGICAL BPRINT,BPRNT0,BPRNT1,BPRNT2,BFAST,BTEST,BOLDFL,BOLDFP
+     X       ,BOLDFT,BPASS1,BFORMP,BCA,BLS,BIC,EX,EXP,BMATCH,BBC1,BSKIP
+     X       ,boldf
+C
+      COMMON /LAG/NLAGP,NP1,NP2,NPH,BBC1
+C
+      DIMENSION IK(NDIM13),SS(NDIM13),LL(NDIM13),JJ(NDIM13),LCF(NDIM13)
+     X         ,ENERG(NDIM13)
+      DIMENSION JK(NDIM10),IWP(NDIM10),DEL0(NDIM10),ITOLB(NDIM10)
+C
+      DIMENSION QSB(NDIM14,10),QLB(NDIM14,10),LMX(NDIM14),NG(NDIM14)
+      DIMENSION QN(NDIM26),QL(NDIM26),QND(NDIM26),QLD(NDIM26)
+      DIMENSION QS0(10),QL0(10),QS00(10),QL00(10),QSR0(10)
+C
+      DIMENSION IWS(NDIM5),IWL(NDIM5),IWJ(NDIM5),LIT(0:NLIT),JCF(*)
+     X         ,E1C(NDIM5),TOLBI(0:NDIM5)
+C
+      DIMENSION ENERGP(NDIM33),PCS(NDIM33,NDIM15)
+      DIMENSION ENERGP0(NDIM33),PCS0(NDIM33)
+      DIMENSION MENGP(NDIM33)
+C
+      ALLOCATABLE :: MENGT(:),ENERGT(:),PCST(:,:)                   !TOT
+C      DIMENSION MENGT(NDIM5),ENERGT(-1:NDIM34),PCST(NDIM34,NDIM16) !TOT
+C  DO NOT INFLATE NDIM34=MIN(2*NDIM5+NDIM33,MXD0) AND NDIM16 FOR TOTALS
+C 
+      DIMENSION LABL(20),LSQ(NDIM24),QNVP(NDIM5),QLVP(NDIM5)
+     X         ,WNP(NDIM5),LMP(NDIM5),QSP(NDIM5,10),QLP(NDIM5,10)
+C
+      DIMENSION WNR(NDIM17),LMR(NDIM17),QSR(NDIM17,10),QLR(NDIM17,10)
+     X,SSR(NDIM17),LLR(NDIM17),JJR(NDIM17),QNV(NDIM17),QLV(NDIM17)
+     X,JV0(MX1017),IRSOL0(MX1317),IRSOL(NDIM13)
+C
+      ALLOCATABLE :: IRSOLT(:),JVT(:),DELT(:)                       !TOT
+C      DIMENSION IRSOLT(NDIM16),JVT(NDIM10),DELT(NDIM10)            !TOT
+C
+      DATA CLABL /'S','P','D','F','G','H','I','J','K','L','M','N','O'
+     X,'P','Q','R','S','T','U','*'/, CMBLNK/'    '/, CMSTAR/'****'/
+      DATA CLIT/'0','1','2','3','4','5','6','7','8','9','A','B','C','D',
+     X  'E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T',
+     X  'U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j',
+     X  'k','l','m','n','o','p','q','r','s','t','u','v','w','x','y'/
+      DATA LSQ /'H','HE','LI','BE','B','C','N','O','F','NE','NA','MG'
+     X,'AL','SI','P','S','CL','AR','K','CA','SC','TI','V','CR','MN'
+     X,'FE','CO','NI','CU','ZN','GA','GE','AS','SE','BR','KR','RB','SR'
+     X,'Y','ZR','NB','MO','TC','RU','RH','PD','AG','CD','IN','SN','SB'
+     X,'TE','I','XE'/
+C
+C
+C FIX FOR FORTRAN 90 COMPILERS THAT DON'T ALLOW ASSIGNMENT OF CHARACTERS
+C TO INTEGER VARIABLES, REQUIRED FOR HISTORIC BACKWARDS COMPATIBILITY
+C
+      OPEN(90,STATUS='SCRATCH',FORM='FORMATTED')
+      WRITE(90,1111)CMSTAR,(CLIT(I),I=0,NLIT)
+ 1111 FORMAT(A4,80A1)
+      BACKSPACE(90)
+      READ(90,1111)MSTAR,(LIT(I),I=0,NLIT)
+      WRITE(90,1111)CMBLNK,(CLABL(I),I=1,20)
+      BACKSPACE(90)
+      READ(90,1111)MBLNK,(LABL(I),I=1,20)
+      BACKSPACE(90)
+      READ(90,1111)MBLNK4
+      CLOSE(90)
+C
+      MXDIM5=0
+      MXDIM10=0
+      MXDIM13=0
+      MXDIM14=0
+      MXDIM15=0
+      MXDIM16=0
+      MXDIM17=0
+      MXDIM33=0
+      MXDIM34=0
+C
+C ALLOCATES
+C
+      IF(NTART.GT.0)THEN                                            !TOT
+        ALLOCATE(                                                   !TOT
+     X  MENGT(NTART),ENERGT(-1:NDIM34),PCST(NDIM34,NDIM16)          !TOT
+     X ,IRSOLT(NDIM16),JVT(NDIM10),DELT(NDIM10)                     !TOT
+     X ,STAT=IERR)                                                  !TOT
+        IF(IERR.NE.0)STOP 'ALLOCATION FOR TOTALS FAILS'             !TOT
+      ENDIF                                                         !TOT
+C
+C*********
+C PREAMBLE
+C*********
+C
+      BOLDFL=boldf       !F USE I6, T USE I4, FOR NPRNT INDEX IN ADF39L
+      BOLDFP=boldf       !F USE I6, T USE I5, FOR LEVEL INDEX IN ADF39PX
+      BOLDFT=boldf       !F USE I6, T USE I5, FOR LEVEL INDEX IN ADF39TX
+C
+      IF(MXORB0.GT.NLIT)WRITE(6,*)'***WARNING: MIGHT NOT BE ABLE '
+     X                  ,' TO DECODE ORBITAL, INCREASE LIT SPEC.'
+C
+      IF(NRSLMX.LT.2)NRSLMX=6
+C
+      IF(.NOT.BLS)BLS=BCA
+C
+      IRSLM0=IRSLMX
+      NTART0=NTART
+      NTARP0=NTARP
+      DELTF0=DELTAF
+      DDDP=1.001D0        !UPDATE INTERPOLATION IF E HAS CHANGED BY !TOT
+C
+      ISIGN=1
+      IF(NTAR.LT.0)ISIGN=-1
+C
+      NTARX=MAX(IABS(NTAR),NTARP,NTART)
+      IF(NTARX.GT.NDIM5)THEN
+        WRITE(6,847)NTARX
+ 847    FORMAT(/' INCREASE NDIM5 TO AT LEAST',I5)
+        STOP 'INCREASE NDIM5'
+      ENDIF
+C
+      IF(NTAR0.LT.0)THEN
+        NTARX=NDIM5
+      ELSE
+        NTARX=MAX(IABS(NTAR),NTART)
+        IF(NTAR.LT.0.OR.TOLB0.GT.DZERO)NTARX=MAX(NTARX,NTARP)
+        IF(NTARX.LE.0)NTARX=-1
+      ENDIF
+C                                        !NEED TO PRE-DETERMINE TOT MESH
+      BSKIP=NTAR0.LT.0.AND.NTART.GT.0    
+      IF(BSKIP)THEN                                                 !TOT
+        NTART=0                                                     !TOT
+        NTARP=0                                                     !TOT
+        IRSLMX=0                                                    !TOT
+        IPRNT0=IPRINT                                               !TOT
+        IPRINT=-3                                                   !TOT
+      ENDIF                                                         !TOT
+C
+C***********
+C INITIALIZE
+C***********
+C
+      IF(JCF(1).NE.0)JCFJ=JCF(1)
+      BFAST=JCFJ.EQ.999999.AND.EBDMIN.LT.-1.D29.AND.EBDMAX.GT.1.D29
+     X      .AND.TOLB.LT.DZERO
+      NENG=0
+      NZOLD=0
+      NEOLD=0
+C
+      IFLAGL=0
+      IFLAGE=0
+      IFLAGT=1000000                                                !TOT
+      KMAX=0                                                        !TOT
+      KFPM=0
+      EIONMN=DZERO
+C
+      NRSOL=0
+      BPASS1=.TRUE.
+C                                   !RE-ENTRY POINT FOR DOUBLE PASS !TOT
+   1  WNP(1)=DZERO
+      EXP=.TRUE.
+      BPRNT0=IPRINT.GE.0
+      BPRNT1=IPRINT.GE.-1
+      BPRNT2=IPRINT.GE.-2
+C
+C******************************************************
+C POSSIBLE UNIT NOS TO BE CHECKED FOR DATA: READ NV, LV
+C******************************************************
+C
+C
+      MR=70
+      MRU=MR
+      MRP=80
+      MRPU=MRP
+      IFILE=1
+C
+      FILNAM='o1'
+      INQUIRE(FILE=FILNAM,EXIST=EX)
+      IF(EX)THEN
+        BFORM=1
+        OPEN(MR,FILE=FILNAM)
+      ELSE
+        FILNAM='o1u'
+        INQUIRE(FILE=FILNAM,EXIST=EX)
+        IF(EX)THEN
+          BFORM=0
+          OPEN(MRU,FILE=FILNAM,FORM='UNFORMATTED')
+        ELSE
+          WRITE(6,*)'*** NO LEVEL INPUT DATA ON FILE o1 OR o1u'
+          WRITE(6,*)'*** NO ADF39L LEVEL FILE WILL BE WRITTEN'
+          BFORM=-1
+        ENDIF
+      ENDIF
+C
+      FILNAM='op1'
+      INQUIRE(FILE=FILNAM,EXIST=EXP)
+      IF(EXP)THEN
+        BFORMP=.TRUE.
+        OPEN(MRP,FILE=FILNAM)
+      ELSE
+        FILNAM='op1u'
+        INQUIRE(FILE=FILNAM,EXIST=EXP)
+        IF(EXP)THEN
+          BFORMP=.FALSE.
+          OPEN(MRPU,FILE=FILNAM,FORM='UNFORMATTED')
+        ELSE
+          WRITE(6,*)'NO XSCTN INPUT DATA ON FILE op1 OR op1u!!!'
+          STOP 'NO XSCTN INPUT DATA ON FILE op1 OR op1u!!!'
+        ENDIF
+      ENDIF
+C
+C RE-ENRTY POINT FOR NEW FILE
+C
+      LV00=-1
+ 331  NV0=100000
+      LV0=-99
+      if(bform.gt.0)then
+        MXORB=min(30,MXORB0)
+      else
+        mxorb=mxorb0
+      endif
+C
+  31  NV=0
+      IF(BFORM.GT.0)READ(MR,38,END=1002)NV,LV
+      IF(BFORM.EQ.0)READ(MRU,END=1002)NV,LV
+  38  FORMAT(5X,I5,5X,I5)
+C
+      IF(.NOT.BSKIP.OR.BPASS1)THEN
+        IF(BFORMP)READ(MRP,38,END=1002)NVP,LVP
+        IF(.NOT.BFORMP)READ(MRPU,END=1002)NVP,LVP
+      ENDIF
+C
+      IF(.NOT.BSKIP)THEN
+        IF(BFORM.GE.0)THEN
+          IF(NV.NE.NVP.OR.LV.NE.LVP)THEN
+            WRITE(6,*)'MIS-MATCH BETWEEN on and opn FILES FOR NV,LV: '
+     X                 ,NV,LV,NVP,LVP
+            STOP 'MIS-MATCH BETWEEN on and opn FILES FOR NV,LV: '
+          ENDIF
+        ELSE
+          NV=NVP
+          LV=LVP
+        ENDIF
+      ENDIF
+C
+      IF(NV.EQ.0)GO TO 1000
+C
+      IF(LV.LT.0.AND.LV00.GE.0)THEN
+        WRITE(6,*)'***ERROR: RE-ORDER INPUT FILES on(u) ETC SO THAT'
+     X           ,'   EQUIVALENT ELECTRON FILES COME FIRST***'
+        STOP '***ERROR: RE-ORDER INPUT FILES on(u)'
+      ENDIF
+C
+      IF(LV0.LT.0.OR.LV.LT.0.OR.NTAR0.LT.0)THEN
+        WNP0=-ONE
+        IF(NTAR0.GE.0)KFPM=0          !RE-DETERMINE TARGETS FOR NEW UNIT
+        KFPM0=KFPM
+        IFLAGL=0
+      ENDIF
+C
+      IF(LV.EQ.LV0)GO TO 37
+C
+  91  IF(LV.GT.LCUT.AND.LV.NE.999)GO TO 1000
+C
+C**************
+C START A NEW L
+C**************
+C
+      LV0=LV
+      NV0=NV-1
+C
+C**************
+C START A NEW N
+C**************
+C
+  37  IF(NV.LE.NCUT.AND.NV.GE.NMN.AND.LV.GE.LMN)GO TO 75
+      IF(LV.LT.LCUT.OR.NV.LT.NMN)GO TO 75
+      LV=LV+1
+      GO TO 91
+  75  NV0=NV
+C
+C************************************
+C READ HEADER, AND MAYBE ORBITAL CODE
+C************************************
+C
+      NCFD=0
+      NZ0D=0
+      NED=0
+      DO I=1,MXORB
+        QND(I)=0
+      ENDDO
+      IF(BFORM.GT.0)then
+ 299    READ(MR,101,END=1002) NCFD,NZ0D,NED,(QND(I),QLD(I),I=1,MXORB)
+        if(kfpm.eq.0.and.qnd(mxorb).ne.0.and.mxorb.lt.mxorb0)then
+          mxorb=mxorb+20
+          mxorb=min(mxorb,mxorb0)
+          backspace(mr)
+          go to 299
+        endif
+      endif
+      IF(BFORM.EQ.0)THEN
+       READ(MRU,END=1002,ERR=303)NCFD,NZ0D,NED,(QND(I),QLD(I),I=1,MXORB)
+       GO TO 302
+ 303   IF(EXP)THEN                               !START OF A FILE
+         REWIND(MRU)                             !SO REWIND
+         READ(MRU)
+         READ(MRU)
+       ELSE
+         STOP 'UNABLE TO READ ORBITAL HEADER...' !SHOULD NOT GET HERE
+       ENDIF                                 
+      ENDIF
+ 101  FORMAT(I3,12X,I2,6X,I2,4X,60(I3,I2))
+C
+ 302  NCF=NCFD                     !NOT EOF SO SAFE TO RELABEL
+      NZ0=NZ0D
+      NE=NED
+      DO I=1,MXORB
+        QN(I)=QND(I)
+        QL(I)=QLD(I)
+      ENDDO
+C
+      IF(NZOLD.NE.0.AND.NZ0.NE.NZOLD)THEN
+        WRITE(6,*)'*** ERROR: DIFFERENT ELEMENTS ON TWO FILES, NZ='
+     X            ,NZOLD,NZ0
+        STOP '*** ERROR: DIFFERENT ELEMENTS ON TWO FILES'
+      ENDIF
+      NZOLD=NZ0
+C
+      IF(NEOLD.NE.0.AND.NE.NE.NEOLD)THEN
+        WRITE(6,*)'*** ERROR: DIFFERENT IONS ON TWO FILES, NE='
+     X            ,NEOLD,NE
+        STOP '*** ERROR: DIFFERENT IONS ON TWO FILES'
+      ENDIF
+      NEOLD=NE
+C
+      DO I=1,MXORB                 !SHORT ORBITAL LIST
+        IF(QN(I).LE.0)GO TO 301
+      ENDDO
+      I=MXORB+1
+ 301  MXORB=I-1
+C
+      IF(NCF.GT.NDIM14)THEN
+        WRITE(6,136)NCF
+ 136  FORMAT(' DIMENSION EXCEEDED IN SR.CROSSJ, INCREASE NDIM14 TO',I5)
+        STOP ' DIMENSION EXCEEDED IN SR.CROSSJ, INCREASE NDIM14'
+      ENDIF
+      MXDIM14=MAX(NCF,MXDIM14)
+C
+C****************************
+C READ PHOTOIONIZATION HEADER
+C****************************
+C
+      IF(BSKIP.AND..NOT.BPASS1)GO TO 1004
+C
+      IF(BFORMP)READ(MRP,201) NENGP0,NZ0P,NEP,EIONMNP
+      IF(.NOT.BFORMP)READ(MRPU) NENGP0,NZ0P,NEP,EIONMNP
+ 201  FORMAT(I3,12X,I2,6X,I2,35X,F15.6)
+C
+      IF(NENGP0.EQ.0)GO TO 1000
+      IF(NENGP0.GT.NDIM33)THEN
+        WRITE(6,*)'INCREASE NDIM33 TO: ',NENGP0
+        STOP 'INCREASE NDIM33'
+      ENDIF
+      MXDIM33=MAX(NENGP0,MXDIM33)
+C
+      IF(NZ0.NE.NZ0P)THEN
+        WRITE(6,*)'*** ERROR: DIFFERENT ELEMENTS ON O/OP FILES, NZ='
+     X            ,NZ0P,NZ0
+        STOP '*** ERROR: DIFFERENT ELEMENTS ON O/OP FILES'
+      ENDIF
+C
+      IF(NE.NE.NEP)THEN
+        WRITE(6,*)'*** ERROR: DIFFERENT IONS ON O/OP FILES, NE='
+     X            ,NEP,NE
+        STOP '*** ERROR: DIFFERENT IONS ON O/OP FILES'
+      ENDIF
+C
+      IF(BFORMP)THEN
+        READ(MRP,202)(ENERGP0(I),I=1,NENGP0)
+ 202    FORMAT(5E15.5)
+        READ(MRP,202)
+        READ(MRP,202)
+      ELSE
+        READ(MRPU)(ENERGP0(I),I=1,NENGP0)
+        READ(MRPU)
+        READ(MRPU)
+      ENDIF
+C
+C***************
+C INITIAL CHECKS
+C***************
+C
+      IF(BPASS1)THEN
+        IF(BFORM.GE.0)THEN
+          IF(NZ0.NE.NZ0P.OR.NE.NE.NEP)THEN
+            WRITE(6,*)'MIS-MATCH BETWEEN on, onp FILES FOR NZ0, NE; '
+     X                ,NZ0,NE,NZ0P,NEP
+            STOP 'MIS-MATCH BETWEEN on, onp FILES FOR NZ0, NE; '
+          ENDIF
+        ELSE
+          NZ0=NZ0P
+          NE=NEP
+        ENDIF
+C
+C******************************
+C LOOK FOR A SUBSET OF ENERGIES
+C******************************
+C
+        IF(NENGP0.GT.2.AND.PFACT.GT.DZERO)THEN
+          IF(BFORMP)THEN
+            READ(MRP,204)ICP,ITP,IWP(1),JCP,JTP,L,PCS0(1),EI0,EC
+            READ(MRP,202)(PCS0(I),I=1,NENGP0)
+            NREC=(NENGP0-1)/5+2
+            DO N=1,NREC
+              BACKSPACE(MRP)
+            ENDDO
+          ELSE
+            READ(MRPU)ICP,ITP,IWP(1),JCP,JTP,L,PCS0(1),EI0,EC
+            READ(MRPU)(PCS0(I),I=1,NENGP0)
+            BACKSPACE(MRPU)
+            BACKSPACE(MRPU)
+          ENDIF
+          NENGP=1
+          MENGP(NENGP)=1
+          M=1
+          DO N=2,NENGP0-1
+            IF(PFACT*ABS(PCS0(N)).LT.ABS(PCS0(M)))THEN
+              NENGP=NENGP+1
+              MENGP(NENGP)=N
+              M=N
+            ENDIF
+          ENDDO
+          NENGP=NENGP+1
+          MENGP(NENGP)=NENGP0
+          DO N=1,NENGP
+            M=MENGP(N)
+            ENERGP(N)=ENERGP0(M)
+          ENDDO
+        ELSE
+          NENGP=NENGP0
+          DO N=1,NENGP
+            MENGP(N)=N
+            ENERGP(N)=ENERGP0(N)
+          ENDDO
+        ENDIF
+C
+C INITIALIZE FOR CONVOLUTION
+C
+        IF(EWIDTH.GT.DZERO)THEN
+          EP0=MAX(DZERO,EMIN)
+          IF(EMAX.LT.DZERO)EMAX=ENERGP(NENGP)
+          IF(EWIDTH.GT.TOLC)THEN
+            IF(NGAUSS.LT.0)THEN
+              NGAUSS=-NGAUSS-1
+              IF(NGAUSS.LT.5)NGAUSS=20
+              DEG=EWIDTH/NGAUSS
+              T=(EMAX-EMIN)/DEG
+              NT=NINT(T)
+            ELSE
+              NT=MAX(200,NGAUSS-1)
+            ENDIF
+          ELSE
+            NT=MAX(1000,NGAUSS-1)
+          ENDIF
+          T=NT
+          DEG=(EMAX-EMIN)/T
+          NGAUSS=NT+1
+          WRITE(13,210)NGAUSS
+          WRITE(14,210)NGAUSS
+  210     FORMAT('#',40X,'AT',I7,' ENERGIES')
+        ELSE
+          NGAUSS=0
+        ENDIF
+C
+C INITIALIZE FOR NLAGP-POINT LAGRANGE INTERPOLATION FORMULA 
+C  NLAGP MUST BE A POSITIVE EVEN INTEGER
+C
+        IF(NTART0.GT.0)THEN                                         !TOT
+          IF(NLAG.GT.0.AND.(-1)**NLAG.GT.0.AND.NLAG.LE.6)THEN       !TOT
+            NLAGP=NLAG                                              !TOT
+          ELSE                                                      !TOT
+            NP=1                                                    !TOT
+            T=ENERGP(NENGP)                                         !TOT
+            DO N=NENGP-1,1,-1                                       !TOT
+              IF(ENERGP(N).GT.T*0.11D0)NP=NP+1 !COUNT PTS PER DECADE!TOT
+            ENDDO                                                   !TOT
+            IF(NP.LT.5)THEN                                         !TOT
+              NLAGP=2                                               !TOT
+            ELSE                                                    !TOT
+              NLAGP=4                                               !TOT
+            ENDIF                                                   !TOT
+c           write(*,*)np,nlagp                                      !TOT
+          ENDIF                                                     !TOT
+          NP1=1                                                     !TOT
+          NP2=MAX(1,NLAGP)                                          !TOT
+          NPH=NP2/2                                                 !TOT
+          BBC1=NENGP.LE.NP2                                         !TOT
+          IF(BBC1)NP2=NENGP                                         !TOT
+        ENDIF                                                       !TOT
+C
+C***************
+C INITIAL WRITES
+C***************
+C
+        NZ=NZ0-NE+1
+        DZ=NZ*NZ
+C        TOLB0=TOLB
+        IF(TOLB0.LE.DZERO)THEN
+          T=MAX(1.5D-7,1.0D-9*DZ*NZ)
+          IF(TOLB.LE.DZERO)THEN
+            TOLB=T
+          ELSE  !AS ONLY A SUBSET OF ENERGIES MAY HAVE BEEN READ/CHECKED
+            TOLB=MIN(TOLB,T)
+          ENDIF
+        ENDIF
+        DO I=1,NTARX
+          IF(TOLBI(I).le.DZERO)TOLBI(I)=TOLB
+        ENDDO
+        TOLBE=TOLB                            !*30 FOR OLD MSTEP PROBLEM
+        IF(BFORM.GT.0)TOLBE=MAX(TOLBE,2.D-6)
+        DELTAF=ALFP*DELTF0/DZ
+C
+        LAB4='/  /'
+        IF(BLS)LAB4='/LS/'
+        IF(BCA)LAB4='/CA/'
+        IF(BIC)LAB4='/IC/'
+        IF(NZ0.LE.NDIM24)THEN
+          LAB2=LSQ(NZ0)
+        ELSE
+          LAB2='**'
+        ENDIF
+C
+        IF(NTARP0.GT.0)THEN
+          IF(BPRINT)THEN
+            WRITE(11,88)LAB2,NZ,LAB4,NENGP,(I,I=1,NENGP)
+            WRITE(11,206)(ENERGP(I),I=1,NENGP)
+            IF(BOLDFP)THEN
+              WRITE(11,89)(I,I=1,NENGP)
+            ELSE
+              WRITE(11,890)(I,I=1,NENGP)
+            ENDIF
+          ELSE
+            WRITE(21)LAB2,NZ,LAB4,NENGP,(I,I=1,NENGP)
+            WRITE(21)(ENERGP(I),I=1,NENGP)
+            WRITE(21)(I,I=1,NENGP)
+          ENDIF
+        ENDIF
+C
+        IF(BPRNT2)WRITE(6,90)
+C
+      ENDIF
+C
+C  END OF INITIAL CHECKS (BPASS1)
+C
+      IF(BPRNT1.AND.NV.GE.0)WRITE(6,34)NV,LV
+  34  FORMAT(I5,I3)
+C
+C************************
+C READ CONFIGURATION DATA
+C************************
+C
+ 1004 IF(NCF.EQ.0)GO TO 1410          !NO LEVEL INFO
+C
+      DO 102 I=1,NCF
+C
+      IF(BFORM.GT.0)READ(MR,179,END=1002)II,NGR,MA0,MB0,(QS0(J),QL0(J)
+     X,J=1,10)
+      IF(BFORM.EQ.0)READ(MRU,END=1002)II,NGR,MA0,MB0,(QS0(J),QL0(J)
+     X,J=1,10)
+ 179  FORMAT(2I5,2X,I3,I2,1X,10(I2,A1))
+C
+      IN=IABS(II)
+      NG(IN)=NGR
+C
+C DECODE CONFIGURATIONS:
+C   LMX(I) IS THE NO OF DISTINCT OPEN-SHELL ORBITALS IN CONFIG I.
+C   QSB(I,J) IS THE OCCUPATION NO OF ORBITAL J IN CONFIG I.
+C   QLB(I,J) IS THE ORBITAL NO OF ORBITAL J IN CONFIG I, J=1,LMX(I).
+C   QS0,QL0 CONTAIN EISSNER SPECIFICATION OF CONFIG TO BE DECODED.
+C
+      DO 16 J=1,10
+        QSB(I,J)=MBLNK
+        IF(QL0(J).EQ.MBLNK)GO TO 16
+        LMX(I)=J
+        M=MOD(QS0(J),10)
+        IF(M.GT.0)QSB(I,J)=LIT(M)
+        DO K=1,NLIT
+          IF(QL0(J).EQ.LIT(K))GO TO 17
+        ENDDO
+        QLB(I,J)=0
+        GO TO 16
+  17    QLB(I,J)=K
+  16  CONTINUE
+        J=LMX(I)
+        IF(II.LT.0)THEN
+          LMX(I)=J-1
+          QSB(I,J)=MBLNK
+        ELSE
+          M=QLB(I,J)
+          IF(M.GT.MXORB.OR.M.EQ.0)THEN
+            WRITE(6,*)'***ERROR, CF=',II,' USES ORBITAL NO=',M
+     X       ,' WHICH IS NOT DEFINED IN ORBITAL HEADER!!'
+            STOP'***ERROR, NEED ORBITAL NOT DEFINED IN HEADER!!'
+          ENDIF
+        ENDIF
+ 102  CONTINUE
+C
+C**************************
+C SKIP AUTOIONIZATION RATES
+C**************************
+C
+      IF(BFORM.GT.0)READ(MR,103,END=1002)
+      IF(BFORM.EQ.0)READ(MRU,END=1002)NZTEST,NDUME
+      IF(BFORM.GT.0)READ(MR,103,END=1002)
+ 103  FORMAT(A1)
+C
+ 111  IF(BFORM.GT.0)READ(MR,112,END=1002)ICA,ITA
+      IF(BFORM.EQ.0)READ(MRU,END=1002)ICA,ITA
+ 112  FORMAT(5I5,5X,1PE15.5,2(0PF15.6))
+C
+      IF(ITA.GT.0) GO TO 111
+C
+      IF(BFORM.GT.0)THEN
+        BACKSPACE(MR)
+        READ(MR,112,END=1002)ICA,ITA,IWA,JCA,JTA,AA,EC,EION
+      ENDIF
+      IF(BFORM.EQ.0)THEN
+        BACKSPACE(MRU)
+        READ(MRU,END=1002)ICA,ITA,IWA,JCA,JTA,AA,EC,EION
+      ENDIF
+C
+      EIONMN=MIN(EIONMN,EION,TEAPOT)               !CASE EION NOT LOWEST
+C
+C**************
+C READ ENERGIES
+C**************
+C
+      IF(BFORM.GT.0)READ(MR,121,END=1002) NENG,ECORE
+      IF(BFORM.EQ.0)READ(MRU,END=1002) NENG,ECORE
+ 121  FORMAT(10X,I5,45X,F15.6)
+C
+      IF(NENG.EQ.0)GO TO 1410
+C
+      IF(BFORM.GT.0)READ(MR,105,END=1002)MTEST4
+      IF(BFORM.EQ.0)READ(MRU,END=1002)MTEST4
+ 105  FORMAT(26X,A4)
+C
+      BTEST=MTEST4.NE.MBLNK4                               !IC=TRUE
+      IF(BLS.AND.BTEST)THEN
+        WRITE(6,370)
+ 370    FORMAT(' RUN INITIALIZED FOR LS BUT IC DATA FOUND')
+        STOP ' RUN INITIALIZED FOR LS BUT IC DATA FOUND'
+      ENDIF
+      IF(BIC.AND..NOT.BTEST)THEN
+        WRITE(6,374)
+ 374    FORMAT(' RUN INITIALIZED FOR IC BUT LS DATA FOUND')
+        STOP ' RUN INITIALIZED FOR IC BUT LS DATA FOUND'
+      ENDIF
+      if(bls.neqv..not.btest)stop 'coupling confusion'
+      if(bic.neqv.btest)stop 'coupling confusion'
+C
+      IF(NENG.GT.NDIM13)THEN
+        WRITE(6,369)NENG
+ 369  FORMAT(' NUMBER OF LEVELS EXCEEDS STORAGE,INCREASE NDIM13 TO',I7)
+        STOP ' NUMBER OF LEVELS EXCEEDS STORAGE,INCREASE NDIM13'
+      ENDIF
+      MXDIM13=MAX(NENG,MXDIM13)
+C
+      MFLAG=0
+      IMATCH=0
+      KKK=KFPM0
+      KFPM=KFPM0                                   !RE-LABEL FOR NL-LOOP
+      WNP0=-ONE
+C
+      DO 122 I=1,NENG
+C
+      IRSOL(I)=0
+C
+      IF(BFORM.GT.0)READ(MR,123,END=1002)IK(I),IT,SS(I),LL(I),JJ(I)
+     X,LCF(I),ENERG(I)                                             !,ie0
+      IF(BFORM.EQ.0)READ(MRU,END=1002)IK(I),IT,SS(I),LL(I),JJ(I)
+     X,LCF(I),ENERG(I)                                             !,ie0
+ 123  FORMAT(5X,6I5,F15.6,i10)
+C
+      M=IK(I)
+      M=IABS(M)
+      IF(M.LE.NDIM10)JK(M)=I
+      MFLAG=MAX(M,MFLAG)
+C
+      K=IABS(LCF(I))
+      IF(BCA.AND.BFORM.GT.0)THEN
+        SS(I)=100000*IT+SS(I)           !as write i10 read as 2i5
+      ENDIF
+C
+C***********************
+C SET-UP TARGET INDEXING (ONLY DONE FOR A NEW UNIT, OR NTAR0.LT.0).
+C***********************
+C
+      ITOLB(M)=0
+COLD      IF(IABS(NTAR0)+NTART.EQ.0)GO TO 122
+      IF(KFPM.LT.NTARX)THEN
+        IF(LCF(I).GT.0)GO TO 122
+        IF(-LCF(I).GT.JCFJ)GO TO 122
+        TE=ECORE+ENERG(I)
+        EIONMN=MIN(EIONMN,TE)
+C
+        IF(ENERG(I).GT.(WNP0+TOLBI(KFPM)))THEN
+C
+          IF(KFPM0.GT.0)THEN
+            IF(BMATCH)THEN                       !CHECK EXISTING TARGETS
+              EE=TE
+              DO J=1,KFPM0
+                IF(ABS(EE+WNP(J)).LT.TOLBI(J))THEN  !ENERGY MATCH
+CF                  IF(LMP(J).NE.LMX(K))GO TO 125
+CF                  DO KK=1,LMP(J)
+CF                    IF(QSP(J,KK).NE.QSB(K,KK))GO TO 125
+CF                    IF(QLP(J,KK).NE.QLB(K,KK))GO TO 125
+CF                  ENDDO                     !CONFIG MATCH
+                  IB=QLB(K,LMX(K))
+                  IF(QN(IB).EQ.NV)THEN
+                    IF(QNVP(J).NE.QN(IB))GO TO 125
+                    IF(QLVP(J).NE.QL(IB))GO TO 125
+                  ENDIF                     !VALENCE MATCH
+                  IMATCH=IMATCH+1           !SO ASSUME MATCH
+                  ITOLB(M)=J
+                  GO TO 120
+                ENDIF
+ 125          ENDDO
+            ELSE
+              IF(KKK-KFPM0.LT.-NTAR0.AND.-NTAR0.GT.1)THEN !I.E.NTAR.LT.0
+                KKK=KKK+1
+                ITOLB(M)=KKK-KFPM0
+                GO TO 120
+              ENDIF
+            ENDIF
+          ENDIF
+C
+C NEW TARGET
+C
+          KFPM=KFPM+1
+          WNP(KFPM)=-TE
+          ITOLB(M)=KFPM
+          DO J=1,10
+            QSP(KFPM,J)=QSB(K,J)
+            QLP(KFPM,J)=QLB(K,J)
+          ENDDO
+          LMP(KFPM)=LMX(K)
+          if(lmp(kfpm).eq.0)then
+            qnvp(kfpm)=0
+            qlvp(kfpm)=0
+          else
+            J=QLB(K,LMX(K))
+            IF(QN(J).EQ.NV)THEN
+              QNVP(KFPM)=NV
+              QLVP(KFPM)=QL(J)
+            ELSE
+              QNVP(KFPM)=-QN(J)
+              QLVP(KFPM)=QL(J)
+            ENDIF
+          endif
+C                                                 !CHECK TARGET ENERGIES
+          IF(E1C(KFPM).NE.DZERO.AND.NTAR0.GE.0)THEN
+            T=TE+WNP(1)
+            T0=E1C(KFPM)
+            IF(KFPM.EQ.1)THEN
+              IF(BPRNT0.OR.BMATCH)WRITE(6,372)TOLBE
+ 372          FORMAT(1X,'NTAR',10X,'E(N)',9X,'NPTAR',10X,'E(N+1)'
+     X              ,7X,'TOLB=',1PE10.3)
+              T0=T0-E1C(1)
+              dee=0
+            ENDIF
+            MMM=MBLNK
+            T1=ABS(T-T0-dee)
+            dee=t-t0
+            IF(TOLBE.LE.TOLB)THEN
+              tee=max(TOLBI(KFPM-1),TOLBI(KFPM))
+            ELSE
+              tee=TOLBE
+            ENDIF
+            IF(T1.GT.tee)THEN
+              IF(BMATCH)THEN                      !LOOK FOR A MATCH
+                NT=IABS(NTAR)
+                DO N=KFPM+1,NT
+                  T0=E1C(N) 
+                  T2=ABS(T-T0)
+                  IF(T2.GT.T1)THEN                !NOT FOUND
+                    WRITE(6,375)KFPM,T
+ 375                FORMAT(/'*** UNABLE TO MATCH TARGET:',I5,F18.8,' IN'
+     X                  ,' RATE FILE WITH THAT IN USER SUPPLIED adasin')
+                    STOP '*** UNABLE TO MATCH TARGETS'
+                  ELSE
+                    IF(T2.LT.tee)THEN             !FOUND
+                      IN=N-KFPM
+                      DO J=N,NT                   !RE-ALIGN
+                        JN=J-IN
+                        E1C(JN)=E1C(J)
+                        IWJ(JN)=IWJ(J)
+                        IWS(JN)=IWS(J)
+                        IWL(JN)=IWL(J)
+                      ENDDO
+                      NTAR=ISIGN*(IABS(NTAR)-IN)
+                      GO TO 135                   !MOVE ON
+                    ENDIF
+                  ENDIF
+                  T1=T2
+                ENDDO
+              ELSE                                !JUST FLAG A MIS-MATCH
+                MMM=MSTAR
+                IFLAGE=IFLAGE+1
+              ENDIF
+            ENDIF
+ 135        CONTINUE
+C            IF(BPRNT0.OR.BMATCH.OR.MMM.NE.MBLNK)
+            WRITE(6,373)KFPM+IABS(NTAR0)-iabs(NTAR),T0,KFPM,T,MMM
+     x                 ,dee,tolbi(kfpm)                        !KFPM,ie0
+ 373        FORMAT(2(I5,F18.8,5X),A4,2F18.8)
+          ENDIF
+c
+c          IF(KFPM.GT.1)THEN
+c            TE=WNP(KFPM-1)-WNP(KFPM)
+c            T0=WNP(1)-WNP(KFPM)
+c            IF(TE.LT.T0*TINY)THEN
+c              WRITE(6,*)'TARGETS TOO CLOSE FOR PI MESH: TAR=',KFPM
+c              STOP 'TARGETS TOO CLOSE FOR PI MESH'
+c            ENDIF
+c          ENDIF
+        ELSE
+C
+          ITOLB(M)=ITOLB(IK(I-1))
+C
+        ENDIF
+C
+C ALLOW FOR ANY DRIFT OF CONTINUUM ENERGIES
+ 120    WNP0=ENERG(I)
+C
+      ELSEIF(KFPM.EQ.NTARX)THEN
+        IF(LCF(I).LT.0)THEN
+          IF(ENERG(I).GT.(WNP0+TOLBI(KFPM)))THEN
+            ITOLB(M)=0
+          ELSE
+            ITOLB(M)=KFPM
+            WNP0=ENERG(I)
+          ENDIF
+        ENDIF
+      ENDIF
+C
+ 122  CONTINUE
+C
+      IF(MFLAG.GT.NDIM10)THEN
+        WRITE(6,368)MFLAG
+ 368  FORMAT(' NUMBER OF LEVELS EXCEEDS STORAGE,INCREASE NDIM10 TO',I7)
+        STOP 'ERROR: NUMBER OF LEVELS EXCEEDS STORAGE,INCREASE NDIM10'
+      ELSE
+        MENG=MFLAG           !FOR CONTINUUM BUNDLING, CORRELATION LABELS
+      ENDIF
+      MXDIM10=MAX(MENG,MXDIM10)
+      MXDIM5=MAX(KFPM,MXDIM5)
+C
+C*****************************************
+C END ENERGY READ AND INDEXING BY SYMMETRY
+C*****************************************
+C
+      NTEST=IABS(NTAR)
+      IF(NTARX.LT.NDIM5)NTEST=MAX(NTARX,NTEST)
+C
+c      write(0,*)tolb,ntar
+      IF(KFPM.LT.NTEST.AND..NOT.BSKIP)THEN
+        IF(NTAR0.GE.0)THEN
+          WRITE(6,378)NTEST,KFPM,TOLB
+ 378    FORMAT(//' WARNING: YOU HAVE FLAGGED NTAR*=',I7,' E-TARGETS BUT'
+     X  ,' ONLY ',I6,' CAN BE DETERMINED FROM YOUR AUTOSTRUCTURE DATA.'/
+     X  /' POSSIBLE CAUSES:'/
+     X   '1.   THERE ARE NOT NTAR* E-TARGET CONTINUA - DID YOU RESTRICT'
+     X  ,' N+1 SYMMETRIES? IF NO MIS-MATCH FLAGGED, SET MATCH="YES" .'/
+     X  ,'2.   LEVEL SPLITTING IS .LT. 1.D-6 BUT O1 IS BEING USED - '
+     X  ,'SWITCHED TO UNFORMATTED DATA ON O1U.' /
+     X  ,'3.   TOLB IS TOO LARGE - TRY SETTING IT TO LESS THAN HALF OF '
+     X  ,'THE GLOBAL SMALLEST LEVEL SPLITTING, NOT JUST THE FIRST NTAR.'
+     X  /5X,'CURRENTLY, TOLB=',1PE10.2,' RYD')
+          IF(KFPM.LT.IABS(NTAR))THEN
+            WRITE(6,*)' REDUCE NTAR TO: ',ISIGN*KFPM,' ?'
+            IF(NTAR.GT.0)
+     X      WRITE(6,*)' AND/OR SET NTAR.LT.0 - SEE NTAR USAGE COMMENTS'
+            WRITE(6,*)
+     X    '*** ERROR: NUMBER OF E-TARGETS REQUESTED EXCEEDS THOSE FOUND'
+            STOP '*** NUMBER OF E-TARGETS REQUESTED EXCEEDS THOSE FOUND'
+C            NTAR=KFPM
+          ENDIF
+        ELSEIF(NTAR0.LT.0)THEN
+          NTAR1=KFPM-KFPM0
+          WRITE(6,377)NTAR1,KFPM
+ 377      FORMAT(' NOTE: NO. OF ELECTRON TARGETS FOUND',I4,' TOTAL',I5)
+        ENDIF
+      ENDIF
+C
+C*************************************************
+C SET-UP ENERGY MESH FOR TOTAL PHOTOIONIZATION
+C BY ADDING POINTS AT EACH THRESHOLD (SINGLE PASS)
+C*************************************************
+C
+      IF(KMAX.EQ.0.AND.NTART.GT.0)THEN                              !TOT
+        KMAX=MIN(KFPM,NTART)                                        !TOT
+C                                                                   !TOT
+        CALL EMESHT(KFPM,KMAX,IWP,NENGP,NENGT,MENGT,WNP,ENERGP      !TOT
+     X      ,ENERGT,NDIM34,LAB2,LAB4,NZ,DELTAE,BSKIP,BOLDFT,BPRINT) !TOT
+C                                                                   !TOT
+        MXDIM34=MAX(NENGT,MXDIM34)                                  !TOT
+C                                                                   !TOT
+      ENDIF                                                         !TOT
+C
+C****************************************
+C SET-UP INDEXING FOR NEW RESOLVED STATES
+C****************************************
+C
+      IMX=MIN(IRSLMX,NENG)
+C
+      DO 127 I=1,IMX
+C
+        IF(LCF(I).LT.0)GO TO 127
+        IF(IK(I).LE.0)GO TO 127
+        TE=ENERG(I)+ECORE
+        IF(TE.GE.EIONMN+TOLR)GO TO 705  !NON-METASTABLE AUTOIONIZING
+C
+        K=LCF(I)
+        J1=LMX(K)
+        M=QLB(K,J1)
+        IF(QN(M).LE.NRSLMX.AND.(QN(M).EQ.NV.OR.LV.LT.0))THEN
+          NRSOL=NRSOL+1
+          IF(NRSOL.LE.NDIM17)THEN
+            QNV(NRSOL)=QN(M)
+            QLV(NRSOL)=QL(M)
+            IRSOL(I)=NRSOL
+            SSR(NRSOL)=-IABS(SS(I))
+            LLR(NRSOL)=LL(I)
+            JJR(NRSOL)=JJ(I)
+            WNR(NRSOL)=ENERG(I)+ECORE
+            LMR(NRSOL)=LMX(K)
+            DO J=1,10
+              QSR(NRSOL,J)=QSB(K,J)
+              QLR(NRSOL,J)=QLB(K,J)
+            ENDDO
+          ENDIF
+        ENDIF
+C
+ 127  CONTINUE
+C
+ 705  IF(NRSOL.GT.NDIM17)THEN
+        WRITE(6,379)NRSOL
+      STOP' SR.CROSSJ:TOO MANY RESOLVED PHOTON TARGETS, INCREASE NDIM17'
+      ENDIF
+C
+C*********************
+C SKIP RADIATIVE RATES
+C*********************
+C
+      IF(BFORM.GT.0)READ(MR,104,END=1002)NZTEST
+      IF(BFORM.EQ.0)READ(MRU,END=1002)NZTEST,NDUME
+ 104  FORMAT(66X,I2)
+C
+      IF(NZTEST.GE.1)THEN
+C
+        IF(BFORM.GT.0)READ(MR,103,END=1002)
+C
+ 131    IF(BFORM.GT.0)READ(MR,132,END=1002) ICR,ITR
+        IF(BFORM.EQ.0)READ(MRU,END=1002)ICR,ITR
+ 132    FORMAT(6I5,1PE15.5,2(0PF15.6))
+C
+        IF(ITR.GT.0)GO TO 131
+      ENDIF
+C
+C*****************************
+C END LEVEL READ AND RATE SKIP
+C*****************************
+C  
+ 1410 CONTINUE
+C
+      IF(BSKIP)GO TO 1007
+C
+C*************************************
+C INITIALIZE FOR PHOTOIONIZATION XSCNS
+C*************************************
+C
+      ITP0=0
+      L0=999999
+      NRSOL0=0
+      NRSOLT=0                                                      !TOT
+      LDROP=9999
+      DO M=1,MENG
+        JV0(M)=0
+      ENDDO
+      DO M=1,NDIM15
+        DO N=1,NENGP
+          PCS(N,M)=DZERO
+        ENDDO
+      ENDDO
+      IF(NTART.GT.0)THEN                                            !TOT
+        DO M=1,MENG                                                 !TOT
+          JVT(M)=0                                                  !TOT
+        ENDDO                                                       !TOT
+        DO M=1,NDIM16                                               !TOT
+          DO N=1,NENGT                                              !TOT
+            PCST(N,M)=DZERO                                         !TOT
+          ENDDO                                                     !TOT
+        ENDDO                                                       !TOT
+      ENDIF                                                         !TOT
+C
+C***************************
+C READ PHOTOIONIZATION XSCNS
+C***************************
+C
+   2  IF(BFORMP)READ(MRP,204)ICP,ITP,IWP0,JCP,JTP,L,PCS0(1),EI0,EC
+      IF(.NOT.BFORMP)READ(MRPU)ICP,ITP,IWP0,JCP,JTP,L,PCS0(1),EI0,EC
+ 204  FORMAT(6I5,E15.5,2F15.6)
+C
+      IF(ITP.EQ.0)GO TO 3
+C
+      IF(NENGP0.GT.1)THEN
+        IF(BFORMP)READ(MRP,202)(PCS0(I),I=1,NENGP0)
+        IF(.NOT.BFORMP)READ(MRPU)(PCS0(I),I=1,NENGP0)
+      ENDIF
+C
+      IF(.NOT.BFAST)THEN
+        IF(KFPM0.EQ.0)THEN
+          IF(L.NE.ITOLB(JTP))THEN
+             IF(IPRINT.GE.0)WRITE(88,*)JCP,JTP,ITOLB(JTP),L,EC
+             IF(ITOLB(JTP).GT.0)L=ITOLB(JTP)
+          ENDIF
+        ENDIF
+        IF(-JCP.GT.JCFJ)THEN
+          LDROP=L
+          GO TO 2
+        ELSE
+          IF(L.GT.LDROP)L=L-1
+        ENDIF
+        IF(EIONMNP-EI0.LT.EBDMIN.OR.EIONMNP-EI0.GT.EBDMAX)GO TO 2
+      ENDIF
+C
+C**************************
+C SUM PHOTOIONIZATION XSCNS
+C**************************
+C
+      IF(L.GT.L0)GO TO 3
+ 133  IF(NCF.GT.0)THEN
+        K=JK(ITP)
+        N=IRSOL(K)
+      ELSE
+        NRSOL=NRSOL+1
+        N=NRSOL
+      ENDIF
+      IF(N.EQ.0)GO TO 2           !NOT WANTED
+C
+      IF(JV0(ITP).EQ.0)THEN         !NEW
+        NRSOL0=NRSOL0+1
+        IF(NRSOL0.LE.NDIM15)IRSOL0(NRSOL0)=ITP
+        JV0(ITP)=NRSOL0
+      ENDIF
+C
+      IF(NTART.GT.0)THEN                                            !TOT
+        IF(JVT(ITP).EQ.0)THEN       !NEW                            !TOT
+          NRSOLT=NRSOLT+1                                           !TOT
+          IF(NRSOLT.LE.NDIM16)IRSOLT(NRSOLT)=ITP                    !TOT
+          JVT(ITP)=NRSOLT                                           !TOT
+        ENDIF                                                       !TOT
+        DELT(ITP)=EIONMN-EI0           !TO GROUND IONIZATION LIMIT, !TOT
+      ENDIF                                                         !TOT
+C
+      N0=JV0(ITP)
+      IF(N0.LE.NDIM15)THEN
+        DO N=1,NENGP
+          M=MENGP(N)
+          PCS(N,N0)=PCS(N,N0)+ABS(PCS0(M))
+        ENDDO
+      ENDIF
+C
+      IWP(ITP)=IWP0
+      DEL0(ITP)=EC-EI0          !ENERGY JUMP TO EXCITED IONIZATION LIMIT
+C
+      JTP0=JTP
+      ITP0=ITP
+      L0=L
+C
+      GO TO 2
+C
+C***********************************************************
+C WRITE PARTIAL PHOTOIONIZATION XSCNS TO ADAS FORMAT ADF39PX
+C *****                                  ****        *******
+C***********************************************************
+C
+   3  IF(ITP0.EQ.0)GO TO 4
+      ITP0=ITP
+      IFLAGL=MAX(IFLAGL,L0)
+      IF(KFPM0.GT.0)THEN                                  !SO NTAR0.LT.0
+        IF(BMATCH.OR.L0-KFPM0.LE.-NTAR0.AND.-NTAR0.GT.1)THEN
+          L00=ITOLB(JTP0)
+        ELSE
+          L00=L0+KFPM0
+        ENDIF
+      ELSE
+        L00=L0
+      ENDIF
+      L0=L                                               !CASE N=0
+C
+      IF(NRSOL.GT.NDIM17)THEN
+        WRITE(6,379)NRSOL
+ 379    FORMAT(' SR.CROSSJ: INCREASE NDIM17 TO:',I7,' OR REDUCE IRSLMX')
+      STOP' SR.CROSSJ:TOO MANY RESOLVED PHOTON TARGETS, INCREASE NDIM17'
+      ENDIF
+      IF(NRSOL0.GT.NDIM15)THEN
+        WRITE(6,380)NRSOL0
+ 380    FORMAT(' ***SR.CROSSJ: TOO MANY PHOTON TARGETS (PARTIALS) '
+     X        ,'INCREASE NDIM15 TO:',I7)
+      STOP' SR.CROSSJ:TOO MANY PARTIAL PHOTON TARGETS, INCREASE NDIM15'
+      ENDIF
+      IF(NRSOLT.GT.NDIM16)THEN
+        WRITE(6,381)NRSOLT
+ 381    FORMAT(' ***SR.CROSSJ: TOO MANY PHOTON TARGETS (TOTALS) '
+     X        ,'INCREASE NDIM16 TO:',I7)
+      STOP' SR.CROSSJ:TOO MANY TOTAL PHOTON TARGETS, INCREASE NDIM16'
+      ENDIF
+      MXDIM17=MAX(NRSOL,MXDIM17)
+      MXDIM15=MAX(NRSOL0,MXDIM15)
+      MXDIM16=MAX(NRSOLT,MXDIM16)
+C
+      NTEST=NTARP
+      IF(NTARP.EQ.NDIM5)NTEST=99999999                   !NO RESTRICTION
+C
+      DO N0=1,NRSOL0
+C
+        ITP=IRSOL0(N0)
+        IRSL=IRSOL(JK(ITP))
+        SSR(IRSL)=IABS(SSR(IRSL))                  !TAG RADIATION EXISTS
+        IF(PCS(1,N0).GT.DELTAF.AND.L00.LE.NTEST)THEN
+          IF(BPRINT)THEN
+            IF(BOLDFP)THEN
+              WRITE(11,205)IRSL,IWP(ITP),L00,DEL0(ITP)
+     X                   ,(PCS(N,N0),N=1,NENGP)
+            ELSE
+              WRITE(11,2050)IRSL,IWP(ITP),L00,DEL0(ITP)
+     X                   ,(PCS(N,N0),N=1,NENGP)
+            ENDIF
+          ELSE
+              WRITE(21)IRSL,IWP(ITP),L00,DEL0(ITP)
+     X               ,(PCS(N,N0),N=1,NENGP)
+          ENDIF
+        ENDIF
+C
+        IF(NTART.GT.0)THEN                                          !TOT
+          NT0=MENGT(L00)                                            !TOT
+          IF(NT0.GT.0)THEN                                          !TOT
+            NT=JVT(ITP)                                             !TOT
+            PCST(NT0,NT)=PCST(NT0,NT)+PCS(1,N0)                     !TOT
+            NT0=NT0+1                                               !TOT
+            J0=2                                                    !TOT
+            T0=-1                                                   !TOT
+            DO N=NT0,NENGT                                          !TOT
+              TE=ENERGT(N)+EIONMN+WNP(L00)                          !TOT
+              IF(TE.GT.DDDP*T0)                                     !TOT
+     X        XP=XINTP(TE,ENERGP,NENGP,PCS(1,N0),J0)                !TOT
+              PCST(N,NT)=PCST(N,NT)+XP                              !TOT
+              T0=TE                                                 !TOT
+            ENDDO                                                   !TOT
+          ELSE                                                      !TOT
+            IFLAGT=MIN(L00-1,IFLAGT)                                !TOT
+          ENDIF                                                     !TOT
+        ENDIF                                                       !TOT
+C
+      ENDDO
+C
+C CONVOLUTE (ON PHOTON ENERGY MESH RELATIVE TO INITIAL PHOTON TARGET
+C            STATE, NOT NECESSARILY THE GROUND. N.B. PCS IS TABULATED
+C            ON ELECTRON ENERGY MESH RELATIVE TO THE FINAL ELECTRON
+C            TARGET STATE, NOT NECESSARILY THE GROUND.)
+C
+      IF(NGAUSS.GT.0.AND.L00.LE.LMAX)THEN
+        LXTRP=LV
+        DO N0=1,NRSOL0
+          ITP=IRSOL0(N0)
+          IRSL=IRSOL(JK(ITP))
+          IF(IRSL.LE.LBIN)THEN
+            T=WNR(1)
+            IF(IRSL.NE.1)T=-T+WNR(IRSL)
+            TT=-WNP(1)
+            IF(L00.NE.1)TT=-TT-WNP(L00)
+            WRITE(13,20)T*UNITS,TT*UNITS,irsl,l00
+  20        FORMAT('#',1P,2E18.8,2i5)
+            J0=2
+            DO N=1,NGAUSS
+              EP=EP0+(N-1)*DEG                    !INITIAL PHOTON TARGET
+              EE=EP-DEL0(ITP)                     !FINAL ELECTRON TARGET
+              SCC=CONVLGP(EE,EWIDTH,ENERGP,PCS(1,N0),NENGP,LXTRP,J0)
+              WRITE(13,19)EP*UNITS,SCC*1.D18
+  19          FORMAT(1PE16.8,E14.4)
+            ENDDO
+          ENDIF
+        ENDDO
+      ENDIF
+C
+      IF(ITP0.EQ.0)GO TO 4
+C
+C RE-INITIALIZE
+C
+      DO N=1,MENG
+        JV0(N)=0
+      ENDDO
+      DO N0=1,NRSOL0
+        DO N=1,NENGP
+          PCS(N,N0)=DZERO
+        ENDDO
+      ENDDO
+      NRSOL0=0
+      ITP=ITP0
+      GO TO 133
+C
+   4  CONTINUE
+C
+C*********************************************************
+C WRITE TOTAL PHOTOIONIZATION XSCNS TO ADAS FORMAT ADF39TX
+C *****                                ****        *******
+C*********************************************************
+C
+      IF(NTART.GT.0)THEN                                            !TOT
+C                                                                   !TOT
+        DO NT=1,NRSOLT                                              !TOT
+          ITP=IRSOLT(NT)                                            !TOT
+          IRSL=IRSOL(JK(ITP))                                       !TOT
+          IF(BPRINT)THEN                                            !TOT
+            IF(BOLDFT)THEN                                          !TOT
+              WRITE(12,203)IRSL,IWP(ITP),DELT(ITP)                  !TOT
+     X                   ,(PCST(N,NT),N=1,NENGT)                    !TOT
+            ELSE                                                    !TOT
+              WRITE(12,2030)IRSL,IWP(ITP),DELT(ITP)                 !TOT
+     X                    ,(PCST(N,NT),N=1,NENGT)                   !TOT
+            ENDIF                                                   !TOT
+          ELSE                                                      !TOT
+            WRITE(22)IRSL,IWP(ITP),DELT(ITP)                        !TOT
+     X             ,(PCST(N,NT),N=1,NENGT)                          !TOT
+          ENDIF                                                     !TOT
+        ENDDO                                                       !TOT
+C                                                                   !TOT
+C CONVOLUTE (SEE PARTIAL CONVOLUTION, ABOVE, FOR NOTES ON MESHES)   !TOT
+C                                                                   !TOT
+        IF(NGAUSS.GT.0)THEN                                         !TOT
+          LXTRP=LV                                                  !TOT
+          DO NT=1,NRSOLT                                            !TOT
+            ITP=IRSOLT(NT)                                          !TOT
+            IRSL=IRSOL(JK(ITP))                                     !TOT
+            IF(IRSL.LE.LBIN)THEN                                    !TOT
+              T=WNR(1)                                              !TOT
+              IF(IRSL.NE.1)T=-T+WNR(IRSL)                           !TOT
+              WRITE(14,20)T*UNITS,EIONMN*UNITS,irsl                 !TOT
+              DO N=1,NGAUSS                                         !TOT
+                EP=EP0+(N-1)*DEG                                    !TOT
+                EE=EP-DELT(ITP)                                     !TOT
+                TCC=CONVLGT(EE,EWIDTH,ENERGT,PCST(1,NT),NENGT,LXTRP)!TOT
+                WRITE(14,19)EP*UNITS,TCC*1.D18                      !TOT
+              ENDDO                                                 !TOT
+            ENDIF                                                   !TOT
+          ENDDO                                                     !TOT
+        ENDIF                                                       !TOT
+C                                                                   !TOT
+C RE-INITIALIZE                                                     !TOT
+C                                                                   !TOT
+        DO N=1,MENG                                                 !TOT
+          JVT(N)=0                                                  !TOT
+        ENDDO                                                       !TOT
+        DO NT=1,NRSOLT                                              !TOT
+          DO N=1,NENGT                                              !TOT
+            PCST(N,NT)=DZERO                                        !TOT
+          ENDDO                                                     !TOT
+        ENDDO                                                       !TOT
+C                                                                   !TOT
+      ENDIF                                                         !TOT
+C
+C**************************
+C  GO AND READ NEW NL BLOCK
+C**************************
+C
+      IFL=IFLAGL-IMATCH
+      IFL=IFL-KKK+KFPM0
+      IF(NTAR0.LT.0.AND.IFL.NE.NTAR1)THEN
+        WRITE(0,140)NTAR1,IFL
+        WRITE(6,140)NTAR1,IFL
+      ENDIF
+C
+ 1007 EXP=.FALSE.
+      BPASS1=.FALSE.
+      GO TO 31
+C
+C  ABORT
+ 1002 NV=0
+      WRITE(6,1107)FILNAM
+ 1107 FORMAT(/' ******WARNING, UNEXPECTED END OF DATA ON FILE '
+     X,A3,'/u  !!!!',/' ****** ADF39 FILES MAY BE INCOMPLETE!'/)
+      GO TO 1001
+C
+C**********************
+C  GO AND READ NEW FILE
+C**********************
+C
+ 1000 CONTINUE
+      IF(BFORM.GE.0)CLOSE(MR)
+      CLOSE(MRP)
+      IFILE=IFILE+1
+      IF(JCF(IFILE).NE.0)JCFJ=JCF(IFILE)
+      IC1=IFILE/10
+      IC2=IFILE-10*IC1
+      IC0=ICHAR('0')
+      IC1=IC1+IC0
+      IC2=IC2+IC0
+C
+      IF(BFORM.GE.0)THEN
+        IF(BFORM.GT.0)THEN
+          FILNAM='o'//CHAR(IC2)
+          IF(IFILE.GE.10)FILNAM='o'//CHAR(IC1)//CHAR(IC2)
+          INQUIRE(FILE=FILNAM,EXIST=EX)
+          IF(EX)OPEN(MR,FILE=FILNAM)
+        ELSE
+          FILNAM='o'//CHAR(IC2)//'u'
+          IF(IFILE.GE.10)FILNAM='o'//CHAR(IC1)//CHAR(IC2)//'u'
+          INQUIRE(FILE=FILNAM,EXIST=EX)
+          IF(EX)OPEN(MRU,FILE=FILNAM,FORM='UNFORMATTED')
+        ENDIF
+      ELSE
+        EX=.FALSE.
+      ENDIF
+C
+      IF(BFORMP)THEN
+        FILNAM='op'//CHAR(IC2)
+        IF(IFILE.GE.10)FILNAM='op'//CHAR(IC1)//CHAR(IC2)
+        INQUIRE(FILE=FILNAM,EXIST=EXP)
+        IF(EXP)OPEN(MRP,FILE=FILNAM)
+      ELSE
+        FILNAM='op'//CHAR(IC2)//'u'
+        IF(IFILE.GE.10)FILNAM='op'//CHAR(IC1)//CHAR(IC2)//'u'
+        INQUIRE(FILE=FILNAM,EXIST=EXP)
+        IF(EXP)OPEN(MRPU,FILE=FILNAM,FORM='UNFORMATTED')
+      ENDIF
+      IF(BFORM.GE.0.AND.EXP.AND..NOT.EX)THEN
+        WRITE(6,1006)
+ 1006   FORMAT(/'opn/u FILE EXISTS WITH NO CORRESPONDING on/u FILE',
+     X  /'*** ADF39L LEVEL FILE INCOMPLETE')
+      ENDIF
+      IF(EXP)GO TO 331
+C
+C  WARNING DIAGNOSTICS
+C
+ 1001 IF(.NOT.BSKIP)THEN
+        IF(TOLB.GT.TOLB0)WRITE(6,137)TOLB
+ 137    FORMAT(/' *** NOTE: TOLB HAS BEEN RESET TO =',1PE10.2,' RYD'/)
+C
+        IF(BPRINT)THEN
+          IF(NTARP.GT.0)WRITE(11,138)NRSLMX        !,IRSLMX
+          IF(NTART.GT.0)WRITE(12,138)NRSLMX        !,IRSLMX         !TOT
+        ELSE
+          IF(NTARP.GT.0)WRITE(21)NRSLMX            !,IRSLMX
+          IF(NTART.GT.0)WRITE(22)NRSLMX            !,IRSLMX         !TOT
+        ENDIF
+ 138    FORMAT(/'   NRSLMX=',I4)                 !,'   IRSLMX=',I7)
+C
+        IF(NTAR0.GE.0.AND.IFLAGL.GT.NTEST.AND.NTARP.GT.0)THEN
+          WRITE(0,140)NTARP,IFLAGL
+          WRITE(6,140)NTARP,IFLAGL
+          WRITE(11,140)NTARP,IFLAGL
+ 140      FORMAT(/' *** NOTE: PARTIAL PI INCOMPLETE; WRITTEN UP TO'
+     X           ,' TARGET',I6,' BUT FINAL TARGET ON FILE IS',I6)
+        ENDIF
+        IF(IFLAGT.NE.1000000.AND.NTAR0.GE.0)THEN                    !TOT
+          WRITE(0,139)IFLAGT,IFLAGL                                 !TOT
+          WRITE(6,139)IFLAGT,IFLAGL                                 !TOT
+          WRITE(12,139)IFLAGT,IFLAGL                                !TOT
+ 139      FORMAT(/' *** WARNING: TOTAL PI INCOMPLETE; SUMMED TO'    !TOT
+     X           ,' TARGET',I6,' BUT FINAL TARGET ON FILE IS',I6)   !TOT
+        ENDIF                                                       !TOT
+        IF(KFPM.EQ.NDIM5)THEN
+          WRITE(0,141)
+          WRITE(6,141)
+ 141      FORMAT(/' ***WARNING: PI MAY BE INCOMPLETE; INCREASE NDIM5')
+        ENDIF
+        IF(IFLAGE.NE.0)WRITE(6,142)IFLAGE
+ 142    FORMAT(//'NOTE: ',I4,' UNIT5 TARGET ENERGIES DID NOT MATCH WITH'
+     X        ,' THOSE PRESENT IN THE RATE FILE, SEE ABOVE "***" !'/11X
+     X        ,' TARGET LEVEL LABELLING MAYBE INCORRECT...')
+      ENDIF
+C
+      IF(NCF.EQ.0)RETURN
+C
+C***********************************************
+C WRITE PI TERM/LEVEL DATA TO ADAS FORMAT ADF39L
+C *****                      *****        ******
+C***********************************************
+C
+      IF(NTAR.LT.0.AND..NOT.BSKIP)NTAR=KFPM
+C
+      IF(NTAR0.LT.0)THEN
+        DO M=1,KFPM
+          IRSOL0(M)=M
+        ENDDO
+        NTAR00=0
+        DO I=1,KFPM
+          E00=-1.0D15
+          M=0
+          DO J=1,KFPM
+            IF(IRSOL0(J).GT.0)THEN
+              IF(WNP(J).GT.E00)THEN
+                E00=WNP(J)
+                M=J
+              ENDIF
+            ENDIF
+          ENDDO
+          IF(M.EQ.0)GO TO 49
+          NTAR00=NTAR00+1
+          IWP(NTAR00)=M          !NOTE NEW USAGE
+          IRSOL0(M)=0
+        ENDDO
+C
+  49    IF(KFPM.NE.NTAR00)STOP 'SORT ERROR'
+C
+        IF(BSKIP)THEN       !SET-UP GLOBAL ELECTRON ENERGY MESH     !TOT
+C                                                                   !TOT
+          NTART=NTART0                                              !TOT
+          NTARP=NTARP0                                              !TOT
+          IRSLMX=IRSLM0                                             !TOT
+          IPRINT=IPRNT0                                             !TOT
+C                                                                   !TOT
+          KMAX=MIN(KFPM,NTART)                                      !TOT
+C                                                                   !TOT
+          CALL EMESHT(KFPM,KMAX,IWP,NENGP,NENGT,MENGT,WNP,ENERGP    !TOT
+     X     ,ENERGT,NDIM34,LAB2,LAB4,NZ,DELTAE,BSKIP,BOLDFT,BPRINT)  !TOT
+C                                                                   !TOT
+          MXDIM34=MAX(NENGT,MXDIM34)                                !TOT
+          BSKIP=.FALSE.                                             !TOT
+          KFPM=0                                                    !TOT
+          GO TO 1                       !NOW USE IT                 !TOT
+        ENDIF                                                       !TOT
+C
+      ELSE
+        IWP(1)=1
+        DO M=2,NTAR
+          IWP(M)=M
+        ENDDO
+      ENDIF
+C
+      IF(BLS)LAB4='/LS/'
+      IF(BIC)LAB4='/IC/'
+      IF(BCA)LAB4='/CA/'
+      IF(NE.LE.NDIM24)THEN
+        LAB2=LSQ(NE)
+      ELSE
+        LAB2='**'
+      ENDIF
+      M=IWP(1)
+      WNP0=WNP(M)*DKCM
+      IF(BPRINT)THEN
+        WRITE(10,21)LAB2,NZ0,LAB4
+        IF(BOLDFL)THEN
+          IF(BCA)THEN
+            WRITE(10,220)WNP0,NTAR
+          ELSE
+            IF(BLS)WRITE(10,22)WNP0,NTAR
+            IF(BIC)WRITE(10,23)WNP0,NTAR
+          ENDIF
+        ELSE
+          IF(BCA)THEN
+            WRITE(10,720)WNP0,NTAR
+          ELSE
+            IF(BLS)WRITE(10,722)WNP0,NTAR
+            IF(BIC)WRITE(10,723)WNP0,NTAR
+          ENDIF
+        ENDIF
+      ELSE
+        WRITE(20)LAB2,NZ0,LAB4
+        WRITE(20)WNP0,NTAR
+      ENDIF
+C
+C PARENT INDEXING
+C
+      DO M0=1,NTAR
+        M=IWP(M0)
+        WNP(M)=-WNP(M)*DKCM+WNP0
+        IF(BLS)THEN
+          TW=IWS(M0)*(2*IWL(M0)+1)
+          TW=0.5D0*(TW-1.0D0)
+        ENDIF
+        IF(BIC)THEN
+          TW=IWJ(M0)
+          TW=0.5D0*TW
+        ENDIF
+        DO 58 J=1,10
+          QS0(J)=MBLNK
+          QL0(J)=MBLNK
+C          IF(J-LMP(M))56,57,58
+          IF(J.LT.LMP(M))GO TO 56
+          IF(J.GT.LMP(M))GO TO 58
+C  57      CONTINUE
+          IF(QNVP(M).EQ.0)GO TO 56
+          K=IABS(QNVP(M))
+          QS0(J)=LIT(K)
+          L=MIN((QLVP(M)+1),20)
+          QL0(J)=LABL(L)
+          GO TO 58
+  56      K=QLP(M,J)
+          QS0(J)=LIT(QN(K))
+          L=MIN((QL(K)+1),20)
+          QL0(J)=LABL(L)
+  58    CONTINUE
+        J1=MAX(5,LMP(M))
+        J0=J1-4
+C        IF(M0.GT.NTAR)THEN
+C          MP=LABL(20)
+C        ELSE
+C          MP=MBLNK
+C        ENDIF
+        IF(BPRINT)THEN
+          IF(BCA)THEN
+            WRITE(10,28)M0,M,(QS0(J),QL0(J),QSP(M,J),J=J0,J1)
+     X                 ,TW,WNP(M),MBLNK   !MP
+          ELSE
+            WRITE(10,29)M0,M,(QS0(J),QL0(J),QSP(M,J),J=J0,J1)
+     X                 ,IWS(M0),LIT(IWL(M0)),TW,WNP(M),MBLNK   !MP
+          ENDIF
+        ELSE
+          IF(BCA)THEN
+            WRITE(20)M0,M,(QS0(J),QL0(J),QSP(M,J),J=J0,J1)
+     X              ,TW,WNP(M),MBLNK   !MP
+          ELSE
+            WRITE(20)M0,M,(QS0(J),QL0(J),QSP(M,J),J=J0,J1)
+     X              ,IWS(M0),LIT(IWL(M0)),TW,WNP(M),MBLNK   !MP
+          ENDIF
+        ENDIF
+      ENDDO
+C
+C RESOLVED INDEXING
+C
+      IF(NRSOL.EQ.0)GO TO 999
+C
+      DO M=1,NRSOL
+        IRSOL0(M)=0
+        IF(SSR(M).GT.0)THEN
+          IRSOL0(M)=M           !DATA EXISTS
+        ELSE
+          IF(BPRNT0)IRSOL0(M)=-M    !LIST, BUT FLAG
+        ENDIF
+      ENDDO
+C
+      NRSOL0=NRSOL
+      IF(.NOT.BPRNT0)THEN              !DO NOT PRINT UNUSED LOWER LEVELS
+        NRSOL0=0
+        DO J=1,NRSOL
+          IF(IRSOL0(J).EQ.0)THEN       !UNUSED, MOVE OUT OF SORT
+            WNR(J)=DZERO
+          ELSE
+            NRSOL0=NRSOL0+1
+          ENDIF
+        ENDDO
+      ENDIF
+C
+      CALL HPSRTI(NRSOL,WNR,JV0)
+C
+      IF(BPRNT0)THEN                           !PRINT UNUSED LOWER LEVELS
+        DO J=1,NRSOL
+          IF(IRSOL0(J).LT.0)JV0(J)=-JV0(J)     !BUT FLAG
+        ENDDO
+      ENDIF
+C
+  51  IF(NRSOL.NE.NRSOL0)THEN
+        WRITE(6,1139)NRSOL,NRSOL0
+1139    FORMAT(/' *** ATTENTION: NO. OF INITIAL STATES REDUCED FROM',
+     X   I6,' TO',I6/4X,' BECAUSE NO RADIATIVE DATA ON FILE FOR'
+     X  ,' THESE STATES')
+        NRSOL=NRSOL0
+      ENDIF
+C
+      M=IABS(JV0(1))
+      WNR0=WNR(M)
+      E00=WNR0
+      WNR0=-WNR0*DKCM
+C
+      IF(BLS)LAB2='LS'
+      IF(BCA)LAB2='CA'
+      IF(BIC)LAB2='IC'
+C
+      IF(BPRINT)THEN
+        IF(BCA)THEN
+          WRITE(10,250)LAB2,WNR0,NRSOL
+        ELSE
+          IF(BLS)WRITE(10,25)LAB2,WNR0,NRSOL
+          IF(BIC)WRITE(10,24)LAB2,WNR0,NRSOL
+        ENDIF
+      ELSE
+        WRITE(20)LAB2,WNR0,NRSOL
+      ENDIF
+C
+      DO M0=1,NRSOL
+        M=IABS(JV0(M0))
+        IF(WNR(M).GE.EIONMN)THEN
+          MP=LABL(20)
+        ELSE
+          MP=MBLNK
+        ENDIF
+        WNR(M)=(WNR(M)-E00)*DKCM
+        ISSR=IABS(SSR(M))
+        IF(BLS)THEN
+          TW=ISSR*(2*LLR(M)+1)
+          TW=0.5D0*(TW-1.0D0)
+        ENDIF
+        IF(BIC)THEN
+          TW=IABS(JJR(M))
+          TW=0.5D0*TW
+        ENDIF
+        DO 27 J=1,10
+          QS0(J)=MBLNK
+          QL0(J)=MBLNK
+C          IF(J-LMR(M))46,47,27
+          IF(J.LT.LMR(M))GO TO 46
+          IF(J.GT.LMR(M))GO TO 27
+C  47      CONTINUE
+          IF(QNV(M).EQ.0)GO TO 46
+          QS0(J)=LIT(QNV(M))
+          L=MIN((QLV(M)+1),20)
+          QL0(J)=LABL(L)
+          GO TO 27
+  46      K=QLR(M,J)
+          QS0(J)=LIT(QN(K))
+          L=MIN((QL(K)+1),20)
+          QL0(J)=LABL(L)
+  27    CONTINUE
+        IF(LMR(M).LE.5)THEN
+          J0=1
+          J1=5
+          IF(BPRINT)THEN
+            IF(BCA)THEN
+              WRITE(10,28)M0,JV0(M0),(QS0(J),QL0(J),QSR(M,J),J=J0,J1)
+     X                   ,TW,WNR(M),MP
+            ELSE
+              WRITE(10,29)M0,JV0(M0),(QS0(J),QL0(J),QSR(M,J),J=J0,J1)
+     X                   ,ISSR,LIT(LLR(M)),TW,WNR(M),MP
+            ENDIF
+          ELSE
+            IF(BCA)THEN
+              WRITE(20)M0,JV0(M0),(QS0(J),QL0(J),QSR(M,J),J=J0,J1)
+     X                ,TW,WNR(M),MP
+            ELSE
+              WRITE(20)M0,JV0(M0),(QS0(J),QL0(J),QSR(M,J),J=J0,J1)
+     X                ,ISSR,LIT(LLR(M)),TW,WNR(M),MP
+            ENDIF
+          ENDIF
+        ELSE
+          DO J=1,10
+            QS00(J)=MBLNK
+            QL00(J)=MBLNK
+            QSR0(J)=MBLNK
+          ENDDO
+          MPP='+'
+          J1=0
+          DO 99 J=1,LMR(M)
+            IF(QL0(J).EQ.LABL(1).AND.QSR(M,J).EQ.LIT(2))GO TO 99 !FULL S
+            IF(QL0(J).EQ.LABL(2).AND.QSR(M,J).EQ.LIT(6))GO TO 99 !FULL P
+            IF(QL0(J).EQ.LABL(3).AND.QSR(M,J).EQ.LIT(10))GO TO 99!FULL D
+            IF(QL0(J).EQ.LABL(4).AND.QSR(M,J).EQ.LIT(14))GO TO 99!FULL F
+            J1=J1+1
+            QL00(J1)=QL0(J)
+            QS00(J1)=QS0(J)
+            QSR0(J1)=QSR(M,J)
+   99     CONTINUE
+          IF(J1.EQ.0)THEN
+            QS00(1)=QS0(LMR(M))
+            QL00(1)=QL0(LMR(M))
+            QSR0(1)=QSR(M,LMR(M))
+          ENDIF
+          IF(J1.GT.5)MPP='!'
+          J1=MAX(5,J1)
+          J0=J1-4
+          IF(BPRINT)THEN         
+            IF(BCA)THEN
+              WRITE(10,300)M0,JV0(M0),MPP,(QS00(J),QL00(J),QSR0(J)
+     X                   ,J=J0,J1),TW,WNR(M),MP
+            ELSE
+              WRITE(10,30)M0,JV0(M0),MPP,(QS00(J),QL00(J),QSR0(J)
+     X                   ,J=J0,J1),ISSR,LIT(LLR(M)),TW,WNR(M),MP
+            ENDIF
+          ELSE
+            IF(BCA)THEN
+              WRITE(20)M0,JV0(M0),MPP,(QS00(J),QL00(J),QSR0(J)
+     X               ,J=J0,J1),TW,WNR(M),MP
+            ELSE
+              WRITE(20)M0,JV0(M0),MPP,(QS00(J),QL00(J),QSR0(J)
+     X                ,J=J0,J1),ISSR,LIT(LLR(M)),TW,WNR(M),MP
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDDO
+C
+C-----------------------------------------------------------------------
+C
+ 999  CONTINUE
+C
+C WRITE SOME INFO ON ACTUAL DIMENSION USAGE
+C
+      WRITE(6,"(///' DIMENSION',9X,'SET',6X,'USED'/)")
+      WRITE(6,"(' NDIM5 ',5X,2I10)")NDIM5,MXDIM5
+      WRITE(6,"(' NDIM10',5X,2I10)")NDIM10,MXDIM10
+      WRITE(6,"(' NDIM13',5X,2I10)")NDIM13,MXDIM13
+      WRITE(6,"(' NDIM14',5X,2I10)")NDIM14,MXDIM14
+      WRITE(6,"(' NDIM15',5X,2I10)")NDIM15,MXDIM15
+      WRITE(6,"(' NDIM16',5X,2I10)")NDIM16,MXDIM16
+      WRITE(6,"(' NDIM17',5X,2I10)")NDIM17,MXDIM17
+      WRITE(6,"(' NDIM33',5X,2I10)")NDIM33,MXDIM33
+      WRITE(6,"(' NDIM34',5X,2I10)")NDIM34,MXDIM34
+C
+C-----------------------------------------------------------------------
+C
+      RETURN
+C
+C-----------------------------------------------------------------------
+C
+  21  FORMAT("SEQ='",A2,"'",5X,"NUCCHG=",I2,50X,A4/)
+  22  FORMAT(3X,'PARENT TERM INDEXING',17X,'BWNP=',F12.1,2X,'NPRNT=',I4/
+     X3X,'--------------------'/3X,'INDP',2X,'IND0',3X,'CODE',17X
+     X,'S L   WI',8X,'WNP'/3X,'----',2X,'----',3X,'----',17X,'- -   --'
+     X,2X,'----------')
+ 220  FORMAT(/3X,'PARENT CONFG INDEXING',16X,'BWNP=',F12.1,2X,'NPRNT=',
+     XI4/3X,'---------------------'/3X,'INDP',2X,'IND0',3X,'CODE',17X,
+     X'      WI',8X,'WNP'/3X,'----',9X,'----',17X,'--------',2X
+     X,'----------')
+  23  FORMAT(3X,'PARENT LEVEL INDEXING',16X,'BWNP=',F12.1,2X,'NPRNT=',I4
+     X/3X,'---------------------'/3X,'INDP',2X,'IND0',3X,'CODE',17X
+     X,'S L   WI',8X,'WNP'/3X,'----',2X,'----',3X,'----',17X,'- -   --'
+     X,2X,'----------')
+ 722  FORMAT(3X,'PARENT TERM INDEXING',17X,'BWNP=',F12.1,2X,'NPRNT=',I6/
+     X3X,'--------------------'/3X,'INDP',2X,'IND0',3X,'CODE',17X
+     X,'S L   WI',8X,'WNP'/3X,'----',2X,'----',3X,'----',17X,'- -   --'
+     X,2X,'----------')
+ 720  FORMAT(/3X,'PARENT CONFG INDEXING',16X,'BWNP=',F12.1,2X,'NPRNT=',
+     XI6/3X,'---------------------'/3X,'INDP',2X,'IND0',3X,'CODE',17X,
+     X'      WI',8X,'WNP'/3X,'----',9X,'----',17X,'--------',2X
+     X,'----------')
+ 723  FORMAT(3X,'PARENT LEVEL INDEXING',16X,'BWNP=',F12.1,2X,'NPRNT=',I6
+     X/3X,'---------------------'/3X,'INDP',2X,'IND0',3X,'CODE',17X
+     X,'S L   WI',8X,'WNP'/3X,'----',2X,'----',3X,'----',17X,'- -   --'
+     X,2X,'----------')
+  24  FORMAT(/3X,A2,' RESOLVED LEVEL INDEXING',11X,'BWNR=',F12.1,1X
+     X,'NLVL=',I6/3X,'--------------------------'/3X,'INDX',2X,'IRSL',3X
+     X,'CODE',17X,'S L   WJ',8X,'WNR'/3X,'----',2X,'----',3X,'----',17X,
+     X'- -   --',2X,'----------')
+  25  FORMAT(/3X,A2,' RESOLVED TERM INDEXING',12X,'BWNR=',F12.1,1X
+     X,'NTRM=',I6/3X,'-------------------------'/3X,'INDX',2X,'IRSL',3X
+     X,'CODE',17X,'S L   WJ',8X,'WNR'/3X,'----',2X,'----',3X,'----',17X,
+     X'- -   --',2X,'----------')
+ 250  FORMAT(/3X,A2,' RESOLVED CONFG INDEXING',11X,'BWNR=',F12.1,3X
+     X,'NCFG=',I4/3X,'--------------------------'/3X,'INDX',2X,'INDP',3X
+     X,'CODE',17X,'      WJ',8X,'WNR'/3X,'----',2X,'----',3X,'----',17X
+     X,'--------',2X,'----------')
+  28  FORMAT(2I6,4X,5(A1,A1,A1,1X),'(',F8.1,')',F11.1,A1)
+  29  FORMAT(2I6,4X,5(A1,A1,A1,1X),'(',I1,')',A1,'(',F4.1,')',F11.1,A1)
+  30  FORMAT(2I6,3X,A1,5(A1,A1,A1,1X),'(',I1,')',A1,'(',F4.1,')',F11.1
+     X,A1)
+ 203  FORMAT(2I5,6X,1PE15.6,10E12.3/(31X,10E12.3))                  !TOT
+ 2030 FORMAT(2I6,6X,1PE13.6,10E12.3/(31X,10E12.3))                  !TOT
+ 205  FORMAT(3I5,1X,1PE15.6,10E12.3/(31X,10E12.3))
+ 2050 FORMAT(3I6,1PE13.6,10E12.3/(31X,10E12.3))
+ 206  FORMAT((31X,10(1PE12.3)))
+  88  FORMAT(A2,I2,5X,A4,20X,'NENG=',I3/37X,'E:'
+     X,10(I2,10X)/(33X,10(5X,I3,4X)))
+  89  FORMAT(/1X,'IRSL',4X,'G',1X,'IND0',5X,'DELI(RYD)'
+     X,6X,'PCS:',10(I2,10X)/(33X,10(5X,I3,4X)))
+ 890  FORMAT(/2X,'IRSL',5X,'G',2X,'IND0',2X,'DELI(RYD)'
+     X,6X,'PCS:',10(I2,10X)/(33X,10(5X,I3,4X)))
+  90  FORMAT(//4X,'N  L')
+ 300  FORMAT(2I6,3X,A1,5(A1,A1,A1,1X),'(',F8.1,')',F11.1,A1)
+C
+      END
+C
+C***********************************************************************
+C
+      SUBROUTINE EMESHT(KFPM,KMAX,IWP,NENGP,NENGT,MENGT,WNP,ENERGP
+     X          ,ENERGT,NDIM34,LAB2,LAB4,NZ,DELTAE,BSKIP,BOLDFT,BPRINT)
+C
+      IMPLICIT REAL*8(A-H,O-Z)
+C
+C  SET-UP A COMMON ELECTRON ENERGY MESH FOR TOTAL PI, I.E. PHOTON MESH.
+C
+C  THIS MAY BE A SINGLE PASS OPERATION - SAME SET OF TARGETS IN EACH
+C  DATA BLOCK (NTAR0.EQ.0), OR THE ACCUMULATION OF TARGETS (NTAR0.LT.0).
+C  
+      PARAMETER (ONE=1.0D0)
+      PARAMETER (TINY=1.D-5)
+C
+      CHARACTER LAB4*4,LAB2*2
+C
+      LOGICAL BSKIP,BOLDFT,BPRINT
+C
+      DIMENSION IWP(*),MENGT(*),WNP(*),ENERGP(*),ENERGT(-1:*)
+C
+      K=1
+      IF(BSKIP)K=IWP(1)
+      WNP0=WNP(k) 
+      M0=1
+      M00=0
+      NENGT=-1
+      ENERGT(-1)=-1
+      DDDM=ONE-DELTAE
+      DO K=1,KFPM   
+        MENGT(K)=0
+      ENDDO
+C
+      DO K0=1,KMAX
+        K=K0
+        IF(BSKIP)K=IWP(K0)
+        TE=WNP0-WNP(K)
+        DO M=M0,NENGP
+          IF(ENERGP(M).LT.0.9D0*TE-TINY)THEN   !INSERT ORIG MESH POINT
+            NENGT=NENGT+1
+            ENERGT(NENGT)=ENERGP(M)
+            M00=M
+          ELSEIF(ENERGP(M).LT.1.1D0*TE+TINY)THEN !SKIP ORIG MESH POINT
+            IF(M.LT.NENGP)M00=M                  !UNLESS THE LAST ONE
+          ENDIF
+        ENDDO
+        M0=M00+1
+        T0=DDDM*TE
+        IF(T0.GT.ENERGT(NENGT))THEN
+          NENGT=NENGT+2
+          ENERGT(NENGT-1)=TE-TINY*TE
+          ENERGT(NENGT)=TE             !INSERT THRESHOLD POINTS
+        ENDIF
+        MENGT(K)=NENGT                 !FLAG THRESHOLD POINTS
+      ENDDO                    
+      DO M=M0,NENGP
+        NENGT=NENGT+1
+        IF(NENGT.LE.NDIM34)ENERGT(NENGT)=ENERGP(M)
+      ENDDO
+C                              
+      IF(NENGT.GT.NDIM34)THEN  
+        WRITE(6,200)NENGT
+        STOP 'SR.EMESHT: TOO MANY TOTAL PHOTOIONIZATION ENERGIES'
+      ENDIF
+C
+C WRITE HEADER TO ADF39TX FILE
+C
+      IF(BPRINT)THEN                                                !TOT
+        WRITE(12,208)LAB2,NZ,LAB4,NENGT,(I,I=1,NENGT)               !TOT
+        WRITE(12,207)(ENERGT(I),I=1,NENGT)                          !TOT
+        IF(BOLDFT)THEN                                              !TOT
+          WRITE(12,209)(I,I=1,NENGT)                                !TOT
+        ELSE                                                        !TOT
+          WRITE(12,2090)(I,I=1,NENGT)                               !TOT
+        ENDIF                                                       !TOT
+      ELSE                                                          !TOT
+        WRITE(22)LAB2,NZ,LAB4,NENGT,(I,I=1,NENGT)                   !TOT
+        WRITE(22)(ENERGT(I),I=1,NENGT)                              !TOT
+        WRITE(22)(I,I=1,NENGT)                                      !TOT
+      ENDIF                                                         !TOT
+C
+      RETURN
+C
+ 200  FORMAT('***TOO MANY TOTAL PHOTOIONIZATION ENERGIES,'
+     X       ,' INCREASE NDIM34 TO: ',I6)             
+ 207  FORMAT((31X,10(1PE12.5)))                         
+ 208  FORMAT(A2,I2,5X,A4,21X,'NENG=',I4/37X,'E:'        
+     X      ,10(I4,8X)/(33X,10(6X,I4,2X)))       
+ 209  FORMAT(/1X,'IRSL',4X,'G',1X,'INDP',5X,'DEL1(RYD)' 
+     X      ,6X,'PCS:',10(I4,8X)/(33X,10(6X,I4,2X)))
+ 2090 FORMAT(/2X,'IRSL',5X,'G',2X,'INDP',2X,'DEL1(RYD)' 
+     X      ,6X,'PCS:',10(I4,8X)/(33X,10(6X,I4,2X)))
+C
+      END
+C
+C***********************************************************************
+C
+      SUBROUTINE HPSRTI(N,A,IP)
+C
+C-----------------------------------------------------------------------
+C
+C SR .HPSRTI CARRIES OUT AN IMPLICIT HEAPSORT  BY *MAGNITUDE*
+C
+C INPUT:  VECTOR A, LENGTH N.
+C OUTPUT: DOWN-ORDERED POINTER IN IP, A IS UNCHANGED.
+C        (UP-ORDERED CAN BE OBTAINED BY CHANGING .LT. TO .GT. AS BELOW).
+C
+C  IT IS CALLED BY:
+C
+C  IT CALLS:
+C
+C-----------------------------------------------------------------------
+C
+      IMPLICIT REAL*8 (A-H,O-Z)
+      IMPLICIT INTEGER (I-N)
+C
+      DIMENSION A(*),IP(*)
+C
+C-----------------------------------------------------------------------
+C
+      DO I=1,N
+        IP(I)=I
+      ENDDO
+C
+      IF(N.LT.2)GO TO 300
+C
+      L=N/2+1
+      IT=N
+C
+  100 IF(L.GT.1)THEN
+        L=L-1
+        IPT=IP(L)
+      ELSE
+        IPT=IP(IT)
+        IP(IT)=IP(1)
+        IT=IT-1
+        IF(IT.EQ.1)THEN
+          IP(1)=IPT
+          GO TO 300
+        ENDIF
+      ENDIF
+      I=L
+      J=L+L
+C
+  200 IF(J.LE.IT)THEN
+        IF(J.LT.IT)THEN
+          IF(abs(A(IP(J+1))).lt.abs(A(IP(J))))J=J+1  !.lt. down, .gt. up
+        ENDIF
+        IF(abs(A(IP(J))).lt.abs(A(IPT)))THEN         !.lt. down, .gt. up
+          IP(I)=IP(J)
+          I=J
+          J=J+J
+        ELSE
+          J=IT+1
+        ENDIF
+        GO TO 200
+      ENDIF
+      IP(I)=IPT
+      GO TO 100
+C
+C-----------------------------------------------------------------------
+C
+  300 RETURN
+C
+C-----------------------------------------------------------------------
+C
+      END SUBROUTINE HPSRTI
+C
+C***********************************************************************
+C
+      REAL*8 FUNCTION SIMP(H,OMEGA,MXE)
+      IMPLICIT REAL*8 (A-H,O-Z)
+C
+C SIMPSON'S RULE QUADRATURE 
+C
+      PARAMETER (DZERO=0.0D0)
+      PARAMETER (DTHREE=3.0D0)
+      PARAMETER (DFOUR=4.0D0)
+C
+      DIMENSION OMEGA(MXE)
+C
+      I1=MOD(MXE+1,2)
+      T=DZERO
+      DO I=2+I1,MXE,2
+        T=T+OMEGA(I-1)+DFOUR*OMEGA(I)+OMEGA(I+1)
+      ENDDO
+      SIMP=T*H/DTHREE
+      RETURN
+      END
+C
+C***********************************************************************
+C
+      REAL*8 FUNCTION TRAP(H,OMEGA,MXE)
+      IMPLICIT REAL*8 (A-H,O-Z)
+C
+C TRAPEZOIDAL RULE QUADRATURE
+C
+      PARAMETER (DZERO=0.0D0)
+      PARAMETER (DTWO=2.0D0)
+C
+      DIMENSION OMEGA(MXE)
+C
+      T=DZERO
+      DO I=2,MXE
+        T=T+OMEGA(I)+OMEGA(I-1)
+      ENDDO
+      TRAP=T*H/DTWO
+      RETURN
+      END
+C
+C***********************************************************************
+C
+      REAL*8 FUNCTION XINTP(TE,ENERGP,NENGP,PCS,J0)
+      IMPLICIT REAL*8 (A-H,O-Z)
+C
+C  INTEPOLATE PARTIAL PHOTOIONIZATION CROSS SECTION
+C
+      PARAMETER (DZERO=0.0D0)
+      PARAMETER (DONE=1.0D0)
+C
+      LOGICAL BBC1,BLOG
+C
+      COMMON /LAG/NLAGP,NP1,NP2,NPH,BBC1
+C
+      DIMENSION ENERGP(*),PCS(*)
+C
+      BLOG=.FALSE.                    !LOG INTERP OF PCS IS VERY SLOW...
+C
+      IF(NLAGP.LE.2)THEN
+C
+        DO J=J0,NENGP
+C
+          IF(ENERGP(J).GT.TE)THEN
+C
+            T=ENERGP(J)-ENERGP(J-1)
+            T1=ENERGP(J)-TE
+            T2=TE-ENERGP(J-1)
+C
+            BLOG=BLOG.AND.PCS(J)*PCS(J-1).GT.DZERO
+C
+            IF(BLOG)THEN
+              XINTP=(T2*LOG(PCS(J))+T1*LOG(PCS(J-1)))/T
+              XINTP=exp(XINTP)
+            ELSE
+              XINTP=(T2*PCS(J)+T1*PCS(J-1))/T
+            ENDIF
+            J0=J
+C
+            RETURN
+C
+          ENDIF
+C
+        ENDDO
+        XINTP=PCS(NENGP)
+C
+      ELSEIF(NLAGP.EQ.3)THEN
+        STOP '*** ILLEGAL VALUE FOR NLAGP'
+      ELSE
+C
+        IF(.NOT.BBC1)THEN
+C
+          DO J=J0,NENGP
+            IF(ENERGP(J).GT.TE)THEN
+              JP=J
+              GO TO 412
+            ENDIF
+          ENDDO
+          JP=NENGP
+C
+ 412      J0=JP
+C
+          NP2=JP+NPH-1
+          NP1=JP-NPH
+          IF(NP1.LE.0)THEN
+            NP2=NP2-NP1+1
+            NP1=1
+          ELSEIF(NP2.GT.NENGP)THEN
+            T=ENERGP(JP)-ENERGP(JP-1)
+            T1=ENERGP(JP)-TE
+            T2=TE-ENERGP(JP-1)
+C
+            BLOG=BLOG.AND.PCS(JP)*PCS(JP-1).GT.DZERO
+C
+            IF(BLOG)THEN
+              XINTP=(T2*LOG(PCS(JP))+T1*LOG(PCS(JP-1)))/T
+              XINTP=exp(XINTP)
+            ELSE
+              XINTP=(T2*PCS(JP)+T1*PCS(JP-1))/T
+            ENDIF
+C
+            RETURN
+C
+c            NP1=NP1-NP2+NENGP
+c            NP2=NENGP
+          ENDIF
+C
+        ENDIF
+C
+        TPJ=DONE
+        DO J=NP1,NP2
+          TPJ=TPJ*PCS(J)
+        ENDDO
+        BLOG=BLOG.AND.TPJ.GT.DZERO
+C
+        XINTP=DZERO
+        DO J=NP1,NP2
+          TPJ=PCS(J)
+          IF(BLOG)TPJ=LOG(TPJ)
+          DD=DONE
+          DO M=NP1,NP2
+            IF(J.NE.M)THEN
+              DD=DD*(TE-ENERGP(M))
+              DD=DD/(ENERGP(J)-ENERGP(M))
+            ENDIF
+          ENDDO
+          XINTP=XINTP+DD*TPJ
+        ENDDO
+C
+        IF(BLOG)XINTP=exp(XINTP)
+C
+      ENDIF
+C
+      RETURN
+C
+      END
+C
+C***********************************************************************
+C
+      REAL*8 FUNCTION XINTT(TE,ENERGT,NENGT,PCST,I)
+      IMPLICIT REAL*8 (A-H,O-Z)
+C
+C  INTEPOLATE TOTAL PHOTOIONIZATION CROSS SECTION
+C
+      PARAMETER (DZERO=0.0D0)
+      PARAMETER (DONE=1.0D0)
+C
+      PARAMETER (TINY2=2.D-5)
+C
+      LOGICAL BLOG
+C
+      DIMENSION ENERGT(-1:*),PCST(*)
+C
+      SAVE NLAG,NP1,NP2
+C
+      DATA I0/0/
+C
+      BLOG=.FALSE.                    !LOG INTERP OF PCS IS VERY SLOW...
+C
+      IF(I0.EQ.I)GO TO 1                             !UNCHANGED
+C
+      IF(TE.GE.ENERGT(NENGT))THEN                    !EXTRAPOLATING
+        NLAG=3
+        NP2=NENGT
+        NP1=NP2-2
+        GO TO 1
+      ENDIF
+C
+C  FIND INTERPOLATION ENERGIES
+C
+      NLAG=2
+      NP1=I-1
+      NP2=I
+C
+      IF(I.LT.NENGT)THEN
+        IF(ENERGT(I+1).GT.ENERGT(I)+ENERGT(I+1)*TINY2)THEN
+          NLAG=NLAG+1
+          NP2=NP2+1
+        ENDIF
+      ENDIF
+C
+      IF(I.GT.2)THEN
+        IF(ENERGT(I-1).GT.ENERGT(I-2)+ENERGT(I-1)*TINY2)THEN
+          NLAG=NLAG+1
+          NP1=NP1-1
+        ENDIF
+      ENDIF
+C
+C  NOW INTERPOLATE
+C
+   1  IF(NLAG.EQ.2)THEN
+C
+        T=ENERGT(I)-ENERGT(I-1)
+        T1=ENERGT(I)-TE
+        T2=TE-ENERGT(I-1)
+C
+        BLOG=BLOG.AND.PCST(I)*PCST(I-1).GT.DZERO
+C
+        IF(BLOG)THEN
+          XINTT=(T2*LOG(PCST(I))+T1*LOG(PCST(I-1)))/T
+          XINTT=exp(XINTT)
+        ELSE
+          XINTT=(T2*PCST(I)+T1*PCST(I-1))/T
+        ENDIF
+C
+      ELSE
+C
+        TPJ=DONE
+        DO J=NP1,NP2
+          TPJ=TPJ*PCST(J)
+        ENDDO
+C
+        BLOG=BLOG.AND.TPJ.GT.DZERO
+C
+        XINTT=DZERO
+        DO J=NP1,NP2
+          TPJ=PCST(J)
+          if(blog.and.tpj.le.dzero)then     !shouldn't be now
+            write(79,*)'p:',j,np1,np2,(energt(m),PCST(m),m=np1,np2)
+            call flush(79)
+            stop 'pcst.le.0'
+          endif
+          IF(BLOG)TPJ=LOG(TPJ)
+          DD=DONE
+          DO M=NP1,NP2
+            IF(J.NE.M)THEN
+              DD=DD*(TE-ENERGT(M))
+              DD=DD/(ENERGT(J)-ENERGT(M))
+            ENDIF
+          ENDDO
+          XINTT=XINTT+DD*TPJ
+        ENDDO
+c
+        if(blog.and.xintt.eq.dzero)then     !shouldn't be now
+          write(77,*)'n:',np1,np2,(energt(j),PCST(J),j=np1,np2),te,xintt
+          call flush(77)
+          stop 'xintt.eq.0'
+        endif
+C
+        IF(BLOG)XINTT=exp(XINTT)
+c
+        if(xintt.lt.dzero)then              !case .not.blog only
+          write(78,*)'x:',np1,np2,(energt(j),PCST(J),j=np1,np2),te,xintt
+          call flush(78)
+          xintt=dzero
+        endif
+C
+      ENDIF
+C
+      I0=I
+C
+      RETURN
+C
+      END

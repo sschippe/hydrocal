@@ -1,0 +1,32 @@
+ **************************************************************
+ *  hydrocal, revision 1306                                   *
+ *                                                            *
+ *         Compilation of hydrogenic atomic structure         *
+ *               and other useful calculations                *
+ *                                                            *
+ *               Stefan Schippers, 1997...2023                *
+ *                                                            *
+ *            Justus-Liebig-Universitaet Giessen              *
+ *            I. Physikalisches Institut                      *
+ *            Atom- und Molekuelphysik                        *
+ *            Heinrich-Buff-Ring 16, D 35392 Giessen          *
+ *                                                            *
+ *        e-mail: stefan.schippers@physik.uni-giessen.de      *
+ **************************************************************
+
+
+ Calculate what ? 
+
+ 1) mathematical functions and 3n-j symbols
+ 2) hydrogenic dipole transitions
+ 3) hyperfine splittings and polarisations
+ 4) field ionization
+ 5) RR cross sections
+ 6) RR and DR rate coefficients
+ 7) model DR spectra
+ 8) convolutions
+ 9) photoionization
+10) ion beams
+11) this and that
+
+ Make your choice (0 quits )               : 

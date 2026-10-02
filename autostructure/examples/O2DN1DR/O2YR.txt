@@ -1,0 +1,13 @@
+####################################################################
+###  hydrocal SVN revision : 1908M
+###               filename : O2YR.txt
+###      start date & time : Thu Mar 12 12:08:25 2026
+###           storage ring : CRYRING@ESR
+###             ion charge : 2
+###           ion mass (u) : 16
+###    cooling energy (eV) : 723
+###    guiding field  (mT) : 30
+###                  max n : 100
+###          cascade depth : 0
+###                 cutoff : hard
+####################################################################
