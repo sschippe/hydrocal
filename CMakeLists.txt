@@ -15,6 +15,11 @@ endif()
 # ---------------------------------------------------------------------------
 option(ENABLE_WARNINGS "Enable a common set of compiler warnings" ON)
 option(WARNINGS_AS_ERRORS "Treat compiler warnings as errors (-Werror)" ON)
+# FLINT is looked up through pkg-config, which resolves against the *host*
+# even in a cross-compilation.  Turning this off keeps a host libflint from
+# being linked into a foreign-target binary; the portable three-stage 1F1
+# fallback is used instead.
+option(USE_FLINT "Use FLINT for the exact 1F1/2F1 engines when available" ON)
 
 # ---------------------------------------------------------------------------
 # Warning flags (applied to all targets defined below)
@@ -282,7 +287,7 @@ endif()
 # HYDROCAL_HAVE_FLINT define.  Without FLINT the portable three-stage
 # (double Taylor, quad Taylor, Poincare asymptotic) 1F1 fallback is used.
 find_package(PkgConfig QUIET)
-if(PkgConfig_FOUND)
+if(PkgConfig_FOUND AND USE_FLINT)
   pkg_check_modules(FLINT QUIET IMPORTED_TARGET flint)
 endif()
 if(FLINT_FOUND)

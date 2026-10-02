@@ -45,7 +45,7 @@
  * @section Installation 
  *
  * Required Linux packages (all these packages are part of any major Linux distribution): 
- * -# <a href="https://subversion.apache.org/">subversion</a>, 
+ * -# <a href="https://git-scm.com/">git</a>, 
  * -# <a href="https://cmake.org/">Cmake</a>,
  * -# <a href="https://gcc.gnu.org/onlinedocs/gcc/index.html">GNU C++ compiler</a> (g++),
  * -# Optionally: <a href="https://clang.llvm.org/docs/ClangFormat.html"> ClangFormat</a> for formating the source files
@@ -56,7 +56,7 @@
  *
  * On Linux systems, these packages can be installed with the commands
  * @verbatim
-   sudo apt install subversion cmake g++ doxygen
+   sudo apt install git cmake g++ doxygen
    sudo apt install graphviz libboost-all-dev libflint-dev clang-format 
    @endverbatim
  *
