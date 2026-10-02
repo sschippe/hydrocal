@@ -189,7 +189,7 @@ There is no dedicated hydrocal software paper. The articles under [References](#
 - S. Schippers et al., A&A **421** (2004) 1185 — [doi:10.1051/0004-6361:20040380](https://doi.org/10.1051/0004-6361:20040380)
 - S. Schippers, JQSRT **219** (2019) 33 — [doi:10.1016/j.jqsrt.2018.08.003](https://doi.org/10.1016/j.jqsrt.2018.08.003)
 - S. Schippers et al., ChemPhysChem **24** (2023) e202300061 — [doi:10.1002/cphc.202300061](https://doi.org/10.1002/cphc.202300061)
-- S.-X. Wang et al., Eur. Phys. J. D **78** (2024) 122 -[doi:10.1140/epjd/s10053-024-00914-7](https://doi.org/10.1140/epjd/s10053-024-00914-7)
+- S.-X. Wang et al., Eur. Phys. J. D **78** (2024) 122 — [doi:10.1140/epjd/s10053-024-00914-7](https://doi.org/10.1140/epjd/s10053-024-00914-7)
 
 ## Author
 
