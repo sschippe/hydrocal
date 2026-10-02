@@ -1,0 +1,52 @@
+hydrocal for Windows
+ ====================
+
+ Version @HYDROCAL_VERSION@, revision @HYDROCAL_REVISION@ (@HYDROCAL_GITID@)
+ Built @HYDROCAL_REVISION_DATE@
+
+ Contents
+ --------
+   hydrocal_win.exe   prebuilt 64-bit console program (OpenMP enabled)
+   hydrocal.sln       Visual Studio 2022 solution
+   hydrocal.vcxproj   Visual Studio C++ project (x64 and Win32, Debug/Release)
+   ReadMe.txt         this file
+   buildinfo.h        version header generated at build time
+
+ Running
+ -------
+ Run hydrocal_win.exe from a command line.  It reads a hydrocal input file
+ (see doc/examples in the source repository) and reports
+
+   ###  hydrocal revision     : @HYDROCAL_REVISION@
+
+ so you can confirm which build you are running.
+
+ No installation and no extra DLLs are needed; the executable is statically
+ linked.
+
+ Building with Visual Studio
+ --------------------------
+ The project files are a convenience for people who prefer MSVC to mingw.
+ They are generated from the same source list as the CMake build, so they
+ always match the sources of this release.  They do NOT ship the sources:
+ extract this zip into the root of a hydrocal source checkout (the directory
+ that contains src\ and CMakeLists.txt) and open hydrocal.sln.
+
+ Visual Studio 2022 or newer with the "Desktop development with C++" workload
+ is required.  For OpenMP support on MSVC, the v2.0 runtime is used
+ automatically; omit <OpenMPSupport> from the project if it is unavailable.
+
+ Building with CMake and mingw-w64 instead
+ ----------------------------------------
+ From the source root:
+
+   cmake -B build-win -S . \
+         -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-mingw-x86_64.cmake \
+         -DCMAKE_BUILD_TYPE=Release
+   cmake --build build-win
+
+ Optional dependencies (Boost, FLINT) are not available for the mingw target,
+ so the corresponding hydrocal features fall back to the portable
+ implementations.  For full functionality build on Linux or with MSVC.
+
+ Please report problems at https://github.com/sschippe/hydrocal/issues

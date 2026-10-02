@@ -40,6 +40,40 @@ CMake options:
 |---|---|---|
 | `ENABLE_WARNINGS` | `ON` | common warning set (`-Wall -Wextra -Wshadow`, `/W4`) |
 | `WARNINGS_AS_ERRORS` | `ON` | promote warnings to errors (`-Werror`, `/WX`) |
+| `USE_FLINT` | `ON` | use FLINT for the exact 1F1/2F1 engines when found |
+| `USE_STATIC_OPENMP` | `OFF` | link libgomp statically (needed for a DLL-free Windows build) |
+
+### Windows (cross-compiling from Linux)
+
+Install mingw-w64 (`apt install g++-mingw-w64-x86-64`), then:
+
+```bash
+cmake -B build-win -S . \
+      -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-mingw-x86_64.cmake \
+      -DCMAKE_BUILD_TYPE=Release
+cmake --build build-win --target win-zip
+```
+
+This produces `build-win/hydrocal.exe` and assembles `hydrocal_win.zip`
+in the source root. The executable is statically linked, so it imports
+only `KERNEL32.dll` and `msvcrt.dll` and needs no runtime DLLs.
+
+Targets:
+
+| Target | Meaning |
+|---|---|
+| `win-project` | write `hydrocal.vcxproj`, `hydrocal.sln` and `ReadMe.txt` to `build-win/win-project/` |
+| `win-zip` | package the executable and project files as `hydrocal_win.zip` |
+
+`win-project` also runs on a native build, so the Visual Studio files can be
+regenerated at any time. They are derived from the same `HYDROCAL_SOURCES`
+list CMake builds, so they cannot drift out of sync. Note that
+`hydrocal_win.zip` is deliberately *not* tracked by git: it is published as a
+GitHub Release asset.
+
+Boost and FLINT are normally unavailable for the mingw target, so the
+matching features fall back to the portable implementations and
+`WARNINGS_AS_ERRORS` is disabled for this build.
 
 ## Running
 
