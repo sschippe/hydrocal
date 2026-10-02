@@ -48,7 +48,6 @@
  * -# <a href="https://git-scm.com/">git</a>, 
  * -# <a href="https://cmake.org/">Cmake</a>,
  * -# <a href="https://gcc.gnu.org/onlinedocs/gcc/index.html">GNU C++ compiler</a> (g++),
- * -# Optionally: <a href="https://clang.llvm.org/docs/ClangFormat.html"> ClangFormat</a> for formating the source files
  * -# Optionally: <a href="http://www.stack.nl/~dimitri/doxygen/index.html">doxygen</a> with
  * <a href="http://www.graphviz.org/">graphviz</a> for generating the documentation. 
  * -# Optionally: <a href="https://www.boost.org">BOOST libraries</a> used, e.g., for extended precision calculations.
@@ -57,7 +56,7 @@
  * On Linux systems, these packages can be installed with the commands
  * @verbatim
    sudo apt install git cmake g++ doxygen
-   sudo apt install graphviz libboost-all-dev libflint-dev clang-format 
+   sudo apt install graphviz libboost-all-dev libflint-dev 
    @endverbatim
  *
  * The @ref pageGUI requires additional packages:
@@ -78,12 +77,15 @@
    cmake ..
    make -j4
    make install
-   make doc-html
    @endverbatim
  *
  * Cmake uses the configuration in <tt>[hydrocal/CMakeLists.txt](../../CMakeLists.txt)</tt>.
  *
- * ClangFormat uses the configuration in <tt>[hydrocal/.clang-format](../../.clang-format)</tt>.
+ * The following command produces the html documentation acessible at <tt>[hydrocal/doc/index.html](index.html)</tt>.
+ * @verbatim
+   cd ~/hydrocal/build
+   make doc-html
+   @endverbatim
  *
  * If you want to commit and push changes to the code or to the documentation, you will have to make sure, that the revision counter
  * is incremented. To this end, you should use the following commands once:

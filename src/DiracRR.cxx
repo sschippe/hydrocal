@@ -23,6 +23,7 @@
 #include "DiracAngle.h"
 #include "osci.h"
 
+#include <array>
 #include <cmath>
 #include <complex>
 #include <cstdio>
