@@ -125,4 +125,4 @@ MIT — see [LICENSE](LICENSE).
 
 ## Author
 
-Stefan Schippers — <stefan.schippers@desy.de>
+Stefan Schippers — <stefan.schippers@uni-giessen.de>
