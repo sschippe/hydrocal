@@ -22,8 +22,9 @@
  *  Heinrich-Buff-Ring16<br />
  *  35392 Giessen, Germany<br />
  *<br />
- *  schippers@jlug.de<br />
- *  https://www.uni-giessen.de/amp
+ *  schippers@uni-giessen.de<br />
+ *  https://www.uni-giessen.de/amp<br />
+ *  ORCID 0000-0002-6166-7138
  *
 ******************************************************************************************************************
  * @section Introduction
@@ -94,5 +95,12 @@
    git config core.hooksPath .githooks
    cmake --build build --target setup-hooks
    @endverbatim
+ *
+ * A windows exectuable of <tt>hydrocal_win.exe</tt> can be produced with the following commands
+ * @verbatim
+   cd ~/hydrocal
+   cmake -B build-win -S . -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-mingw-x86_64.cmake -DCMAKE_BUILD_TYPE=Release
+   cmake --build build-win --target win-zip
+  @endverbatim
  */
 

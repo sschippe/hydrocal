@@ -1,0 +1,125 @@
+cff-version: 1.2.0
+message: "If you use hydrocal in your research, please cite it as below."
+title: "hydrocal: hydrogenic atomic structure calculations and radiative transition rates"
+abstract: >-
+  hydrocal is a collection of subroutines performing hydrogenic atomic
+  structure calculations such as bound-bound and bound-free radiative
+  transition rates, which are then used, for example, in the calculation of
+  cross sections and rate coefficients for radiative recombination.
+authors:
+  - family-names: "Schippers"
+    given-names: "Stefan"
+    affiliation: "Institute of Experimental Physics I, Justus-Liebig-Universitaet Giessen, Heinrich-Buff-Ring 16, 35392 Giessen, Germany"
+    orcid: "https://orcid.org/0000-0002-6166-7138"
+version: "1.0.1"
+date-released: "2026-10-02"
+license: MIT
+repository-code: "https://github.com/sschippe/hydrocal"
+url: "https://github.com/sschippe/hydrocal/releases/tag/v1.0.1"
+keywords:
+  - atomic physics
+  - hydrogenic ions
+  - atomic structure
+  - photoionization
+  - radiative recombination
+references:
+  - authors:
+      - family-names: "Schippers"
+        given-names: "Stefan"
+    title: "Analytical expression for the convolution of a Fano line profile with a gaussian"
+    journal: "Journal of Quantitative Spectroscopy and Radiative Transfer"
+    volume: 219
+    start: 33
+    end: 36
+    year: 2019
+    doi: "10.1016/j.jqsrt.2018.08.003"
+  - authors:
+      - family-names: "Schippers"
+        given-names: "Stefan"
+      - family-names: "Boduch"
+        given-names: "P."
+      - family-names: "Buchem"
+        given-names: "J. van"
+      - family-names: "Bliek"
+        given-names: "F. W."
+      - family-names: "Hoekstra"
+        given-names: "R."
+      - family-names: "Morgenstern"
+        given-names: "R."
+      - family-names: "Olson"
+        given-names: "R. E."
+    title: "Polarized light emission in keV He2++Na(3s) collisions"
+    journal: "Journal of Physics B: Atomic, Molecular and Optical Physics"
+    volume: 28
+    issue: 15
+    start: 3271
+    end: 3282
+    year: 1995
+    doi: "10.1088/0953-4075/28/15/017"
+  - authors:
+      - family-names: "Schippers"
+        given-names: "Stefan"
+      - family-names: "Muller"
+        given-names: "A."
+      - family-names: "Gwinner"
+        given-names: "G."
+      - family-names: "Linkemann"
+        given-names: "J."
+      - family-names: "Saghiri"
+        given-names: "A. A."
+      - family-names: "Wolf"
+        given-names: "A."
+    title: "Storage Ring Measurement of the C IV Recombination Rate Coefficient"
+    journal: "The Astrophysical Journal"
+    volume: 555
+    issue: 2
+    start: 1027
+    end: 1037
+    year: 2001
+    doi: "10.1086/321512"
+  - authors:
+      - family-names: "Schippers"
+        given-names: "Stefan"
+      - family-names: "Schnell"
+        given-names: "M."
+      - family-names: "Brandau"
+        given-names: "C."
+      - family-names: "Kieslich"
+        given-names: "S."
+      - family-names: "Muller"
+        given-names: "A."
+      - family-names: "Wolf"
+        given-names: "A."
+    title: "Experimental Mg IX photorecombination rate coefficient"
+    journal: "Astronomy & Astrophysics"
+    volume: 421
+    issue: 3
+    start: 1185
+    end: 1191
+    year: 2004
+    doi: "10.1051/0004-6361:20040380"
+  - authors:
+      - family-names: "Schippers"
+        given-names: "Stefan"
+      - family-names: "Hillenbrand"
+        given-names: "P.-M."
+      - family-names: "Perry-Sassmannshausen"
+        given-names: "A."
+      - family-names: "Buhr"
+        given-names: "T."
+      - family-names: "Fuchs"
+        given-names: "S."
+      - family-names: "Reinwardt"
+        given-names: "S."
+      - family-names: "Trinter"
+        given-names: "F."
+      - family-names: "Muller"
+        given-names: "A."
+      - family-names: "Martins"
+        given-names: "M."
+    title: "Vibrationally Resolved Inner-Shell Photoexcitation of the Molecular Anion C2-"
+    journal: "ChemPhysChem"
+    volume: 24
+    issue: 11
+    year: 2023
+    doi: "10.1002/cphc.202300061"

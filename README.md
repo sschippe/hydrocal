@@ -150,13 +150,41 @@ exact commit in a bug report.
 
 MIT — see [LICENSE](LICENSE).
 
+## Citation
+
+If you use hydrocal in your research, please cite the software itself:
+
+```bibtex
+@software{Schippers2026hydrocal,
+  author       = {Schippers, Stefan},
+  title        = {{hydrocal}: hydrogenic atomic structure calculations
+                  and radiative transition rates},
+  version      = {1.0.1},
+  year         = {2026},
+  month        = oct,
+  publisher    = {GitHub},
+  license      = {MIT},
+  repository   = {github.com/sschippe/hydrocal},
+  url          = {https://github.com/sschippe/hydrocal},
+  orcid        = {0000-0002-6166-7138},
+  note         = {Revision 2132; release \url{https://github.com/sschippe/hydrocal/releases/tag/v1.0.2}}
+}
+```
+
+`@software` requires [biblatex](https://ctan.org/pkg/biblatex). For plain BibTeX use the `@misc` fallback in [`CITATION.bib`](CITATION.bib). Machine-readable metadata for GitHub's *Cite this repository* widget is in [`CITATION.cff`](CITATION.cff); both files also carry the method papers below.
+
+There is no dedicated hydrocal software paper. The articles under [References](#references) describe the underlying physics, not the code, and should be cited only when referring to that physics.
+
 ## References
 
 - S. Schippers et al., J. Phys. B **28** (1995) 3271 — [doi:10.1088/0953-4075/28/15/017](https://doi.org/10.1088/0953-4075/28/15/017)
 - S. Schippers et al., ApJ **555** (2001) 1027 — [doi:10.1086/321512](https://doi.org/10.1086/321512)
 - S. Schippers et al., A&A **421** (2004) 1185 — [doi:10.1051/0004-6361:20040380](https://doi.org/10.1051/0004-6361:20040380)
 - S. Schippers, JQSRT **219** (2019) 33 — [doi:10.1016/j.jqsrt.2018.08.003](https://doi.org/10.1016/j.jqsrt.2018.08.003)
+- S. Schippers et al., ChemPhysChem **24** (2023) e202300061 — [doi:10.1002/cphc.202300061](https://doi.org/10.1002/cphc.202300061)
 
 ## Author
 
 Stefan Schippers — <stefan.schippers@uni-giessen.de>
+Institute of Experimental Physics I, Justus-Liebig-Universität Giessen
+[ORCID 0000-0002-6166-7138](https://orcid.org/0000-0002-6166-7138)
