@@ -32,6 +32,7 @@ All external dependencies are **optional** and enable extra functionality when f
 ```bash
 cmake -B build -S .
 cmake --build build -j
+make -C build doc-html
 ```
 
 The CLI executable is written to `build/hydrocal`.
