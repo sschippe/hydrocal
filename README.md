@@ -22,7 +22,7 @@ git clone https://github.com/sschippe/hydrocal hydrocal
 |---|---|
 | Compiler | C++17 |
 | Build system | CMake ≥ 3.16 |
-| Documetation | doxygen |
+| Documentation | doxygen |
 
 ```bash
 sudo apt install git cmake g++ doxygen
