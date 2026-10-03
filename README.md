@@ -10,6 +10,11 @@ experiments.
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23105741.svg)](https://doi.org/10.5281/zenodo.23105741)
 
+## Download
+```bash
+git clone https://github.com/sschippe/hydrocal hydrocal
+```
+
 ## Requirements
 
 | | |
@@ -45,6 +50,13 @@ CMake options:
 | `WARNINGS_AS_ERRORS` | `ON` | promote warnings to errors (`-Werror`, `/WX`) |
 | `USE_FLINT` | `ON` | use FLINT for the exact 1F1/2F1 engines when found |
 | `USE_STATIC_OPENMP` | `OFF` | link libgomp statically (needed for a DLL-free Windows build) |
+
+### Documention
+
+```bash
+make -C build doc-html
+```
+The documentation can be accessed at `~/hydrocal/doc/html/index.html`. 
 
 ### Windows (cross-compiling from Linux)
 
