@@ -37,7 +37,6 @@ All external dependencies are **optional** and enable extra functionality when f
 ```bash
 cmake -B build -S .
 cmake --build build -j
-make -C build doc-html
 ```
 
 The CLI executable is written to `build/hydrocal`.
@@ -51,11 +50,12 @@ CMake options:
 | `USE_FLINT` | `ON` | use FLINT for the exact 1F1/2F1 engines when found |
 | `USE_STATIC_OPENMP` | `OFF` | link libgomp statically (needed for a DLL-free Windows build) |
 
-### Documention
+### Documentation
 
 ```bash
 make -C build doc-html
 ```
+
 The documentation can be accessed at `~/hydrocal/doc/html/index.html`. 
 
 ### Windows (cross-compiling from Linux)
