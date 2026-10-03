@@ -47,6 +47,7 @@ git clone https://github.com/sschippe/hydrocal hydrocal
 
 ```bash
 cd ~/hydrocal
+mkdir build
 cmake -B build -S .
 cmake --build build -j
 ```
