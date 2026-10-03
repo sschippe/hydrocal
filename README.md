@@ -22,7 +22,11 @@ git clone https://github.com/sschippe/hydrocal hydrocal
 |---|---|
 | Compiler | C++17 |
 | Build system | CMake ≥ 3.16 |
-| Required | a C++17 compiler and `libm` |
+| Documetation | doxygen |
+
+```bash
+sudo apt install git cmake g++ doxygen
+```
 
 All external dependencies are **optional** and enable extra functionality when found:
 
@@ -32,6 +36,11 @@ All external dependencies are **optional** and enable extra functionality when f
 | Boost (headers) | Boost-based routines |
 | FLINT | exact 1F1 and 2F1 summation engines |
 | FLTK + Cairo | the `hydrocalGUI` graphical front end |
+
+```bash
+sudo apt install graphviz libboost-all-dev libflint-dev
+sudo apt install libfltk1.4-dev libcairo2-dev gnuplot
+```
 
 ## Building
 
