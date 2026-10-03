@@ -206,7 +206,7 @@ There is no dedicated hydrocal software paper. The articles under [References](#
 
 ## Author
 
-Stefan Schippers — <stefan.schippers@uni-giessen.de>
-I. Physikalisches Institut, Justus-Liebig-Universität Gießen
-Heinrich-Buff-Ring 16, 35392 Giessen, Germany
+Stefan Schippers — <stefan.schippers@uni-giessen.de>,
+I. Physikalisches Institut, Justus-Liebig-Universität Gießen,
+Heinrich-Buff-Ring 16, 35392 Giessen, Germany,
 [ORCID 0000-0002-6166-7138](https://orcid.org/0000-0002-6166-7138)
