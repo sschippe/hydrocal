@@ -11,11 +11,6 @@ experiments.
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23105741.svg)](https://doi.org/10.5281/zenodo.23105741)
 
-## Download
-```bash
-git clone https://github.com/sschippe/hydrocal hydrocal
-```
-
 ## Requirements
 
 | | |
@@ -40,6 +35,11 @@ All external dependencies are **optional** and enable extra functionality when f
 ```bash
 sudo apt install graphviz libboost-all-dev libflint-dev
 sudo apt install libfltk1.4-dev libcairo2-dev gnuplot
+```
+
+## Download
+```bash
+git clone https://github.com/sschippe/hydrocal hydrocal
 ```
 
 ## Building
