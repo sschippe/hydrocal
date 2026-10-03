@@ -39,12 +39,14 @@ sudo apt install libfltk1.4-dev libcairo2-dev gnuplot
 
 ## Download
 ```bash
+cd
 git clone https://github.com/sschippe/hydrocal hydrocal
 ```
 
 ## Building
 
 ```bash
+cd ~/hydrocal
 cmake -B build -S .
 cmake --build build -j
 ```
@@ -63,6 +65,7 @@ CMake options:
 ### Documentation
 
 ```bash
+cd ~/hydrocal
 make -C build doc-html
 ```
 
@@ -73,6 +76,7 @@ The documentation can be accessed at `~/hydrocal/doc/html/index.html`.
 Install mingw-w64 (`apt install g++-mingw-w64-x86-64`), then:
 
 ```bash
+cd ~/hydrocal
 cmake -B build-win -S . \
       -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-mingw-x86_64.cmake \
       -DCMAKE_BUILD_TYPE=Release
