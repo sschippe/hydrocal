@@ -50,6 +50,7 @@ cd ~/hydrocal
 mkdir build
 cmake -B build -S .
 cmake --build build -j
+make -C build install
 ```
 
 The CLI executable is written to `build/hydrocal`.
