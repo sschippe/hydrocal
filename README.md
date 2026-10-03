@@ -53,7 +53,7 @@ cmake --build build -j
 make -C build install
 ```
 
-The CLI executable is written to `build/hydrocal`.
+The CLI executable is written to `build/hydrocal`. The last command creates softlinks in `~/bin`. 
 
 CMake options:
 
