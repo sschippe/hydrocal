@@ -2,8 +2,9 @@
 
 A collection of subroutines performing **hydrogenic atomic structure calculations**, such as
 bound–bound and bound–free radiative transition rates, which are then used to calculate cross
-sections and rate coefficients for radiative recombination. Convolution of cross sections into
-rate coefficients is supported as well.
+sections and rate coefficients for radiative recombination. Convolution of cross sections 
+(also from external sources such as `autostructure`) into
+merged-beams and plasma rate coefficients is supported as well.
 
 Development is driven by data-evaluation needs of storage-ring electron–ion collision
 experiments.
