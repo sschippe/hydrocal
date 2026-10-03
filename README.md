@@ -53,7 +53,8 @@ cmake --build build -j
 make -C build install
 ```
 
-The CLI executable is written to `build/hydrocal`. The last command creates softlinks in `~/bin`. 
+The CLI executable is written to `build/hydrocal`. The last command creates softlinks 
+in `~/bin` defining the commands `hydrocal` and `hydrocalgui`. 
 
 CMake options:
 
@@ -111,7 +112,7 @@ matching features fall back to the portable implementations and
 `hydrocal` reads its input on stdin and writes results to stdout:
 
 ```bash
-./build/hydrocal < doc/examples/U92RR.hcin
+hydrocal < doc/examples/U92RR.hcin
 ```
 
 Each test case in `doc/examples/` is a `.hcin` input file.
