@@ -64,3 +64,9 @@ hydrocal_win.zip
 doc/html/
 doc/latex/
 .aider*
+
+# Web interface
+web/.venv/
+web/jobs/
+web/**/__pycache__/
+.pytest_cache/
