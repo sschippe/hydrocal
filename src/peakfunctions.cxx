@@ -1,11 +1,10 @@
+// SPDX-License-Identifier: MIT
 /**
  * @file peakfunctions.cxx
  * @brief Coding of peak functions
- * SPDX-License-Identifier: MIT
  *
  * @author Stefan Schippers
  * @date 2013-04-23
- * @version $Id $
  *
  */
 

@@ -4,7 +4,6 @@
  * @brief More rigorous calculation of field-ionization rates (unfinished)
  *
  * @verbatim
-  $Id: fieldion2.cxx 2037 2026-07-17 15:21:56Z iamp $
 // SPDX-License-Identifier: MIT
  @endverbatim
  *

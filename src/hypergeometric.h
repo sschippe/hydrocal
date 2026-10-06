@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /**
  * @file hypergeometric.h
  *
@@ -9,8 +10,6 @@
  *
  * @par VERSION
  * @verbatim
- * $Id: hypergeometric.h 2118 2026-09-22 09:12:57Z iamp $
- // SPDX-License-Identifier: MIT
  * @endverbatim
  */
 

@@ -4,7 +4,6 @@
  * @brief Calculation of hydrogenic field-ionization rates and probabilities
  *
  * @verbatim
-  $Id: fieldion.cxx 2037 2026-07-17 15:21:56Z iamp $
 // SPDX-License-Identifier: MIT
  @endverbatim
  *

@@ -1,11 +1,10 @@
+// SPDX-License-Identifier: MIT
 /**
  * @file IchiharaEichlerRRdata.h
  *
  * @brief Tabulated exact relativistic radiative-recombination cross
  *        sections of A. Ichihara and J. Eichler
  *
- * $Id: IchiharaEichlerRRdata.h 2115 2026-09-21 08:49:33Z iamp $
- // SPDX-License-Identifier: MIT
  */
 #pragma once
 

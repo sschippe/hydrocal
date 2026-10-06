@@ -5,7 +5,6 @@
  *
  * @author Stefan Schippers
  * @verbatim
-   $Id: FranckCondon.cxx 614 2019-03-29 14:01:00Z iamp $
 // SPDX-License-Identifier: MIT
    @endverbatim
  *

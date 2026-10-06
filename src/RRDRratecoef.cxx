@@ -10,7 +10,6 @@ sections
  * defined here, have the same list of parameters as RR cross sections.
  * Note that all functions defining a cross section return SIGMA(E)*E.
  *
- * $Id: RRDRratecoef.cxx 2039 2026-07-20 07:57:32Z iamp $
 // SPDX-License-Identifier: MIT
  *
  * Stefan Schippers@physik.uni-giessen.de

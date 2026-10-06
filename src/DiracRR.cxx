@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /**
  * @file DiracRR.cxx
  *
@@ -9,8 +10,6 @@
  *
  * @par VERSION
  * @verbatim
- * $Id: DiracRR.cxx 2119 2026-09-22 14:52:53Z iamp $
- // SPDX-License-Identifier: MIT
  * @endverbatim
  */
 

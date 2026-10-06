@@ -5,7 +5,6 @@
  *
  * @author Stefan Schippers
  * @verbatim
-   $Id: readadas.h 2038 2026-07-17 16:41:52Z iamp $
 // SPDX-License-Identifier: MIT
    @endverbatim
  *

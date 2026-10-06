@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /**
  * @file DiracRate.h
  *
@@ -7,8 +8,6 @@
  * States are specified by (n, kappa); kappa encodes l and j:
  * kappa = -(l+1) for j = l+1/2,  kappa = +l for j = l-1/2.
  *
- * $Id: DiracRate.h 2098 2026-08-06 13:21:05Z iamp $
- // SPDX-License-Identifier: MIT
  */
 
 #pragma once

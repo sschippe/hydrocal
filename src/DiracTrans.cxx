@@ -12,7 +12,6 @@
 
     @par VERSION
     @verbatim
-    $Id: DiracTrans.cxx 2098 2026-08-06 13:21:05Z iamp $
 // SPDX-License-Identifier: MIT
     @endverbatim
 

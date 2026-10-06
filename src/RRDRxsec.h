@@ -3,7 +3,6 @@
  *
  * @brief hydrogenic RR cross sections and DR peak cross sections
  *
- * $Id: RRDRxsec.h 2039 2026-07-20 07:57:32Z iamp $
 // SPDX-License-Identifier: MIT
  */
 

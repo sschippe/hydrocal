@@ -1,4 +1,3 @@
-// $Id: autoso1.h 2037 2026-07-17 15:21:56Z iamp $
 // SPDX-License-Identifier: MIT
 // Author: Stefan.E.Schippers@iamp.physik.uni-giessen.de 2006-07-18
 #pragma once

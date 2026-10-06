@@ -3,7 +3,6 @@
  *
  * @brief Handling of data from the TOPbase atomic data base
  *
- * $Id: TOPbase.cxx 2037 2026-07-17 15:21:56Z iamp $
 // SPDX-License-Identifier: MIT
  */
 #include "fele.h"

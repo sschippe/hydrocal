@@ -1,13 +1,10 @@
+// SPDX-License-Identifier: MIT
 /**
  * @file fele.cxx
  *
  * @brief energy distribution functions to be used in convolutions
- * SPDX-License-Identifier: MIT
  *
  * @author Stefan Schippers
- * @verbatim
-   $Id $
- @endverbatim
 */
 
 #include <iostream>

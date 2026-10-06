@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /**
  * @file DiracRate.cxx
  *
@@ -16,8 +17,6 @@
  *
  * @par VERSION
  * @verbatim
- * $Id: DiracRate.cxx 2110 2026-08-14 13:23:35Z iamp $
- // SPDX-License-Identifier: MIT
  * @endverbatim
  */
 #include "DiracRate.h"

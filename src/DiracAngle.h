@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /**
  * @file DiracAngle.h
  *
@@ -13,8 +14,6 @@
  *
  * The implementations live in DiracAngle.cxx.
  *
- * $Id: DiracAngle.h 2122 2026-09-28 11:42:05Z iamp $
- // SPDX-License-Identifier: MIT
  */
 
 #pragma once

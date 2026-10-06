@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /**
  * @file DiracAngle.cxx
  *
@@ -10,8 +11,6 @@
  *
  * @par VERSION
  * @verbatim
- * $Id: DiracAngle.cxx 2112 2026-08-14 17:40:06Z iamp $
- // SPDX-License-Identifier: MIT
  * @endverbatim
  */
 #include "DiracAngle.h"

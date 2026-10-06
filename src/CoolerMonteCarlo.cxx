@@ -18,7 +18,6 @@ file.
  *
  * @author Stefan Schippers
  * @verbatim
-   $Id: CoolerMonteCarlo.cxx 2039 2026-07-20 07:57:32Z iamp $
 // SPDX-License-Identifier: MIT
    @endverbatim
  *

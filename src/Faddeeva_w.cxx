@@ -1,12 +1,10 @@
+// SPDX-License-Identifier: MIT
 
 /**
  * @file Faddeeva_w.cxx
  *
  * @brief Complex error function
  *
- * @verbatim
- $Id: Faddeeva_w.cxx 372 2016-02-04 18:43:22Z iamp $
-@endverbatim
 *
  * Copyright (c) 2012 Massachusetts Institute of Technology
  *

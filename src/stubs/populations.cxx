@@ -1,12 +1,10 @@
+// SPDX-License-Identifier: MIT
 /**
  * @file populations.cxx
  *
  * @brief populations of hydrogenic energy levels by cascades (unfinished)
  *
  * @author Stefan Schippers
- * @verbatim
-   $Id: populations.cxx 2010 2026-06-27 19:27:14Z iamp $
-   @endverbatim
  *
  */
 #include <cmath>

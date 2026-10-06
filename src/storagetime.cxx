@@ -8,7 +8,6 @@ section 4.8
  *
  * This code is based on Manfred Grieser's program LEBENSDAUER.
  *
- * $Id: storagetime.cxx 2037 2026-07-17 15:21:56Z iamp $
 // SPDX-License-Identifier: MIT
  */
 
