@@ -125,3 +125,28 @@ references:
     issue: 11
     year: 2023
     doi: "10.1002/cphc.202300061"
+  - authors:
+      - family-names: "Wang"
+        given-names: "S.-X."
+      - family-names: "Brandau"
+        given-names: "C."
+      - family-names: "Fritzsche"
+        given-names: "S."
+      - family-names: "Fuchs"
+        given-names: "S."
+      - family-names: "Harman"
+        given-names: "Z."
+      - family-names: "Kozhuharov"
+        given-names: "C."
+      - family-names: "Muller"
+        given-names: "A."
+      - family-names: "Steck"
+        given-names: "M."
+      - family-names: "Schippers"
+        given-names: "Stefan"
+    title: "Breit interaction in dielectronic recombination of hydrogenlike xenon ions: storage-ring experiment and theory"
+    journal: "The European Physical Journal D"
+    volume: 78
+    issue: 10
+    year: 2024
+    doi: "10.1140/epjd/s10053-024-00914-7"
