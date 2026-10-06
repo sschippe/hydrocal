@@ -204,7 +204,7 @@ If you use hydrocal in your research, please cite the software itself:
   license      = {MIT},
   repository   = {github.com/sschippe/hydrocal},
   orcid        = {0000-0002-6166-7138},
-  note         = {Revision 2133; release \url{https://github.com/sschippe/hydrocal/releases/tag/v1.0.3}}
+  note         = {Revision 2135; release \url{https://github.com/sschippe/hydrocal/releases/tag/v1.0.3}}
 }
 ```
 
