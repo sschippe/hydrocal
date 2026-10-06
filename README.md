@@ -131,10 +131,10 @@ Every binary embeds a revision number, printed in the start-up banner and in
 the header of most output files:
 
 ```
- *  hydrocal, revision 2123                                   *
+ *  hydrocal, revision 2134                                   *
 ```
 
-It is a monotonically increasing integer that **continues the Subversion
+(The number shown is only an example.) It is a monotonically increasing integer that **continues the Subversion
 revision numbering**, so numbers stay unique and correctly ordered across the
 SVN → git transition. The last Subversion revision of the imported tree was
 **r2122**, and the counter carries on from there.
