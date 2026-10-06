@@ -49,8 +49,9 @@ endif()
 # HYDROCAL_REVISION continues the Subversion revision numbering, so numbers
 # cited in the literature stay unique and ordered across the SVN -> git
 # transition.  The counter lives in the REVISION file at the top of the
-# source tree and is bumped by the pre-commit hook in .githooks/, which
-# stages the new value together with the commit itself.  REVISION_BASE is
+# source tree and is bumped once per push by the pre-commit hook in
+# .githooks/, which stages the new value together with the first commit made
+# after a push.  REVISION_BASE is
 # only a fallback for checkouts where the file is missing (e.g. someone
 # builds from a partial copy); in that case the value is reconstructed as
 #   REVISION_BASE + (commits on the main line) - 1

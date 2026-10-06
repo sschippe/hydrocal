@@ -1,19 +1,23 @@
 #!/bin/sh
 # SPDX-License-Identifier: MIT
 #
-# pre-commit hook: bump the revision counter.
+# pre-commit hook: bump the revision counter once per push.
 #
 # The counter in REVISION continues the Subversion revision numbering so that
 # numbers cited in the literature stay unique and ordered across the SVN -> git
-# transition.  Each commit increments it by one, and the increment is part of
-# the commit itself, so the number a build reports is always the number of the
-# tree it was built from.
+# transition.  The counter advances once per push, not once per commit: the
+# first commit after a push (or fetch) increments it, and further commits made
+# before the next push keep that number.  "Already bumped" is detected by
+# comparing REVISION with its value at the upstream branch, so no extra state
+# is stored.  The increment is part of the commit itself, so the number a
+# build reports is always the number of the tree it was built from.  Without
+# an upstream branch there is nothing to compare with, so every commit bumps.
 #
 # Activated by setting the hooks path (see README.md):
 #     git config core.hooksPath .githooks
 #
-# Commits made with --no-verify skip the bump; bump REVISION by hand in that
-# case so the sequence has no gaps.
+# Commits made with --no-verify skip the bump; if that was the first commit
+# since the last push, bump REVISION by hand so the sequence has no gaps.
 
 set -e
 
@@ -32,6 +36,16 @@ case "$current" in
     exit 0
     ;;
 esac
+
+# Value of the counter at the upstream branch (the state at the last push).
+# If it differs from the working copy, this push batch is already bumped.
+if upstream=$(git show '@{upstream}:REVISION' 2>/dev/null); then
+  upstream=$(printf '%s' "$upstream" | tr -d ' \t\r\n')
+  if [ "$current" != "$upstream" ]; then
+    echo "pre-commit: revision $current already bumped since last push"
+    exit 0
+  fi
+fi
 
 next=$((current + 1))
 printf '%s\n' "$next" > "$counter"

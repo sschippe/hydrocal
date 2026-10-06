@@ -141,9 +141,13 @@ SVN → git transition. The last Subversion revision of the imported tree was
 
 The counter is the single line in the **`REVISION`** file at the top of the
 source tree. It is bumped automatically by the `pre-commit` hook in
-`.githooks/`, which writes the new value and stages it as part of the same
-commit — so the number a build reports always belongs to the tree it was
-built from, and there is nothing to bump by hand.
+`.githooks/` **once per push**: the first commit after a push (or pull) writes
+the new value and stages it as part of that commit, and further commits made
+before the next push keep the same number. The hook detects this by comparing
+`REVISION` with its value on the upstream branch, so no extra state is kept.
+The number a build reports therefore always belongs to the tree it was built
+from, and there is nothing to bump by hand. Without an upstream branch every
+commit bumps.
 
 Git does not track hook configuration, so activate it once per clone:
 
@@ -154,8 +158,8 @@ git config core.hooksPath .githooks    # or: cmake --build build --target setup-
 To set the number deliberately (e.g. to mark a release), edit `REVISION`
 before committing; the hook increments from whatever is in the file.
 
-Commits made with `--no-verify` skip the bump — increment `REVISION` by hand
-in that case so the sequence has no gaps. Note also that the counter follows
+Commits made with `--no-verify` skip the bump — if it was the first commit
+since the last push, increment `REVISION` by hand so the sequence has no gaps. Note also that the counter follows
 the file, not the history, so it stays put across `rebase`, `reset` and
 history rewriting — already-published numbers remain valid.
 
