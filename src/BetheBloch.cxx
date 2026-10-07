@@ -17,6 +17,7 @@
 #include <math.h>
 #include <string>
 #include <vector>
+#include "stdin_guard.h"
 
 using namespace std;
 const int maxcomposits = 10;

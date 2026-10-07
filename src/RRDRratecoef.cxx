@@ -32,6 +32,7 @@ sections
 #include <iostream>
 #include <string>
 #include <vector>
+#include "stdin_guard.h"
 
 using namespace std;
 

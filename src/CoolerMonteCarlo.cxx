@@ -40,6 +40,7 @@ file.
 #include <iostream>
 #include <omp.h>
 #include <random> // random number generators and distributions
+#include "stdin_guard.h"
 
 using namespace std;
 
@@ -55,7 +56,7 @@ void CoolerMonteCarlo(void) {
 
   cout << endl
        << endl
-       << "**** Merged-beam rate coeffcients from  Monte-Carlo convolution of "
+       << "**** Merged-beam rate coefficients from  Monte-Carlo convolution of "
           "theoretical cross sections ****"
        << endl;
   cout << endl
@@ -516,7 +517,7 @@ void CoolerMonteCarlo(void) {
   vector<double> nele_eCM(nbin, 0.0); // electron density as function of eCM
   bool norm_ok_flag = false;
   int first_bin = 0, last_bin = 0;
-  // *********** calculation of rate coeffcients alpha(erel) by convolution of
+  // *********** calculation of rate coefficients alpha(erel) by convolution of
   // sigma(eCM) with f(eCM,erel) *******
   for (int n = 0; n < nbin; n++) { // loop over center-of-mass energies
     int out_of_zrange_counter = 0.0;

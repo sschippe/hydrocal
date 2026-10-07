@@ -16,6 +16,7 @@ section 4.8
 #include <cmath>
 #include <iomanip>
 #include <iostream>
+#include "stdin_guard.h"
 
 using namespace std;
 

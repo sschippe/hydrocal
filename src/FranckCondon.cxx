@@ -30,6 +30,7 @@
 #include <boost/math/quadrature/gauss_kronrod.hpp>
 #include <boost/math/special_functions/gamma.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
+#include "stdin_guard.h"
 using namespace boost::math;
 using namespace boost::multiprecision;
 typedef cpp_dec_float_100 mp_double;

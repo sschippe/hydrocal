@@ -24,6 +24,7 @@ world
 #include <functional>
 #include <iomanip>
 #include <iostream>
+#include "stdin_guard.h"
 
 using namespace std;
 
@@ -151,7 +152,7 @@ void COOLER::CRYinit(bool short_init_flag) {
   max_overlap_length = solenoid_length + 2.0 * toroid_sampling_length;
 
   char answer;
-  cout << endl << " Intialization of the CRYRING electron cooler";
+  cout << endl << " Initialization of the CRYRING electron cooler";
   cout << endl << " Give cathode voltage (V) ...............................: ";
   cin >> cathode_voltage;
   cooling_voltage = cathode_voltage;
@@ -254,7 +255,7 @@ void COOLER::ESRinit(bool short_init_flag) {
       true; // CM energy is varied by scanning drifttube potential
 
   char answer;
-  cout << endl << " Intialization of ESR electron cooler" << endl;
+  cout << endl << " Initialization of ESR electron cooler" << endl;
   cout << " Give cathode voltage (V) ...............................: ";
   cin >> cathode_voltage;
   cooling_voltage = cathode_voltage;

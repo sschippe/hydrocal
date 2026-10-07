@@ -31,6 +31,7 @@
 #include <cmath>
 #include <cstdio>
 #include <vector>
+#include "stdin_guard.h"
 
 using namespace std;
 

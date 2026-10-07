@@ -23,6 +23,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include "stdin_guard.h"
 
 using namespace std;
 

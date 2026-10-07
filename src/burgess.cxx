@@ -18,6 +18,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string>
+#include "stdin_guard.h"
 
 using namespace std;
 using hydroconst::pi;
@@ -183,7 +184,7 @@ double sigmaPI(double e, double z, double nu, double mu, int l, int w,
 }
 
 void BurgessPIxsec(void) {
-  double e, eI, z, nu, mu, mu0, mu1, emax, sigma, gm, gp, cm, cp;
+  double e, eI, z, nu, mu, mu0, mu1 = 0.0, emax, sigma, gm, gp, cm, cp;
   int n, l, w;
   string filename;
   ofstream fout;

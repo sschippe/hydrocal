@@ -23,6 +23,7 @@ section and a rate  coefficient [convflat()].
 #include <sstream>
 #include <string>
 #include <vector>
+#include "stdin_guard.h"
 
 using namespace std;
 

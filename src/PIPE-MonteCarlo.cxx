@@ -28,6 +28,7 @@ setup
 #include <iostream>
 #include <random> // random number generators and distributions
 #include <vector>
+#include "stdin_guard.h"
 
 using namespace std;
 
@@ -543,6 +544,10 @@ int PIPE_MonteCarlo() {
   } else {
     extension = ".pmc";
   }
+  if (CST_input_flag)
+    cout << endl
+         << " The name is used for the .pid particle file and the .pmc summary."
+         << endl;
   cout << endl
        << " Give filename for output (" << extension
        << ") .......................: ";

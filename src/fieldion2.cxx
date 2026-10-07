@@ -17,6 +17,7 @@
 #include <iomanip>
 #include <math.h>
 #include <vector>
+#include "stdin_guard.h"
 
 using namespace std;
 

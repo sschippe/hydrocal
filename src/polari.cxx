@@ -18,6 +18,7 @@
 #include "lifetime.h"
 #include <math.h>
 #include <stdio.h>
+#include "stdin_guard.h"
 
 using namespace std;
 

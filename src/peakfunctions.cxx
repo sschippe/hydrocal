@@ -27,6 +27,7 @@
 #if __has_include(<boost/math/quadrature/tanh_sinh.hpp>)
 #include <boost/math/quadrature/gauss_kronrod.hpp>
 #include <boost/math/quadrature/tanh_sinh.hpp>
+#include "stdin_guard.h"
 #define useBOOST
 #endif
 #endif

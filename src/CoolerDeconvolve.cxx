@@ -1,7 +1,7 @@
 /**
  * @file CoolerDeconvolve.cxx
  *
- * @brief Toroid deconvolution of experimental merged-beams rate coeffcients
+ * @brief Toroid deconvolution of experimental merged-beams rate coefficients
  *
  * Implements algorithm of Lampert et al., Phys. Rev. A 53, 1413–1423 (1996);
  * https://doi.org/10.1103/PhysRevA.53.1413
@@ -28,6 +28,7 @@
 #include <iomanip>
 #include <iostream>
 #include <vector>
+#include "stdin_guard.h"
 
 using namespace std;
 

@@ -54,9 +54,36 @@
 #include "stripping.h"
 #include "buildinfo.h"
 #include <cstdio>
+#include <cstdlib>
 #include <iostream>
+#include "stdin_guard.h"
 
 using namespace std;
+
+/////////////////////////////////////////////////////////////////////////////
+/**
+ * Reads a menu choice from stdin.
+ *
+ * At end of input the program ends cleanly.  Before, scanf left the old
+ * value in place and the menus asked again without end, writing prompts at
+ * full speed.  Text that is not a number is discarded and returned as -1,
+ * which every menu treats as an invalid choice.
+ */
+static int read_menu_choice(void) {
+  int choice = -1;
+  int nread = scanf("%d", &choice);
+  if (nread == EOF) {
+    printf("\n\n End of input, hydrocal quits.\n");
+    exit(0);
+  }
+  if (nread != 1) {
+    int ch;
+    while ((ch = getchar()) != '\n' && ch != EOF)
+      ;
+    return -1;
+  }
+  return choice;
+}
 
 /////////////////////////////////////////////////////////////////////////////
 /**
@@ -85,7 +112,7 @@ void math_group(void) {
     printf("transformation to Stark states\n");
   error:
     printf("\n Make your choice (0 quits)                : ");
-    scanf("%d", &choice);
+    choice = read_menu_choice();
     switch (choice) {
     case 0:
       i = 0;
@@ -145,7 +172,7 @@ void dipole_group(void) {
 
   error:
     printf("\n Make your choice (0 quits)                : ");
-    scanf("%d", &choice);
+    choice = read_menu_choice();
     switch (choice) {
     case 0:
       i = 0;
@@ -192,11 +219,11 @@ void polari_group(void) {
     printf("\n\n Polarization group: \n\n");
     printf(" 1) hyperfine splittings\n");
     printf(" 2) depolarization factor\n");
-    printf(" 3) polarization coeffcients\n");
+    printf(" 3) polarization coefficients\n");
 
   error:
     printf("\n Make your choice (0 quits)                : ");
-    scanf("%d", &choice);
+    choice = read_menu_choice();
     switch (choice) {
     case 0:
       i = 0;
@@ -245,7 +272,7 @@ void fieldion_group(void) {
     printf(" 6) nl-specific detection probabilities (method of Zong et al.)\n");
   error:
     printf("\n Make your choice (0 quits)                : ");
-    scanf("%d", &choice);
+    choice = read_menu_choice();
     switch (choice) {
     case 0:
       i = 0;
@@ -302,7 +329,7 @@ void RRxsec_group(void) {
 
   error:
     printf("\n Make your choice (0 quits)                : ");
-    scanf("%d", &choice);
+    choice = read_menu_choice();
     switch (choice) {
     case 0:
       i = 0;
@@ -327,7 +354,7 @@ void RRxsec_group(void) {
 
 /////////////////////////////////////////////////////////////////////////////
 /**
- * merged-beams and plasma recombination rate coeffcients (menu item 6)\n
+ * merged-beams and plasma recombination rate coefficients (menu item 6)\n
  * <ol>
  * <li> merged beams rate coefficients from RR and DR cross sections
  * (calls #calc_alpha)</li>
@@ -358,7 +385,7 @@ void ratecoeff_group(void) {
 
   error:
     printf("\n Make your choice (0 quits)                : ");
-    scanf("%d", &choice);
+    choice = read_menu_choice();
     switch (choice) {
     case 0:
       i = 0;
@@ -409,7 +436,7 @@ void ratecoeff_group(void) {
  * <ol>
  * <li>resonance energies of a Rydberg series (calls #rydbergseries)</li>
  * <li>model DR spectrum (calls #calcdr)</li>
- * <li>min E-field for Stark mixing (not implemented, calls #CalcminField)</li>
+ * <li>min E-field for Stark mixing (calls #CalcminField)</li>
  * <li>hyperfine splitting of DR resonance (calls #HyperfineDR)</li>
  * </ol>
  */
@@ -425,7 +452,7 @@ void modelspe_group(void) {
 
   error:
     printf("\n Make your choice (0 quits)                : ");
-    scanf("%d", &choice);
+    choice = read_menu_choice();
     switch (choice) {
     case 0:
       i = 0;
@@ -440,7 +467,7 @@ void modelspe_group(void) {
       break;
     case 3:
       printf("\n");
-      // CalcminField();
+      CalcminField(); // Stark.cxx
       break;
     case 4:
       printf("\n");
@@ -484,7 +511,7 @@ void convolution_group(void) {
 
   error:
     printf("\n Make your choice (0 quits)                : ");
-    scanf("%d", &choice);
+    choice = read_menu_choice();
     switch (choice) {
     case 0:
       i = 0;
@@ -544,7 +571,7 @@ void photoionization_group(void) {
 
   error:
     printf("\n Make your choice (0 quits)                : ");
-    scanf("%d", &choice);
+    choice = read_menu_choice();
     switch (choice) {
     case 0:
       i = 0;
@@ -592,7 +619,7 @@ void ionbeam_group(void) {
 
   error:
     printf("\n Make your choice (0 quits)                : ");
-    scanf("%d", &choice);
+    choice = read_menu_choice();
     switch (choice) {
     case 0:
       i = 0;
@@ -634,12 +661,12 @@ void miscellaneus_group(void) {
     int ret_val = 0;
     printf("\n\n Miscellaneous group: \n\n");
     printf(" 1) Weizsaecker mass formula\n");
-    printf(" 2) autostructre o1 read\n");
+    printf(" 2) autostructure o1 read\n");
     printf(" 3) convert strz data file\n");
 
   error:
     printf("\n Make your choice (0 quits)                : ");
-    scanf("%d", &choice);
+    choice = read_menu_choice();
     switch (choice) {
     case 0:
       i = 0;
@@ -671,6 +698,7 @@ void miscellaneus_group(void) {
  */
 int main(void) {
   int i = 1, choice = 0;
+  hydrocal_install_stdin_guard(); // end of input ends the program
   printf(" **************************************************************\n");
   printf(" *  hydrocal, revision %-20s                   *\n", HYDROCAL_REVISION);
   printf(" *                                                            *\n");
@@ -702,7 +730,7 @@ int main(void) {
     printf("11) this and that\n");
   error:
     printf("\n Make your choice (0 quits )               : ");
-    scanf("%d", &choice);
+    choice = read_menu_choice();
     switch (choice) {
     case 0:
       i = 0;

@@ -16,6 +16,7 @@
 #include <cstdio>
 #include <iomanip>
 #include <iostream>
+#include "stdin_guard.h"
 
 using namespace std;
 ////////////////////////////////////////////////////////////////////////////////////

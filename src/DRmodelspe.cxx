@@ -21,6 +21,7 @@
 #include <iomanip>
 #include <iostream>
 #include <vector>
+#include "stdin_guard.h"
 
 using namespace std;
 static const double clight = hydroconst::clight_cm_s;
@@ -67,7 +68,15 @@ void calcdr(void) {
     printf("\n is -1, then all quantum defects will be 0.\n");
     do {
       printf("\n Give quantum defect for l =%2d (-1 quits) .: ", l);
-      scanf("%lf", &qdef[l]);
+      if (scanf("%lf", &qdef[l]) != 1) { // end of input or no number
+        printf("\n WARNING: no valid quantum defect given, input ends here.\n");
+        qdef[l] = -1.0;
+      }
+      if ((qdef[l] >= 0) && (l == maxn - 1)) {
+        printf("\n WARNING: at most %d quantum defects, input ends here.\n",
+               maxn - 1);
+        qdef[l] = -1.0;
+      }
     } while (qdef[l++] >= 0);
     defmax = l - 2;
   }
@@ -76,16 +85,29 @@ void calcdr(void) {
     defmax = 0;
   }
 
-  double emin, emax, edelta, ktpar, ktperp;
+  double emin = 0.0, emax = 0.0, edelta = 0.0, ktpar = 0.0, ktperp = 0.0;
   printf("\n Give energy range (min, max, delta in eV) : ");
-  scanf("%lf %lf %lf", &emin, &emax, &edelta);
+  if (scanf("%lf %lf %lf", &emin, &emax, &edelta) != 3) {
+    printf("\n WARNING: no valid energy range given, leaving the model.\n");
+    return;
+  }
   emax *= q2; // q2 is 1 if on input q>0 or q^2 if on input q<0
 
   printf("\n Give ktpar and ktperp in meV .............: ");
-  scanf("%lf %lf", &ktpar, &ktperp);
+  if (scanf("%lf %lf", &ktpar, &ktperp) != 2) {
+    printf("\n WARNING: no valid temperatures given, leaving the model.\n");
+    return;
+  }
   ktperp *= 0.001;
   ktpar *= 0.001;
-  int i, epts = 1 + int((emax - emin) / edelta);
+  const double nsteps = (emax - emin) / edelta;
+  if (!(nsteps >= 0.0) || nsteps > 1.0e7) { // also catches NaN and edelta = 0
+    printf("\n WARNING: the energy range gives %g points (allowed: 1 - 1e7), "
+           "leaving the model.\n",
+           nsteps + 1.0);
+    return;
+  }
+  int i, epts = 1 + int(nsteps);
   vector<double> energy(epts, 0.0);
   vector<double> esigma(epts, 0.0);
   vector<double> esigmaF(epts, 0.0);
@@ -157,7 +179,14 @@ new_model:
 
 new_nmax:
   printf("\n Give nmax ................................: ");
-  scanf("%d", &nmax);
+  if (scanf("%d", &nmax) != 1) {
+    printf("\n WARNING: no valid nmax given, leaving the model.\n");
+    return;
+  }
+  if ((nmax < 1) || (nmax >= maxn)) {
+    printf("\n WARNING: nmax must be in the range 1 - %d.\n", maxn - 1);
+    goto new_nmax;
+  }
 
   int nAa = 0;
   if ((model == 1) && (defmax == 0)) {

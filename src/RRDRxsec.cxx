@@ -28,6 +28,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include "stdin_guard.h"
 
 using namespace std;
 
@@ -1104,7 +1105,7 @@ void calc_sigmaRR(void) {
       sigma = sigmarrqm(eV, z, nmin, lmin);
       break;
     }
-    if (choice < 10) {
+    if (choice <= 10) {
       cout << " " << setw(12) << uppercase << defaultfloat << setprecision(5)
 	   << eV << "     " << setw(15) << uppercase << defaultfloat
 	   << setprecision(5) << sigma / eV << "      " << setw(15) << uppercase

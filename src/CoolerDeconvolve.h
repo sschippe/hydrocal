@@ -1,7 +1,7 @@
 /**
  * @file CoolerDeconvolve.h
  *
- * @brief Toroid deconvolution of experimental merged-beams rate coeffcients
+ * @brief Toroid deconvolution of experimental merged-beams rate coefficients
  *
  * @author Stefan Schippers
  * @verbatim

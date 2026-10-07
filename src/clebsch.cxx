@@ -15,6 +15,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <vector>
+#include "stdin_guard.h"
 
 using namespace std;
 

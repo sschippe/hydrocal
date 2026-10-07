@@ -22,6 +22,7 @@
 #include <limits>
 #include <sstream>
 #include <vector>
+#include "stdin_guard.h"
 
 using namespace std;
 

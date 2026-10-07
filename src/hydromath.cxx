@@ -15,6 +15,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <exception>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -25,6 +26,7 @@
 #if __has_include(<boost/math/special_functions/gamma.hpp>)
 #include <boost/math/special_functions/gamma.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
+#include "stdin_guard.h"
 #define useBOOST
 #endif
 #endif
@@ -288,7 +290,7 @@ int cuberoot(double a, double b, double c, double d, double &x1, double &x2,
 void TestElliptic(void) {
   double m, K, E;
 
-  printf("\n\n Calculation of the ellipitc integrals K and E");
+  printf("\n\n Calculation of the elliptic integrals K and E");
   printf("\n of the first and second kind, respectively.\n");
 
   for (;;) {
@@ -312,7 +314,18 @@ void TestDAERF() {
 
   for (;;) {
     printf("\n Give x, h : ");
-    scanf("%lf %lf", &x, &h);
+    int nread = scanf("%lf %lf", &x, &h);
+    if (nread == EOF) { // end of input: nothing more can be read
+      printf("\n WARNING: end of input, leaving the test.\n");
+      return;
+    }
+    if (nread != 2 || !std::isfinite(x) || !std::isfinite(h)) {
+      int ch;
+      while ((ch = getchar()) != '\n' && ch != EOF) // discard the bad line
+        ;
+      printf("\n WARNING: x and h must be two finite numbers, ignored.\n");
+      continue;
+    }
     y = daerf(x, h);
     printf("\n x = %10.6f, h= %10.6f, DAERF(x,y) = %20.9f ", x, h, y);
   }
@@ -327,7 +340,24 @@ void TestLnGamma() {
 
   for (;;) {
     printf("\n Give x : ");
-    cin >> x;
+    if (!(cin >> x)) {
+      if (cin.eof()) { // end of input: nothing more can be read
+        printf("\n WARNING: end of input, leaving the test.\n");
+        return;
+      }
+      cin.clear();
+      cin.ignore(numeric_limits<streamsize>::max(), '\n'); // discard the bad line
+      printf("\n WARNING: x must be a finite number, ignored.\n");
+      continue;
+    }
+    if (!std::isfinite(x)) {
+      printf("\n WARNING: x must be a finite number, ignored.\n");
+      continue;
+    }
+    if (x <= 0.0 && x == std::floor(x)) {
+      printf("\n WARNING: lngamma has a pole at x = %g, ignored.\n", x);
+      continue;
+    }
     y = lngamma(x); // function defined below
     cout << " x = " << setprecision(10) << x
          << ",         lgamma(x) = " << setprecision(30) << y << endl;
@@ -359,7 +389,12 @@ void TestLnGamma() {
         mp_double;
     mp_double mp_x = x;
     mp_double mp_y;
-    mp_y = boost::math::lgamma(mp_x); // from <boost>
+    try {
+      mp_y = boost::math::lgamma(mp_x); // from <boost>
+    } catch (const std::exception &e) {
+      printf("\n WARNING: boost::lgamma failed (%s), ignored.\n", e.what());
+      continue;
+    }
     cout << " x = " << setprecision(10) << mp_x << ",  boost::lgamma(x) = "
          << setprecision(numeric_limits<mp_double>::max_digits10) << mp_y
          << endl;
@@ -375,7 +410,7 @@ void TestCuberoot(void) {
   printf("\n\n Test the solver the cubic equation ");
   printf("a*x^3 + b*x^2 + c*x + d = 0");
   for (;;) {
-    printf("\n\n Input of coeffcients or roots or stop ? (c/r/s) : ");
+    printf("\n\n Input of coefficients or roots or stop ? (c/r/s) : ");
     scanf(" %c", &answer);
     if (answer == 's')
       break;

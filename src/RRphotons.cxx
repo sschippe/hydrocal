@@ -28,6 +28,7 @@
 #include <iomanip>
 #include <iostream>
 #include <vector>
+#include "stdin_guard.h"
 
 using namespace std;
 using hydroconst::pi;

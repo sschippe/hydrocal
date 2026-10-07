@@ -37,6 +37,7 @@
 #endif
 #include "matrix.h"
 #include "buildinfo.h"
+#include "stdin_guard.h"
 
 using namespace std;
 

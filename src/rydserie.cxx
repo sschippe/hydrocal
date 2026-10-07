@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include "stdin_guard.h"
 
 using namespace std;
 

@@ -20,6 +20,7 @@
 #include <math.h>
 #include <sstream>
 #include <stdio.h>
+#include "stdin_guard.h"
 
 using namespace std;
 
