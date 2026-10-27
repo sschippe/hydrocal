@@ -1772,7 +1772,7 @@ void fractionTable(int iselect) {
     for (int n = 1; n <= nmax; n++) {
       sigma_nmax = 0.0;
       for (int l = 0; l < n; l++) {
-        sigma_nmax += sigmarrqm(1e-6, qion, n, l);
+        sigma_nmax += sigmarrnrd(1e-6, qion, n, l);
       }
       sigma_sum += sigma_nmax;
     }
@@ -1912,7 +1912,7 @@ new_cascade:
 
     double sigma_max = 0.0;
     for (l1 = 0; l1 < n1; l1++) {
-      sigma[l1] = sigmarrqm(1e-12, qion, n1, l1);
+      sigma[l1] = sigmarrnrd(1e-12, qion, n1, l1);
       if (sigma[l1] > sigma_max) {
         sigma_max = sigma[l1];
       }

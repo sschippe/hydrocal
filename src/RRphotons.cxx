@@ -207,7 +207,7 @@ static void cascade_spectrum_rel(const RADRATE &hydro, int nmax, double z,
                    dirac_rr_nonneg(dirac_rr_xsec_retarded(E_use, z, s.n, s.kappa),
                                    E_use, s.n, s.kappa);
     else
-      sigmaRR[i] = sigmarrqm(E_use, z, s.n, s.l) / E_use;
+      sigmaRR[i] = sigmarrnrd(E_use, z, s.n, s.l) / E_use;
   }
 
   // Solve cascade equations (excl. ground state i=0)

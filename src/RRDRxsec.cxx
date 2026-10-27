@@ -143,7 +143,7 @@ double sigmarrtest(double e, double /*z*/, vector<double> /*fraction*/,
 
 /////////////////////////////////////////////////////////////////////////////////////
 /**
- * @brief nonrelativistic hydrogenic RR cross section for subshell n,l at zero energy
+ * @brief nonrelativistic (dipole approximation) n,l-specific RR cross section (NRD) at zero energy
  *
  * @param z nuclear charge
  * @param n principal quantum number of initial subshell
@@ -151,7 +151,7 @@ double sigmarrtest(double e, double /*z*/, vector<double> /*fraction*/,
  *
  * @return RR cross section times electron-ion collision energy (E) in cm2 eV for E=0
  */
-double sigmarrqm(double z, int n, int l) { // 
+double sigmarrnrd(double z, int n, int l) { // 
   const double Pi = hydroconst::pi;
   const double Alpha = hydroconst::alpha;
   const double A0 = hydroconst::a0_cm;
@@ -174,7 +174,7 @@ double sigmarrqm(double z, int n, int l) { //
  *
  * @return RR cross section times electron-ion collision energy in cm2 eV
  */
-double sigmarrqm(double eV, double z, int n, int l) { 
+double sigmarrnrd(double eV, double z, int n, int l) { 
   const double Pi = hydroconst::pi;
   const double Alpha = hydroconst::alpha;
   const double A0 = hydroconst::a0_cm;
@@ -205,12 +205,12 @@ double sigmaPIqm(double Eph_eV, double z, int nmin, int n, int l, double IP) {
   double gf = 1;
   double gi = 4 * l + 2;
   double Erel = Eph_eV - Rydberg * z * z * (1.0 / (n * n) - 1.0 / (nmin * nmin)) + IP;
-  return 1.022e6 * gf / gi / Eph_eV * sigmarrqm(Erel, z, n, l);
+  return 1.022e6 * gf / gi / Eph_eV * sigmarrnrd(Erel, z, n, l);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /**
- * @brief nonrelativistic hydrogenic photoionization cross section summed over subshells
+ * @brief nonrelativistic (dipole approximation) n,l-specific RR cross section (NRD of type SIGMARR)
  *
  * @param Eph_eV photon energy in eV
  * @param z nuclear charge
@@ -258,7 +258,7 @@ double sigmaPIqm(double Eph_eV, double z, vector<double> fraction, int use_fract
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /**
- * @brief nonrelativistic quantum mechanical hydrogenic RR cross section summed over subshells
+ * @brief nonrelativistic (dipole approximation) total RR cross section  (NRD of type SIGMARR)
  *
  * @param eV electron-ion collision energy in eV
  * @param z nuclear charge
@@ -270,7 +270,7 @@ double sigmaPIqm(double Eph_eV, double z, vector<double> fraction, int use_fract
  *
  * @return RR cross section times electron-ion collision energy in cm2 eV
  */
-double sigmarrqm(double eV, double z, vector<double> fraction, int use_fraction,
+double sigmarrnrd(double eV, double z, vector<double> fraction, int use_fraction,
           int nmin, int nmax, int lmin) { 
   const double Pi = hydroconst::pi;
   const double Alpha = hydroconst::alpha;
@@ -313,7 +313,7 @@ double sigmarrqm(double eV, double z, vector<double> fraction, int use_fraction,
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
- * @brief relativistic (Dirac) hydrogenic RR cross section in dipole approximation for nonrelativistic subshell n,l
+ * @brief relativistic (Dirac, dipole approximation) n,l-specific RR cross section (DID) 
  *
  * @param eV electron-ion collision energy in eV
  * @param z nuclear charge
@@ -337,7 +337,7 @@ double sigmarrdid(double eV, double z, int n, int l)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
- * @brief relativistic (Dirac) hydrogenic RR cross section in dipole approximation summed over subshells
+ * @brief relativistic (Dirac, dipole approximation) total RR cross section (DID of type SIGMARR)
  *
  * @param eV electron-ion collision energy in eV
  * @param z nuclear charge
@@ -367,7 +367,7 @@ double sigmarrdid(double eV, double z, vector<double> fraction, int use_fraction
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
- * @brief relativistic (Dirac) fully retarded hydrogenic RR cross section for nonrelativistic subshell n,l
+ * @brief relativistic (Dirac, full retardation) n,l-specific RR cross section (DIR) 
  *
  * @param eV electron-ion collision energy in eV
  * @param z nuclear charge
@@ -391,7 +391,7 @@ double sigmarrdir(double eV, double z, int n, int l)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
- * @brief relativistic (Dirac) fully retarded hydrogenic RR cross section summed over subshells
+ * @brief relativistic (Dirac, full retardation) total RR cross section (DIR of type SIGMARR)
  *
  * @param eV electron-ion collision energy in eV
  * @param z nuclear charge
@@ -497,7 +497,7 @@ double kstobbe(int n) {
 
 //////////////////////////////////////////////////////////////////////
 /**
- * @brief semi-classical RR cross section summed over subshells
+ * @brief semi-classical RR cross section (SCL) summed oversubshells
  *
  * @param eV electron-ion collision energy in eV
  * @param z nuclear charge
@@ -556,7 +556,7 @@ double sigmarrscl(double eV, double z, vector<double> fraction, int use_fraction
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
- * @brief quantum mechanical (for n<=49) and semi-classical (for n>49) RR cross section summed over subshells
+ * @brief NRD (for n<=49) and SCL (for n>49) RR cross section summed over subshells
  *
  * @param eV electron-ion collision energy in eV
  * @param z nuclear charge
@@ -568,16 +568,16 @@ double sigmarrscl(double eV, double z, vector<double> fraction, int use_fraction
  *
  * @return RR cross section times electron-ion collision energy in cm2 eV
  */
-double sigmarraqm(double eV, double z, vector<double> fraction,
-                  int use_fraction, int nmin, int nmax, int lmin)
+double sigmarrnrdscl(double eV, double z, vector<double> fraction,
+		     int use_fraction, int nmin, int nmax, int lmin)
 {
   int nqm = 49;
   nqm = nmax > nqm ? nqm : nmax;
-  double sigma = sigmarrqm(eV, z, fraction, use_fraction, nmin, nqm, lmin);
+  double sigma = sigmarrnrd(eV, z, fraction, use_fraction, nmin, nqm, lmin);
   if (nmax > nqm) {
     double ratio =
         hydroconst::pi * 3.0 * sqrt(3.0) / 16.0 *
-        sigmarrqm(eV, z, fraction, use_fraction, nqm + 1, nqm + 1, lmin) /
+        sigmarrnrd(eV, z, fraction, use_fraction, nqm + 1, nqm + 1, lmin) /
         stobbe(nqm + 1) /
         sigmarrscl(eV, z, fraction, use_fraction, nqm + 1, nqm + 1, lmin);
     sigma +=
@@ -588,7 +588,7 @@ double sigmarraqm(double eV, double z, vector<double> fraction,
 
 //////////////////////////////////////////////////////////////////////
 /**
- * @brief semi-classical (for n<n2) RR cross section summed over subshells plus integration over n>=n2
+ * @brief SCL (for n<n2) RR cross section summed over subshells plus integration over n>=n2
  *
  * for curiosity only, not used in production
  *
@@ -602,7 +602,7 @@ double sigmarraqm(double eV, double z, vector<double> fraction,
  *
  * @return RR cross section times electron-ion collision energy in cm2 eV
  */
-double sigmarrscl2(double eV, double z, vector<double> fraction, int n2,
+double sigmarrsci(double eV, double z, vector<double> fraction, int n2,
                    int nmin, int nmax, int lmin) { // e*sigma (eV cm^2)
   double sigma = sigmarrscl(eV, z, fraction, 0, nmin, n2 - 1, lmin);
   sigma +=
@@ -691,29 +691,30 @@ void calc_sigmaRR(void) {
   ofstream fout, fout2;
 
   cout << "\n Select type of RR calculation ?\n";
-  cout << "\n  1:  semiclassical calculation with Stobbe corrections (SCS)";
-  cout << "\n  2:  semiclassical calculation without Stobbe corrections (SCL)";
-  cout << "\n  3:  nonrelativistic quantum mechanical calculation, dipole approximation (NRD)";
+  cout << "\n  1:  Bethe & Salpeter without Gaunt factors (BS)";
+  cout << "\n  2:  semiclassical calculation, i.e. Bethe & Salpeter with Gaunt factors (SCL)";
+  cout << "\n  3:  nonrelativistic dipole approximation (NRD)";
   cout << "\n  4:  relativistic (Dirac) dipole approximation (DID)";
   cout << "\n  5:  relativistic (Dirac) fully retarded calculation (DIR)";
   cout << "\n  6:  NRD just one n,l for a range of energies";
-  cout << "\n  7:  NRD, all n,l up to n=nmax at fixed energy";
-  cout << "\n  8:  SCS up to nint-1, from nint to nmax integral dn (SCI)";
+  cout << "\n  7:  NRD all n,l up to n=nmax at fixed energy";
+  cout << "\n  8:  SCL up to nint-1, from nint to nmax integral dn (SCI)";
   cout << "\n  9:  photoionization from NRD RR (PI)";
   cout << "\n 10:  Ichihara & Eichler tabulated values (interpolated), one n,kappa (IE)";
-  cout << "\n 11:  comparison: SCS vs. NRD";
+  cout << "\n 11:  comparison: SCL vs. NRD";
   cout << "\n 12:  comparison: NRD vs. DID";
   cout << "\n 13:  comparison: DID vs. DIR";
   cout << "\n 14:  comparison: DIR vs. IE";
   while ((choice < 1) || (choice > 14)) {
-    cout << "\n\n Make a choice ................................... : ";
+    cout << "\n\n Make a choice (0 quits) ........................: ";
     cin >> choice;
+    if (choice==0) return;
   }
     
   cout << "\n Give effective nuclear charge ....................: ";
   cin >> z;
   z = fabs(z);
-  if (choice == 2) {
+  if (choice == 1) {
     z = -fabs(z); // flags that Stobbe corrections are not applied
   } 
 
@@ -784,7 +785,7 @@ void calc_sigmaRR(void) {
       double esmax = 0.0, estot = 0.0, esout;
       int lmax = 0;
       for (l = 0; l < n; l++) {
-        es[l] = sigmarrqm(eV, z, n, l);
+        es[l] = sigmarrnrd(eV, z, n, l);
         estot += es[l];
         esmean[l] = estot / (l + 1.0);
         if (es[l] > esmax) {
@@ -864,55 +865,48 @@ void calc_sigmaRR(void) {
 
   switch (choice) {
   case 1:
-    fout << "semiclassical RR cross section";
-    fout << "  with Stobbe correction\n";
-    fout << "SCS: z=" << fixed << setprecision(2) << z << ", nmin=" << setw(3)
+    fout << "Bethe & Salpeter RR cross section without Gaunt factors\n";
+    fout << "BS: z=" << fixed << setprecision(2) << z << ", nmin=" << setw(3)
          << nmin << ", lmin=" << setw(3) << lmin;
     fout << " nele=" << setw(3) << nele << ", nmax=" << setw(3) << nmax << "\n";
     break;
   case 2:
-    fout << "semiclassical RR cross section";
-    fout << "  without Stobbe correction\n";
+    fout << "semiclassical RR cross section, i.e. Bethe  & Salpeter with Gaunt factors\n";
     fout << "SCL: z=" << fixed << setprecision(2) << z << ", nmin=" << setw(3)
          << nmin << ", lmin=" << setw(3) << lmin;
     fout << " nele=" << setw(3) << nele << ", nmax=" << setw(3) << nmax << "\n";
     break;
   case 3:
-    fout << "nonrelativistic quantum mechanical RR cross section";
-    fout << " (dipole approximation)\n";
+    fout << "RR cross section from nonrelativistic dipole approximation\n";
     fout << "NRD: z=" << fixed << setprecision(2) << z << ", nmin=" << setw(3)
          << nmin << ", lmin=" << setw(3) << lmin;
     fout << " nele=" << setw(3) << nele << ", nmax=" << setw(3) << nmax << "\n";
     break;
   case 4:
-    fout << " relativistic (Dirac) RR cross section (dipole approximation)";
-    fout << " \n";
+    fout << "RR cross section from relativistic (Dirac) dipole approximation\n";
     fout << "DID: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
          << nmin << ", l=" << setw(3) << lmin << ", j=" << setw(3) << jmin << "\n";
     break;
   case 5:
-    fout << " relativistic fully retarded RR cross section";
+    fout << " relativistic (Dirac) fully retarded RR cross section (DIR)";
     fout << " \n";
     fout << "DIR: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
          << nmin << ", l=" << setw(3) << lmin << ", j=" << setw(3) << jmin << "\n";
     break;
   case 6:
-    fout << "nonrelativistic quantum mechanical RR cross section";
-    fout << " (dipole approximation)\n";
+    fout << "RR cross section from nonrelativistic dipole approximation\n";
     fout << "NRD: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
          << nmin << ", l=" << setw(3) << lmin << "\n";
     break;
   case 8:
-    fout << "semiclassical RR cross section";
-    fout << "  with high-n integration\n";
+    fout << "semiclassical RR cross section with high-n integration\n";
     fout << "SCI: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
          << nmin << ", l=" << setw(3) << lmin << "\n";
     fout << " nele=" << setw(3) << nele << ", nint=" << setw(3) << nint
          << ", nmax=" << setw(3) << nmax << "\n";
     break;
   case 9:
-    fout << "non relativistic PI cross section";
-    fout << "  (dipole approximation) \n";
+    fout << "PI cross section from nonrelativistic dipole approximation\n";
     fout << "PI: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
          << nmin << ", l=" << setw(3) << lmin << "\n";
     fout << " nele=" << setw(3) << nele << ", nmax=" << setw(3) << nmax
@@ -1010,7 +1004,7 @@ void calc_sigmaRR(void) {
       sigma = sigmarrscl(eV, z, fraction, use_fraction, nmin, nmax, lmin);
       break;
     case 3:
-      sigma = sigmarrqm(eV, z, fraction, use_fraction, nmin, nmax, lmin);
+      sigma = sigmarrnrd(eV, z, fraction, use_fraction, nmin, nmax, lmin);
       break;
     case 4:
       sigma = sigmarrdid(eV, z, fraction, use_fraction, nmin, nmax, lmin);
@@ -1019,7 +1013,7 @@ void calc_sigmaRR(void) {
       sigma = sigmarrdir(eV, z, fraction, use_fraction, nmin, nmax, lmin);
       break;
     case 8:
-      sigma = sigmarrscl2(eV, z, fraction, nint, nmin, nmax, lmin);
+      sigma = sigmarrsci(eV, z, fraction, nint, nmin, nmax, lmin);
       break;
     case 9:
       sigma = sigmaPIqm(eV, z, fraction, use_fraction, nmin, nmax, lmin, IP);
@@ -1031,7 +1025,7 @@ void calc_sigmaRR(void) {
     case 11: {
       double sigma_qmd = 0.0, sigma_scl = 0.0;
       if (eV>0.0) {
-	 sigma_qmd = sigmarrqm(eV, z, fraction, use_fraction, nmin, nmin, lmin)/eV;
+	 sigma_qmd = sigmarrnrd(eV, z, fraction, use_fraction, nmin, nmin, lmin)/eV;
 	 sigma_scl = sigmarrscl(eV, z, fraction, use_fraction, nmin, nmin, lmin)/eV;
       }
       double ratio = sigma_qmd > 0.0 ? sigma_scl / sigma_qmd : 0.0;
@@ -1050,7 +1044,7 @@ void calc_sigmaRR(void) {
     case 12: {
       double sigma_qmd = 0.0, sigma_did= 0.0;
       if (eV>0.0) {
-	sigma_qmd = sigmarrqm(eV, z, nmin, lmin)/eV;
+	sigma_qmd = sigmarrnrd(eV, z, nmin, lmin)/eV;
 	sigma_did = sigmarrdid(eV, z, nmin, lmin)/eV;
       }
       double ratio = sigma_qmd > 0.0 ? sigma_qmd / sigma_did : 0.0;
@@ -1102,7 +1096,7 @@ void calc_sigmaRR(void) {
       break;
     }
     default:
-      sigma = sigmarrqm(eV, z, nmin, lmin);
+      sigma = sigmarrnrd(eV, z, nmin, lmin);
       break;
     }
     if (choice <= 10) {

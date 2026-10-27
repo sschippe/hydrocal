@@ -300,10 +300,10 @@ int calc_alpha(int fselect) {
   string marker;
 
   printf("\n\n Which cross section to use ?");
-  printf("\n   1: RR semiclassical with Stobbe corrections (SCS)");
-  printf("\n   2: SCS RR with high n integration (SCI)");
-  printf("\n   3: RR quantum mechanical dipole approximation (QMD)");
-  printf("\n   4: RR QMD for low n + SCS for high n (QMS)");
+  printf("\n   1: RR semiclassical, i.e. Bethe & Salpeter with Gaunt factors (SCL)");
+  printf("\n   2: RR nonrelativistic dipole approximation (NRD)");
+  printf("\n   3: RR relativistic (Dirac) dipole approximation (DID)");
+  printf("\n   4: RR relativistic (Dirac) fully retarded (DIR)");
   printf("\n   5: binned or individual DR resonances from file");
   printf("\n   6: as function of energy (as x-, y- columns in file)");
   printf("\n                                    make a choice : ");
@@ -312,7 +312,7 @@ int calc_alpha(int fselect) {
   switch (sselect) {
   case 1:
     sigma = &sigmarrscl;
-    marker.assign("SCS");
+    marker.assign("SCL");
     if (fselect == 1) {
       extension = ".crr";
     } else {
@@ -320,8 +320,8 @@ int calc_alpha(int fselect) {
     }
     break;
   case 2:
-    sigma = &sigmarrscl2;
-    marker.assign("SCI");
+    sigma = &sigmarrnrd;
+    marker.assign("NRD");
     if (fselect == 1) {
       extension = ".crr";
     } else {
@@ -329,8 +329,8 @@ int calc_alpha(int fselect) {
     }
     break;
   case 3:
-    sigma = &sigmarrqm;
-    marker.assign("QMD");
+    sigma = &sigmarrdid;
+    marker.assign("DID");
     if (fselect == 1) {
       extension = ".crr";
     } else {
@@ -338,8 +338,8 @@ int calc_alpha(int fselect) {
     }
     break;
   case 4:
-    sigma = &sigmarraqm;
-    marker.assign("QMS");
+    sigma = &sigmarrdir;
+    marker.assign("DIR");
     if (fselect == 1) {
       extension = ".crr";
     } else {
@@ -398,7 +398,7 @@ int calc_alpha(int fselect) {
   default:
     sigma = &sigmarrscl;
     extension = ".cdr";
-    marker.assign("SCS");
+    marker.assign("SCL");
     sselect = 1;
   } // end switch (sselect)
 
@@ -416,16 +416,9 @@ int calc_alpha(int fselect) {
     printf("\n Give number of electrons in min n,l-subshell ..........: ");
     scanf("%d", &nele);
     t = 1.0 - nele / (4.0 * lmin + 2.0);
-
-    if (sselect == 2) {
-      use_fraction = 0;
-      printf("\n Give n where integration dn starts ....................: ");
-      scanf("%d", &nint);
-    } else {
-      printf("\n Use surviving fractions from file ? (y/n) .............: ");
-      scanf(" %c", &answer);
-      use_fraction = ((answer == 'y') || (answer == 'Y'));
-    }
+    printf("\n Use surviving fractions from file ? (y/n) .............: ");
+    scanf(" %c", &answer);
+    use_fraction = ((answer == 'y') || (answer == 'Y'));
   } else {
     use_fraction = 0;
     read_DRtheory(theo_filename, theo_mode, level_number, energy, strength,

@@ -38,32 +38,49 @@ double sigmaPIqm(double eV, double z, std::vector<double> fraction,
 
 ///////////////////////////////////////////////////////////////
 /**
- * @brief quantum mechanical RR cross section times energy for energy->0
+ * @brief nonrelativistic (dipole approximation) n,l-specific RR cross section (NRD) at zero energy
  *
  * @return cross section times energy (cm2 eV)
  */
-double sigmarrqm(double z, int n, int l);
+double sigmarrnrd(double z, int n, int l);
 
 ///////////////////////////////////////////////////////////////
 /**
- * @brief quantum mechanical RR cross section
+ * @brief nonrelativistic (dipole approximation) n,l-specific RR cross section (NRD)
  *
  * @return cross section times energy (cm2 eV)
  */
-double sigmarrqm(double eV, double z, int n, int l);
+double sigmarrnrd(double eV, double z, int n, int l);
 
 ///////////////////////////////////////////////////////////////
 /**
- * @brief quantum mechanical RR cross section (of type SIGMARR)
+ * @brief nonrelativistic (dipole approximation) total RR cross section (NRD of type SIGMARR)
  *
  * @return cross section times energy (cm2 eV)
  */
-double sigmarrqm(double eV, double z, std::vector<double> fraction,
+double sigmarrnrd(double eV, double z, std::vector<double> fraction,
                  int use_fraction, int nmin, int nmax, int lmin);
 
 ///////////////////////////////////////////////////////////////
 /**
- * @brief relativistic (Dirac) RR cross section 
+ * @brief relativistic (Dirac, dipole approximation) n,l-specific RR cross section (DID) 
+ *
+ * @return cross section times energy (cm2 eV)
+ */
+double sigmarrdid(double eV, double z, int n, int l);
+
+///////////////////////////////////////////////////////////////
+/**
+ * @brief relativistic (Dirac, dipole approximation) total RR cross section (DID of type SIGMARR)
+ *
+ * @return cross section times energy (cm2 eV)
+ */
+double sigmarrdid(double eV, double z, std::vector<double> fraction,
+                 int use_fraction, int nmin, int nmax, int lmin);
+
+///////////////////////////////////////////////////////////////
+/**
+ * @brief relativistic (Dirac, full retardation) n,l-specfic RR cross section (DIR) 
  *
  * @return cross section times energy (cm2 eV)
  */
@@ -71,7 +88,7 @@ double sigmarrdir(double eV, double z, int n, int l);
 
 ///////////////////////////////////////////////////////////////
 /**
- * @brief relativistic (Dirac) RR cross section (of type SIGMARR)
+ * @brief relativistic (Dirac, full retardation) total RR cross section (DIR of type SIGMARR)
  *
  * @return cross section times energy (cm2 eV)
  */
