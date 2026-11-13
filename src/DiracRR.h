@@ -42,7 +42,14 @@ double sigma_IchiharaEichlerRR(double E_el_eV, int Z, int n, int l, double j);
 /**
  * @brief relativistic hydrogenic RR cross section (fully retarded)
  */
-double dirac_rr_xsec_retarded(double E_el_eV, double z, int n, int kappa);
+double dirac_rr_xsec_retarded(double E_el_eV, double z, int n, int kappa, double rel_tol, int dj_max, int &dj_conv);
+inline double dirac_rr_xsec_retarded(double E_el_eV, double z, int n, int kappa)
+{ // use default values for covergence control
+  double rel_tol=1.0E-4;
+  int dj_max=99;
+  int dj_conv;
+  return dirac_rr_xsec_retarded(E_el_eV, z, n, kappa, rel_tol, dj_max, dj_conv);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /**
@@ -50,35 +57,3 @@ double dirac_rr_xsec_retarded(double E_el_eV, double z, int n, int kappa);
  */
 double dirac_rr_xsec_dipole(double E_el_eV, double z, int n, int kappa);
 
-///////////////////////////////////////////////////////////////////////////////
-/**
- * @brief clamp a per-vacancy Dirac RR cross section to its physical range
- *
- * dirac_rr_xsec_retarded and dirac_rr_xsec_dipole never return a negative
- * value (0.0 marks a non-existent state or an evaluation that could not be
- * completed).  The aggregation sites weight them by statistical factors
- * (2j+1), so any failure sentinel returned in future would surface in the
- * printed tables as -2, -6, -10, ... rather than as an error.  Any negative
- * value is therefore treated as unavailable (0.0, the convention already used
- * by sigma_IchiharaEichlerRR) and reported once on stderr.  A NaN is left
- * alone: it cannot be mistaken for data.
- *
- * @param sigma    cross section as returned by dirac_rr_xsec_retarded/dipole
- * @param E_el_eV  electron kinetic energy (eV), for the warning
- * @param n        principal quantum number of the captured state
- * @param kappa    relativistic angular quantum number of the captured state
- * @return         sigma if non-negative (or NaN), 0.0 if negative
- */
-inline double dirac_rr_nonneg(double sigma, double E_el_eV, int n, int kappa) {
-  if (sigma >= 0.0) return sigma;
-  if (!(sigma < 0.0)) return sigma; // NaN: propagate, do not mask
-  static bool warned = false;
-  if (!warned) {
-    warned = true;
-    fprintf(stderr,
-            "WARNING: negative Dirac RR cross section (%.6g cm^2) at "
-            "E=%.6g eV, n=%d, kappa=%d; reporting 0 instead\n",
-            sigma, E_el_eV, n, kappa);
-  }
-  return 0.0;
-}

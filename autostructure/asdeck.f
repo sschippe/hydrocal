@@ -348,7 +348,7 @@
       PARAMETER (MXSOC=  20000000_SP)   !No. of spin-orbit interaction algebraic coeffs.
       PARAMETER (MXSOI=     15000_SP)   !No. of spin-orbit and M1+BP,M2 integrals (1-body).
       PARAMETER (MXST0=    400050_SP)   !Total no. of Slater states. *Only per config on input*.
-      PARAMETER (MXSTX=    400000_SP)   !No. of one-body SS interactions (DW, also for s-o now).
+      PARAMETER (MXSTX=    600000_SP)   !No. of one-body SS interactions (DW, also for s-o now).
 !
 !
 ! DIMENSIONS PERTAINING TO SLATER STATE INTERACTIONS:

@@ -202,12 +202,13 @@ static void cascade_spectrum_rel(const RADRATE &hydro, int nmax, double z,
   vector<double> sigmaRR(ns, 0.0);
   for (int i = 0; i < ns; i++) {
     const StateInfo &s = states[i];
-    if (s.is_rel)
-      sigmaRR[i] = (2.0 * s.j + 1.0) *
-                   dirac_rr_nonneg(dirac_rr_xsec_retarded(E_use, z, s.n, s.kappa),
-                                   E_use, s.n, s.kappa);
-    else
+    if (s.is_rel) {
+      double sigma = dirac_rr_xsec_retarded(E_use, z, s.n, s.kappa);
+      sigmaRR[i] = sigma > 0 ? (2.0 * s.j + 1.0) * sigma : 0.0; // negative values indicate convergence problems
+    }
+    else {
       sigmaRR[i] = sigmarrnrd(E_use, z, s.n, s.l) / E_use;
+    }
   }
 
   // Solve cascade equations (excl. ground state i=0)

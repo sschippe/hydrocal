@@ -324,15 +324,18 @@ double sigmarrnrd(double eV, double z, vector<double> fraction, int use_fraction
  */
 double sigmarrdid(double eV, double z, int n, int l)
 {  
-  double w1 = 2.0*(l+0.5)+1.0;
   int  kappa = kappa_from_lj(l, l+0.5);
-  double sigma = w1*dirac_rr_nonneg(dirac_rr_xsec_dipole(eV, z, n, kappa), eV, n, kappa);
+  double sigma1 = dirac_rr_xsec_dipole(eV, z, n, kappa);
+  if (sigma1 < 0.0) return 0.0; // convergence problems may lead to negative values
+  double w1 = 2.0*(l+0.5)+1.0;
+  double sigma2 = 0.0, w2 = 0.0;
   if (l>0) {
-    double w2 = 2.0*(l-0.5)+1.0;
     kappa = kappa_from_lj(l, l-0.5);
-    sigma += w2*dirac_rr_nonneg(dirac_rr_xsec_dipole(eV, z, n, kappa), eV, n, kappa);
+    sigma2 = dirac_rr_xsec_dipole(eV, z, n, kappa);
+    if (sigma2 < 0.0) return 0.0; // convergence problems may lead to negative values
+    w2 = 2.0*(l-0.5)+1.0;
   }
-  return sigma*eV;
+  return (w1*sigma1+w2*sigma2)*eV;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -378,15 +381,18 @@ double sigmarrdid(double eV, double z, vector<double> fraction, int use_fraction
  */
 double sigmarrdir(double eV, double z, int n, int l)
 {  
-  double w1 = 2.0*(l+0.5)+1.0;
   int  kappa = kappa_from_lj(l, l+0.5);
-  double sigma = w1*dirac_rr_nonneg(dirac_rr_xsec_retarded(eV, z, n, kappa), eV, n, kappa);
+  double sigma1 = dirac_rr_xsec_retarded(eV, z, n, kappa);
+  if (sigma1 < 0.0) return 0.0; // convergence problems may lead to negative values
+  double w1 = 2.0*(l+0.5)+1.0;
+  double sigma2 = 0.0, w2 = 0.0;
   if (l>0) {
-    double w2 = 2.0*(l-0.5)+1.0;
     kappa = kappa_from_lj(l, l-0.5);
-    sigma += w2*dirac_rr_nonneg(dirac_rr_xsec_retarded(eV, z, n, kappa), eV, n, kappa);
+    sigma2 = dirac_rr_xsec_retarded(eV, z, n, kappa);
+    if (sigma2 < 0.0) return 0.0; // convergence problems may lead to negative values
+    w2 = 2.0*(l-0.5)+1.0;
   }
-  return sigma*eV;
+  return (w1*sigma1+w2*sigma2)*eV;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -689,6 +695,8 @@ void calc_sigmaRR(void) {
   char answer;
   string filename, fnroot, header, line;
   ofstream fout, fout2;
+  double dir_tolerance = 1.0E-4; // for DIR convergence check
+  int dir_max_no_channels = 99;  // for DIR convergence check
 
   cout << "\n Select type of RR calculation ?\n";
   cout << "\n  1:  Bethe & Salpeter without Gaunt factors (BS)";
@@ -705,8 +713,9 @@ void calc_sigmaRR(void) {
   cout << "\n 12:  comparison: NRD vs. DID";
   cout << "\n 13:  comparison: DID vs. DIR";
   cout << "\n 14:  comparison: DIR vs. IE";
-  while ((choice < 1) || (choice > 14)) {
-    cout << "\n\n Make a choice (0 quits) ........................: ";
+  cout << "\n 15:  DIR convergence check";
+  while ((choice < 1) || (choice > 15)) {
+    cout << "\n\n Make a choice (0 quits) ..........................: ";
     cin >> choice;
     if (choice==0) return;
   }
@@ -735,6 +744,14 @@ void calc_sigmaRR(void) {
       cin >> nmin >> lmin >> jmin;
     }
     kappa = kappa_from_lj(lmin, jmin);
+  } else if (choice==15) {
+    cout << "\n Give n, l, j .....................................: ";
+    cin >> nmin >> lmin >> jmin;
+    kappa = kappa_from_lj(lmin, jmin);
+    cout << "\n Give tolerance ...................................: ";
+    cin >> dir_tolerance;
+    cout << "\n Give max number of channnels .....................: ";
+    cin >> dir_max_no_channels;
   } else if ((choice == 11) || (choice==12) || (choice==13)) {
     cout << "\n Give n, l ........................................: ";
     cin >> nmin >> lmin;
@@ -937,6 +954,12 @@ void calc_sigmaRR(void) {
     fout << "DIR/IE: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
          << nmin << ", l=" << setw(3) << lmin << ", j=" << setw(3) << jmin << "\n";
     break;
+  case 15:
+    fout << "conversion check of Dirac fully retarded (DIR), "
+	 << "max number of channels: " << dir_max_no_channels << "\n";
+    fout << "DIR: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
+         << nmin << ", l=" << setw(3) << lmin << ", j=" << setw(3) << jmin << "\n";
+    break;
   }
 
   int steps;
@@ -976,6 +999,9 @@ void calc_sigmaRR(void) {
   } else if (choice == 14) {
     cout << "\n     Ecm (eV)     sDIR (cm^2)      sIE (cm^2)      sDIR/sIE\n";
     fout << "     Ecm (eV)     sDIR (cm^2)      sIE (cm^2)      sDIR/sIE\n";
+  } else if (choice == 15) {
+    cout << "\n     Ecm (eV)     sDIR (cm^2)        tol    nKc\n";
+      fout << "     Ecm (eV)     sDIR (cm^2)        tol    nKc\n";
   } else {
     cout << "\n     Ecm (eV)        sigma (cm^2)    E*sigma (eV cm^2)\n";
     fout << "     Ecm             sigma           E*sigma\n";
@@ -1080,7 +1106,7 @@ void calc_sigmaRR(void) {
       break;
     }
     case 14: {
-      double sigma_dir = dirac_rr_nonneg(dirac_rr_xsec_retarded(eV, z, nmin, kappa), eV, nmin, kappa);
+      double sigma_dir = dirac_rr_xsec_retarded(eV, z, nmin, kappa);
       double sigma_ie = sigma_IchiharaEichlerRR(eV, (int)z, nmin, lmin, jmin);
       double ratio = sigma_ie > 0.0 ? sigma_dir / sigma_ie : 0.0;
       cout << " " << setw(12) << uppercase << defaultfloat << setprecision(5)
@@ -1093,6 +1119,19 @@ void calc_sigmaRR(void) {
            << setprecision(5) << sigma_dir << " " << setw(15) << uppercase
            << defaultfloat << setprecision(5) << sigma_ie << " " << setw(12)
            << uppercase << defaultfloat << setprecision(5) << ratio << "\n";
+      break;
+    }
+    case 15: {
+      int dir_max_channel = 0.0;
+      double sigma_dir = dirac_rr_xsec_retarded(eV, z, nmin, kappa, dir_tolerance, dir_max_no_channels, dir_max_channel);
+      cout << " " << setw(12) << uppercase << defaultfloat << setprecision(5)
+           << eV << " " << setw(15) << uppercase << defaultfloat
+           << setprecision(7) << sigma_dir << " " << setw(12)  << dir_tolerance << " " 
+           << setw(4) << dir_max_channel << "\n";
+      fout << " " << setw(12) << uppercase << defaultfloat << setprecision(5)
+           << eV << " " << setw(15) << uppercase << defaultfloat
+           << setprecision(7) << sigma_dir << " " << setw(12)  << dir_tolerance << " "
+	   << setw(4) << dir_max_channel << "\n";
       break;
     }
     default:

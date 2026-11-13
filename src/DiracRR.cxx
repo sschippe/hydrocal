@@ -1298,12 +1298,15 @@ static void dirac_rr_bf_retarded_numeric(double E_el_eV, double z,
  * @param z       nuclear charge
  * @param n       principal quantum number of the captured state
  * @param kappa   relativistic angular quantum number of the captured state
+ * @param rel_tol convergence criterium, summation stops when the current channel is smaller than rel_tol*running_sum
+ * @param dj_max  maximum number of channels
+ * @param dj_con  on exit: number of the channel where convergence has been reached
  *
  * @return sigma_RR in cm^2, never negative
  * @return  0.0 for a non-existent state, non-positive energy, or an
  *          evaluation that could not be completed
  */
-double dirac_rr_xsec_retarded(double E_el_eV, double z, int n, int kappa)
+double dirac_rr_xsec_retarded(double E_el_eV, double z, int n, int kappa, double rel_tol, int dj_max,  int &dj_conv)
 {
   using hydroconst::alpha;
   using hydroconst::a0_cm;
@@ -1348,8 +1351,8 @@ double dirac_rr_xsec_retarded(double E_el_eV, double z, int n, int kappa)
     return env != nullptr && *env != '\0' && strcmp(env, "0") != 0;
   }();
 
-  const double rel_tol = 1e-4;
-  const int dj_max = 99;
+  //const double rel_tol = 1e-4;
+  //const int dj_max = 99;
   // Per-shell channel sums are independent, so the expensive part (the
   // closed-form 2F1 evaluations, one per channel) is parallelised over dj.
   // The shells are then accumulated in ascending order, preserving the
@@ -1389,11 +1392,13 @@ double dirac_rr_xsec_retarded(double E_el_eV, double z, int n, int kappa)
   double tot = 0.0;
   bool any_ok = false;
   bool converged = false;
+  dj_conv = 0;
   for (int dj = 0; dj <= dj_max; dj++) {
     if (any_arr[dj]) any_ok = true;
     tot += shell_arr[dj];
     if (any_ok && dj > 0 && shell_arr[dj] < rel_tol * tot) {
       converged = true;
+      dj_conv = dj;
       break;
     }
   }
