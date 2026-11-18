@@ -286,19 +286,21 @@
  * the ion has been created (e.g. by stripping). It is available in hydrocal
  * from the main menu via
  * @verbatim
-   Ion beam group -> 5) Meta cascade from autostructure oic file
+   Ion beam group -> 5) Level populations as function of storage time
    @endverbatim
  *
  * @paragraph mcasinput Input
- * The interactive entry point #MetaCascadeAS prompts for
- * - the name of the autostructure file (including its extension);
+ * The interactive entry point #MetaCascadeAS prompts for the name of the
+ * autostructure file (including its extension) and then asks whether the
+ * default calculation parameters should be changed. If answered with
+ * <tt>y</tt>, it prompts for
  * - the electron temperature in eV at stripping, used for Boltzmann initial
  *   populations; entering <tt>0</tt> selects statistical populations
  *   proportional to the statistical weights (2J+1);
  * - the first and last time points (defaults: 1e-10 s and 1e2 s); and
  * - the number of logarithmically spaced time points (default: 61).
  *
- * Pressing return at any prompt accepts the displayed default.
+ * Answering <tt>n</tt> keeps all notebook defaults.
  *
  * @paragraph mcasmethod Method
  * Radiative rates are taken as absolute values and sorted into the rate

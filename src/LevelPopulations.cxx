@@ -1,5 +1,5 @@
 /**
- * @file MetaCascadeAS.cxx
+ * @file LevelPopulations.cxx
  *
  * @brief C++ port of the Meta-Cascade-AS Mathematica notebook
  *
@@ -16,7 +16,7 @@
  *
  */
 
-#include "MetaCascadeAS.h"
+#include "LevelPopulations.h"
 #include "autoso1.h"
 #include "hydromath.h"
 #include "hydroconst.h"
@@ -35,15 +35,6 @@
 using namespace std;
 
 namespace {
-
-/** \brief Removes leading and trailing whitespace */
-string trim(const string &text) {
-  size_t first = text.find_first_not_of(" \t\r\n");
-  if (first == string::npos)
-    return "";
-  size_t last = text.find_last_not_of(" \t\r\n");
-  return text.substr(first, last - first + 1);
-}
 
 /** \brief Composes the output file name from an input file name */
 string file_prefix(const string &filename) {
@@ -69,45 +60,6 @@ string level_label(const AUTOSO1::Level &level) {
   ostringstream label;
   label << abs(level.S) << l_symbol(level.L) << 0.5 * level.J;
   return label.str();
-}
-
-/** \brief Reads a value from stdin, using the default on empty input */
-string prompt_string(const string &prompt, const string &default_value) {
-  cout << prompt << " [" << default_value << "]: ";
-  cout.flush();
-  string line;
-  if (!getline(cin, line))
-    return default_value;
-  line = trim(line);
-  return line.empty() ? default_value : line;
-}
-
-/** \brief Reads a double from stdin, using the default on invalid input */
-double prompt_double(const string &prompt, double default_value) {
-  string value = prompt_string(prompt, "");
-  if (value.empty())
-    return default_value;
-  char *end = nullptr;
-  double result = strtod(value.c_str(), &end);
-  if (end == value.c_str() || *end != '\0') {
-    cout << "  invalid input, using " << default_value << endl;
-    return default_value;
-  }
-  return result;
-}
-
-/** \brief Reads an integer from stdin, using the default on invalid input */
-int prompt_int(const string &prompt, int default_value) {
-  string value = prompt_string(prompt, "");
-  if (value.empty())
-    return default_value;
-  char *end = nullptr;
-  long result = strtol(value.c_str(), &end, 10);
-  if (end == value.c_str() || *end != '\0' || result <= 0) {
-    cout << "  invalid input, using " << default_value << endl;
-    return default_value;
-  }
-  return (int)result;
 }
 
 } // namespace
@@ -376,26 +328,30 @@ int compute_meta_cascade(const string &filename, const MetaCascadeParams &params
  */
 void MetaCascadeAS(void) {
   cout << "\n Meta-cascade population dynamics from autostructure radiative "
-          "rates\n\n";
+          "rates\n";
 
-  // discard the rest of the line containing the menu choice
-  cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-  string filename =
-      prompt_string(" Give name of autostructure file (*.oic or *.o1)", "");
-  if (filename.empty()) {
-    cout << " No file given." << endl;
-    return;
-  }
+  string filename;
+  cout << "\n Give name of autostructure file (*.oic or *.o1) ....: ";
+  cin >> filename;
 
   MetaCascadeParams params;
-  params.kB_T_eV = prompt_double(
-      " Electron temperature at stripping (eV, 0 -> statistical populations)",
-      0.0);
-  params.t_start = prompt_double(" First time point (s)", params.t_start);
-  params.t_end = prompt_double(" Last time point (s)", params.t_end);
-  params.n_times = (size_t)prompt_int(" Number of log-spaced time points",
-                                      (int)params.n_times);
+  char answer;
+  cout << "\n Change default calculation parameters? (y/n) .........: ";
+  cin >> answer;
+  if ((answer == 'y') || (answer == 'Y')) {
+    cout << "\n Give electron temperature at stripping in eV"
+            " (0 -> statistical population) ....................: ";
+    cin >> params.kB_T_eV;
+    cout << "\n Give first time point in s ...........................: ";
+    cin >> params.t_start;
+    cout << "\n Give last time point in s ............................: ";
+    cin >> params.t_end;
+    cout << "\n Give number of log-spaced time points .................: ";
+    int n_times;
+    cin >> n_times;
+    if (n_times > 0)
+      params.n_times = (size_t)n_times;
+  }
   if (params.t_end <= params.t_start) {
     cout << "ERROR:: Last time point must be larger than the first one" << endl;
     return;

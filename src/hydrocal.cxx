@@ -44,7 +44,7 @@
 #include "hydromath.h"
 #include "kinema.h"
 #include "lifetime.h"
-#include "MetaCascadeAS.h"
+#include "LevelPopulations.h"
 #include "osci.h"
 #include "peakfunctions.h"
 #include "polari.h"
@@ -618,7 +618,7 @@ void ionbeam_group(void) {
     printf(" 2) Bethe Bloch stopping power and ion ranges\n");
     printf(" 3) Charge state distribution after stripping\n");
     printf(" 4) Beam lifetime in a storage ring\n");
-    printf(" 5) Meta cascade from autostructure oic file\n");
+    printf(" 5) Level populations as function of storage time\n");
 
   error:
     printf("\n Make your choice (0 quits)                : ");
@@ -645,7 +645,7 @@ void ionbeam_group(void) {
       break;
     case 5:
       printf("\n");
-      MetaCascadeAS(); // MetaCascadeAS.cxx
+      MetaCascadeAS(); // LevelPopulations.cxx
       break;
     default:
       goto error;

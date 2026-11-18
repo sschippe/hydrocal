@@ -1,5 +1,5 @@
 /**
- * @file MetaCascadeAS.h
+ * @file LevelPopulations.h
  *
  * @brief Population dynamics from autostructure radiative transition rates
  *
