@@ -285,7 +285,7 @@ int compute_meta_cascade(const string &filename, const MetaCascadeParams &params
     cout << "ERROR:: Cannot write " << level_filename << endl;
   }
 
-  // write the population table for the longest-lived levels
+  // write the population table for levels living longer than the threshold
   ostringstream temperature_string;
   temperature_string << setprecision(6) << params.kB_T_eV;
   const string population_filename = output_prefix + "_" +
@@ -293,9 +293,11 @@ int compute_meta_cascade(const string &filename, const MetaCascadeParams &params
                                      temperature_string.str() + ".dat";
   ofstream population_file(population_filename);
   if (population_file.is_open()) {
-    const size_t nplot = min<size_t>(5, nlevels);
-    vector<size_t> plot_levels(result.lifetime_order.begin(),
-                               result.lifetime_order.begin() + nplot);
+    vector<size_t> plot_levels;
+    for (size_t i : result.lifetime_order) {
+      if (result.lifetimes[i] > params.lifetime_min)
+        plot_levels.push_back(i);
+    }
     population_file << "# time/s";
     for (size_t i : plot_levels)
       population_file << " " << level_label(levels[i]);
@@ -351,6 +353,9 @@ void MetaCascadeAS(void) {
     cin >> n_times;
     if (n_times > 0)
       params.n_times = (size_t)n_times;
+    cout << "\n Give minimum lifetime of levels to be written in s"
+            " (default 1) .........................................: ";
+    cin >> params.lifetime_min;
   }
   if (params.t_end <= params.t_start) {
     cout << "ERROR:: Last time point must be larger than the first one" << endl;

@@ -22,6 +22,7 @@ struct MetaCascadeParams {
   double t_start = 1.0e-10; ///< first time point (s)
   double t_end = 1.0e2;     ///< last time point (s)
   std::size_t n_times = 61; ///< number of logarithmically spaced time points
+  double lifetime_min = 1.0; ///< minimum lifetime (s) for levels in output
 };
 
 /** \brief Results of a meta-cascade calculation */

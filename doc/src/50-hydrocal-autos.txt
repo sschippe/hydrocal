@@ -298,7 +298,9 @@
  *   populations; entering <tt>0</tt> selects statistical populations
  *   proportional to the statistical weights (2J+1);
  * - the first and last time points (defaults: 1e-10 s and 1e2 s); and
- * - the number of logarithmically spaced time points (default: 61).
+ * - the number of logarithmically spaced time points (default: 61); and
+ * - the minimum lifetime in s for levels to be included in the population
+ *   output (default: 1).
  *
  * Answering <tt>n</tt> keeps all notebook defaults.
  *
@@ -320,8 +322,8 @@
  * - <tt>base_lev.dat</tt> &mdash; a table of the levels, sorted by decreasing
  *   lifetime, with their energies and radiative lifetimes;
  * - <tt>base_NLEVEL_kbT.dat</tt> &mdash; a CSV table of the time grid, the
- *   populations of the five longest-lived levels, and the total population
- *   (a norm check; it should remain close to 1).
+ *   populations of all levels with lifetimes exceeding the threshold, and
+ *   the total population (a norm check; it should remain close to 1).
  *
  * No plot is produced by the console program; the CSV output can be plotted
  * with an external tool such as gnuplot.
