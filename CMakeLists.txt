@@ -541,6 +541,12 @@ add_test(
   "${CMAKE_CURRENT_SOURCE_DIR}/doc/examples/CNplus.hcin"
   "${CMAKE_CURRENT_BINARY_DIR}/CNplus.result"
 )
+add_test(
+  NAME Ar4rates
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/run_test.sh
+  "${CMAKE_CURRENT_SOURCE_DIR}/doc/examples/Ar4rates.hcin"
+  "${CMAKE_CURRENT_BINARY_DIR}/Ar4rates.result"
+)
 
 # ---------------------------------------------------------------------------
 # Symbolic links in ~/bin (original makefile behavior)

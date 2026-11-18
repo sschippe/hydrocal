@@ -16,7 +16,7 @@ srcdir=$(dirname "$(readlink -f "$0")")
 mkdir -p "$logdir/$name"
 
 # copy support files from the examples directory
-for f in Ne2deconv.inp O2DN1.bdr Xe53DRtheo4.dat; do
+for f in Ne2deconv.inp O2DN1.bdr Xe53DRtheo4.dat Ar4rates.oic; do
   [ -f "$refdir/$f" ] && cp "$refdir/$f" "$logdir/$name/"
 done
 
@@ -199,6 +199,19 @@ case "$name" in
     if [ $rc -eq 0 ]; then echo "ok" > "$result_file"
     else echo "FAILED (data differs)" > "$result_file"
     fi
+    ;;
+  Ar4rates)
+    for out in Ar4rates_lev.dat Ar4rates_92_0.dat; do
+      if [ ! -f "$logdir/$name/$out" ]; then
+        echo "FAILED (missing $out)" > "$result_file"; exit 1
+      fi
+      diff -q "$logdir/$name/$out" "$refdir/$out" >/dev/null 2>&1
+      rc=$?
+      if [ $rc -ne 0 ]; then
+        echo "FAILED ($out differs)" > "$result_file"; exit 1
+      fi
+    done
+    echo "ok" > "$result_file"
     ;;
   *)
     echo "FAILED (unknown test)" > "$result_file"
