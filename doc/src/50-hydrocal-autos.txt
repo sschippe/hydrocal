@@ -277,3 +277,51 @@
  *
  */
 
+ /** @page pageMetaCascadeAS Meta-cascade population dynamics from autostructure .oic files
+ *
+ * This feature is the native C++ port of the Mathematica notebook
+ * <tt>Meta-Cascade-AS.nb</tt>. It reads the level energies and radiative transition
+ * rates from an autostructure <tt>*.oic</tt> (or <tt>*.o1</tt>) file, sets up the
+ * rate matrix, and follows the time evolution of the level populations after
+ * the ion has been created (e.g. by stripping). It is available in hydrocal
+ * from the main menu via
+ * @verbatim
+   Ion beam group -> 5) Meta cascade from autostructure oic file
+   @endverbatim
+ *
+ * @paragraph mcasinput Input
+ * The interactive entry point #MetaCascadeAS prompts for
+ * - the name of the autostructure file (including its extension);
+ * - the electron temperature in eV at stripping, used for Boltzmann initial
+ *   populations; entering <tt>0</tt> selects statistical populations
+ *   proportional to the statistical weights (2J+1);
+ * - the first and last time points (defaults: 1e-10 s and 1e2 s); and
+ * - the number of logarithmically spaced time points (default: 61).
+ *
+ * Pressing return at any prompt accepts the displayed default.
+ *
+ * @paragraph mcasmethod Method
+ * Radiative rates are taken as absolute values and sorted into the rate
+ * matrix as <tt>A[final,initial] += |AR|</tt>, with the diagonal holding the
+ * negative total outflow of every level. The radiative lifetime of a level is
+ * the inverse of its total outflow rate. Initial populations are either a
+ * Boltzmann distribution <tt>(2J+1) exp(-E/kT)</tt> or the pure statistical
+ * weights <tt>(2J+1)</tt>, normalized to unity. The coupled rate equations
+ * <tt>dP/dt = A P</tt> are solved analytically. Whenever the rate matrix is
+ * triangular with distinct decay constants (the usual case for purely
+ * downward radiative cascades), the compact Bateman solution is used;
+ * otherwise hydrocal falls back to a matrix-exponential propagator.
+ *
+ * @paragraph mcasoutput Output
+ * For an input file <tt>base.oic</tt> two files are written in the same
+ * directory:
+ * - <tt>base_lev.dat</tt> &mdash; a table of the levels, sorted by decreasing
+ *   lifetime, with their energies and radiative lifetimes;
+ * - <tt>base_NLEVEL_kbT.dat</tt> &mdash; a CSV table of the time grid, the
+ *   populations of the five longest-lived levels, and the total population
+ *   (a norm check; it should remain close to 1).
+ *
+ * No plot is produced by the console program; the CSV output can be plotted
+ * with an external tool such as gnuplot.
+ */
+

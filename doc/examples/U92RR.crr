@@ -1,10 +1,10 @@
 ###########################################################
 ### hydcrocal cooler recombination rate-coefficient
-### SVN revision       : 2089:2097M
+### revision           : 2139
 ### filename           : U92RR.crr
 ### kTpar (meV)        :    0.045
 ### kTperp (meV)       :    1.000
-### RR calculation type: SCS
+### RR calculation type: SCL
 ### nuclear charge z   : 92.00
 ### lowest occupied subshell
 ###      nmin          : 1

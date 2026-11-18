@@ -44,6 +44,7 @@
 #include "hydromath.h"
 #include "kinema.h"
 #include "lifetime.h"
+#include "MetaCascadeAS.h"
 #include "osci.h"
 #include "peakfunctions.h"
 #include "polari.h"
@@ -605,7 +606,8 @@ void photoionization_group(void) {
  * <li>relativistic transformation for merged beams (calls #kinema)</li>
  * <li>Bethe-Bloch stopping power (calls #BetheBloch)</li>
  * <li>charge state distribution after stripping (calls #stripping)</li>
- * |li>beam lifetime in a storage ring (calls #beam_storage_time)</li>);
+ * <li>beam lifetime in a storage ring (calls #beam_storage_time)</li>
+ * <li>meta cascade from autostructure oic file (calls #MetaCascadeAS)</li>
  * </ol>
  */
 void ionbeam_group(void) {
@@ -616,6 +618,7 @@ void ionbeam_group(void) {
     printf(" 2) Bethe Bloch stopping power and ion ranges\n");
     printf(" 3) Charge state distribution after stripping\n");
     printf(" 4) Beam lifetime in a storage ring\n");
+    printf(" 5) Meta cascade from autostructure oic file\n");
 
   error:
     printf("\n Make your choice (0 quits)                : ");
@@ -639,6 +642,10 @@ void ionbeam_group(void) {
     case 4:
       printf("\n");
       beam_storage_time(); // storagetime.cxx
+      break;
+    case 5:
+      printf("\n");
+      MetaCascadeAS(); // MetaCascadeAS.cxx
       break;
     default:
       goto error;

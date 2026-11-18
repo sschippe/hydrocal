@@ -185,6 +185,7 @@ set(HYDROCAL_SOURCES
   src/hypergeometric.cxx
   src/kinema.cxx
   src/lifetime.cxx
+  src/MetaCascadeAS.cxx
   src/matrix.cxx
   src/numerov.cxx
   src/osci.cxx
@@ -232,6 +233,7 @@ set(HYDROCAL_HEADERS
   src/IchiharaEichlerRRdata.h
   src/kinema.h
   src/lifetime.h
+  src/MetaCascadeAS.h
   src/matrix.h
   src/numerov.h
   src/osci.h

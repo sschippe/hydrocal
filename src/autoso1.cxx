@@ -14,6 +14,7 @@
 #include "fele.h"
 #include "hydroconst.h"
 #include "lifetime.h"
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -23,6 +24,23 @@
 #include "stdin_guard.h"
 
 using namespace std;
+
+/** \brief Extracts all purely numeric tokens from a line
+ *
+ * Autostructure output occasionally contains non-numeric tokens such as
+ * 'X' in the middle of a data row. They are ignored here.
+ */
+static void extract_numbers(const string &line, vector<double> &numbers) {
+  numbers.clear();
+  istringstream sline(line);
+  string token;
+  while (sline >> token) {
+    char *end = nullptr;
+    double value = strtod(token.c_str(), &end);
+    if (end != token.c_str() && *end == '\0')
+      numbers.push_back(value);
+  }
+}
 
 int AUTOSO1::open_file(string filename) {
   filename += ".o1";
@@ -183,6 +201,152 @@ int AUTOSO1::read_nl(int nRyd, int lRyd) {
   nLV = LV_K.size();
   nAR = AR_CF1.size();
   return 1;
+}
+
+int AUTOSO1::read_oic(const string &filename) {
+  ifstream fin(filename);
+  if (!fin.is_open()) {
+    cout << "ERROR:: File " << filename << " does not exist!" << endl;
+    return 0;
+  }
+
+  AA_CF1.clear();
+  AA_LV1.clear();
+  AA_W1.clear();
+  AA_CF2.clear();
+  AA_LV2.clear();
+  AA_rate.clear();
+  AA_energy.clear();
+  LV_K.clear();
+  LV_LV.clear();
+  LV_T.clear();
+  LV_S.clear();
+  LV_L.clear();
+  LV_J.clear();
+  LV_CF.clear();
+  LV_energy.clear();
+  AR_CF1.clear();
+  AR_LV1.clear();
+  AR_W1.clear();
+  AR_CF2.clear();
+  AR_LV2.clear();
+  AR_W2.clear();
+  AR_rate.clear();
+  AR_energy.clear();
+
+  string line;
+  vector<double> num;
+
+  // find the NLEVEL line and extract the number of levels
+  int nlevel = 0;
+  while (getline(fin, line)) {
+    size_t pos = line.find("NLEVEL=");
+    if (pos == string::npos)
+      continue;
+    istringstream sline(line.substr(pos + 7));
+    sline >> nlevel;
+    break;
+  }
+  if (nlevel <= 0) {
+    cout << "ERROR:: No NLEVEL entry found in " << filename << "!" << endl;
+    return 0;
+  }
+
+  auto next_numeric_line = [&](size_t nmin) -> bool {
+    while (getline(fin, line)) {
+      extract_numbers(line, num);
+      if (num.size() >= nmin)
+        return true;
+    }
+    return false;
+  };
+
+  // read the level table: K LV T 2S+1 L 2J CF (EK-E1)/RY
+  for (int i = 0; i < nlevel; i++) {
+    if (!next_numeric_line(8)) {
+      cout << "ERROR:: Unexpected end of level data in " << filename << "!"
+           << endl;
+      return 0;
+    }
+    LV_K.push_back((int)num[0]);
+    LV_LV.push_back((int)num[1]);
+    LV_T.push_back((int)num[2]);
+    LV_S.push_back((int)num[3]);
+    LV_L.push_back((int)num[4]);
+    LV_J.push_back((int)num[5]);
+    LV_CF.push_back((int)num[6]);
+    LV_energy.push_back(num[7]);
+  }
+
+  // skip to the radiative data block
+  bool found_radiative_data = false;
+  while (getline(fin, line)) {
+    if (line.find("RADIATIVE DATA") != string::npos) {
+      found_radiative_data = true;
+      break;
+    }
+  }
+  if (!found_radiative_data) {
+    cout << "ERROR:: No RADIATIVE DATA block found in " << filename << "!"
+         << endl;
+    return 0;
+  }
+
+  // read all transition rows: CF LV W CF LV W AR*SEC DEL(RYD) E-G(RYD)
+  while (next_numeric_line(9)) {
+    AR_CF1.push_back((int)num[0]);
+    AR_LV1.push_back((int)num[1]);
+    AR_W1.push_back((int)num[2]);
+    AR_CF2.push_back((int)num[3]);
+    AR_LV2.push_back((int)num[4]);
+    AR_W2.push_back((int)num[5]);
+    AR_rate.push_back(num[6]);
+    AR_energy.push_back(num[7]);
+  }
+
+  nAA = 0;
+  nLV = (int)LV_K.size();
+  nAR = (int)AR_CF1.size();
+  cout << "Read " << nLV << " levels and " << nAR << " radiative rates from "
+       << filename << endl;
+
+  return 1;
+}
+
+vector<AUTOSO1::Level> AUTOSO1::get_levels(void) const {
+  vector<Level> levels;
+  levels.reserve(LV_K.size());
+  for (unsigned i = 0; i < LV_K.size(); i++) {
+    Level level;
+    level.K = LV_K[i];
+    level.LV = LV_LV[i];
+    level.T = LV_T[i];
+    level.S = LV_S[i];
+    level.L = LV_L[i];
+    level.J = LV_J[i];
+    level.CF = LV_CF[i];
+    level.energy = LV_energy[i];
+    levels.push_back(level);
+  }
+  return levels;
+}
+
+vector<AUTOSO1::RadiativeRate> AUTOSO1::get_radiative_rates(void) const {
+  vector<RadiativeRate> rates;
+  rates.reserve(AR_CF1.size());
+  for (unsigned i = 0; i < AR_CF1.size(); i++) {
+    RadiativeRate rate;
+    rate.CF1 = AR_CF1[i];
+    rate.LV1 = AR_LV1[i];
+    rate.W1 = AR_W1[i];
+    rate.CF2 = AR_CF2[i];
+    rate.LV2 = AR_LV2[i];
+    rate.W2 = AR_W2[i];
+    rate.rate = AR_rate[i];
+    rate.energy = AR_energy[i];
+    rates.push_back(rate);
+  }
+  return rates;
 }
 
 int AUTOSO1::summed_rates(int nminHydro, int CF1) {
