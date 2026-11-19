@@ -70,7 +70,7 @@
  * @verbinclude Ar4levelpop.hcin
  *
  * Radiative rates and level energies are read from the autostructure file
- * <tt>Ar4levelpop.oic</tt>.
+ * <tt>[Ar4levelpop.oic](../../autostructure/examples/Ar4rates/Ar4rates/o1)</tt> (see autostructure @ref Ar4rates).
  *
  * Hydrocal output file (<tt>Ar4levelpopT0.pop</tt>):
  * @verbinclude Ar4levelpopT0.pop

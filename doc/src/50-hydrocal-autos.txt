@@ -62,10 +62,29 @@
  * After installation, the commands <tt>autos</tt> and <tt>autosdr</tt> are available for performing autostructure
  * calulations as explained in the [Introduction to AUTOSTRUCUTRE](../../autostructure/doc/AUTOSintro.pdf) and as used in the examples below.
  *
+ * - @subpage Ar4rates
  * - @subpage O2DR
  * - @subpage O2DN1DR
  * - @subpage Pb78DR
  * - @subpage Sn12DR
+ *
+****************************************************************************************************************************
+ * @page Ar4rates Example: Radiative transtion rates beween atomic levels
+ *
+ * -# Intermediate-coupling (IC) calculation of energy levels and transtion rates:
+ * @verbatim
+    autos Ar4rates
+   @endverbatim
+ * using the input file <tt>[Ar4rates.in](../../autostructure/examples/Ar4rates/Ar4rates.in)</tt>.
+ *
+ *
+ * -# The output file <tt>[Ar4rates/o1](../../autostructure/examples/Ar4rates/Ar4rates/o1)</tt> can be used as input to hydrocal calculations of level populations
+ *     as functions of storage time. This can be prepared with 
+ *  @verbatim
+    ln -s Ar4rates/o1 Ar4levelpop.oic
+ @endverbatim
+ *
+ * -# Then proceed as in the corresponding hydrocal example @ref Ar4levelpop.
  *
 ****************************************************************************************************************************
  * @page O2DR Example: &Delta; N=0 DR of C-like O2+ with modeled n-cutoff
