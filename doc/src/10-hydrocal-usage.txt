@@ -23,6 +23,7 @@
  *
  * Here below are links to some examples for input and the associated generated output.
  * - @subpage Hlifetimes (TEST=Hlifetimes)
+ * - @subpage Ar4levelpop (TEST=Ar4levelpop)
  * - @subpage U91DiracRates (TEST=U91DiracRates)
  * - @subpage Ds110RR (TEST=Ds3p32DiracRR)
  * - @subpage U92RR (TEST=U92RR)
@@ -57,6 +58,27 @@
  * Hydrocal output file (<tt>Hlifetimes.tau</tt>):
  * @verbinclude Hlifetimes.tau
  * Lifetimes of H(n,l) levels in seconds.
+ ***************************************************************************************************************
+ * @page Ar4levelpop Population dynamics of levels of stored ions
+ *
+ * To run this example use
+ * @verbatim
+  hydrocal < Ar4levelpop.hcin
+  @endverbatim
+ *
+ * Hydrocal input file (<tt>Ar4levelpop.hcin</tt>):
+ * @verbinclude Ar4levelpop.hcin
+ *
+ * Radiative rates and level energies are read from the autostructure file
+ * <tt>Ar4levelpop.oic</tt>.
+ *
+ * Hydrocal output file (<tt>Ar4levelpopT0.pop</tt>):
+ * @verbinclude Ar4levelpopT0.pop
+ * The level data (columns 1-6) are merged row by row with the time grid and
+ * the level populations (columns 7 onward). The label column contains the
+ * electron configuration from the OIC file, e.g.
+ * <tt>2s2 2p6 3s2 3p2 3P2</tt>.
+ *
  ***************************************************************************************************************
  * @page U91DiracRates Fully relativistic transition rates in H-like U91+
  *

@@ -317,13 +317,16 @@
  * otherwise hydrocal falls back to a matrix-exponential propagator.
  *
  * @paragraph mcasoutput Output
- * For an input file <tt>base.oic</tt> two files are written in the same
- * directory:
- * - <tt>base_lev.dat</tt> &mdash; a table of the levels, sorted by decreasing
- *   lifetime, with their energies and radiative lifetimes;
- * - <tt>base_NLEVEL_kbT.dat</tt> &mdash; a CSV table of the time grid, the
- *   populations of all levels with lifetimes exceeding the threshold, and
- *   the total population (a norm check; it should remain close to 1).
+ * For an input file <tt>base.oic</tt> one file <tt>baseT<em>kbT</em>.pop</tt>
+ * is written in the same directory. It combines the level data (columns 1-6:
+ * K, LV, T, label (configuration and term), energy, and radiative lifetime,
+ * sorted by decreasing lifetime) with the population data (columns 7 onward:
+ * time, the populations
+ * of all levels with lifetimes exceeding the threshold, and the total
+ * population, which should remain close to 1). Both tables are merged row by
+ * row; columns of the shorter table are filled with <tt>--</tt> where the
+ * longer table still has rows. The file carries a hydrocal-style header
+ * describing the calculation and all columns.
  *
  * No plot is produced by the console program; the CSV output can be plotted
  * with an external tool such as gnuplot.

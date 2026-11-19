@@ -542,10 +542,10 @@ add_test(
   "${CMAKE_CURRENT_BINARY_DIR}/CNplus.result"
 )
 add_test(
-  NAME Ar4rates
+  NAME Ar4levelpop
   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/run_test.sh
-  "${CMAKE_CURRENT_SOURCE_DIR}/doc/examples/Ar4rates.hcin"
-  "${CMAKE_CURRENT_BINARY_DIR}/Ar4rates.result"
+  "${CMAKE_CURRENT_SOURCE_DIR}/doc/examples/Ar4levelpop.hcin"
+  "${CMAKE_CURRENT_BINARY_DIR}/Ar4levelpop.result"
 )
 
 # ---------------------------------------------------------------------------

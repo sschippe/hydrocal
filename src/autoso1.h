@@ -48,6 +48,8 @@ private:
   std::vector<int> AR_CF1, AR_LV1, AR_W1, AR_CF2, AR_LV2, AR_W2;
   std::vector<double> AR_rate, AR_energy;
 
+  std::vector<std::string> configurations; ///< configurations indexed by CF-1
+
   int nRydberg, lRydberg;
   double Zeff;
 
@@ -82,4 +84,7 @@ public:
 
   /** \brief Returns the radiative rates read by #read_oic */
   std::vector<RadiativeRate> get_radiative_rates(void) const;
+
+  /** \brief Returns human-readable configurations indexed by CF-1 */
+  std::vector<std::string> get_configurations(void) const;
 };

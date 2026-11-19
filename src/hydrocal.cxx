@@ -645,7 +645,7 @@ void ionbeam_group(void) {
       break;
     case 5:
       printf("\n");
-      MetaCascadeAS(); // LevelPopulations.cxx
+      LevelPopulations(); // LevelPopulations.cxx
       break;
     default:
       goto error;

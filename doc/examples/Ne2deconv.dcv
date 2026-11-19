@@ -1,7 +1,7 @@
 ##############################################################################################
 ### Cooler deconvolution of rate-coefficient data from an electron-ion merged-beams experiment
 ###
-###  hydrocal revision     : 2135
+###      hydrocal revision : 2135
 ###               filename : Ne2deconv.dcv
 ###         input filename : Ne2deconv.inp
 ###    number of data sets : 818

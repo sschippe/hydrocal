@@ -1,13 +1,7 @@
 /**
  * @file LevelPopulations.cxx
  *
- * @brief C++ port of the Meta-Cascade-AS Mathematica notebook
- *
- * The notebook reads radiative transition rates from an autostructure
- * *.oic file, sets up the rate matrix, solves the coupled rate equations
- * for the level populations, and writes level and population tables.
- * Here the same calculations are performed natively; analytic solutions
- * of the triangular rate matrix replace Mathematica's DSolve.
+ * @brief Level population dynamics of stored ions
  *
  * @author Stefan Schippers
  * @verbatim
@@ -18,6 +12,7 @@
 
 #include "LevelPopulations.h"
 #include "autoso1.h"
+#include "buildinfo.h"
 #include "hydromath.h"
 #include "hydroconst.h"
 #include "matrix.h"
@@ -25,6 +20,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -36,7 +32,7 @@ using namespace std;
 
 namespace {
 
-/** \brief Composes the output file name from an input file name */
+/** @brief Composes the output file name from an input file name */
 string file_prefix(const string &filename) {
   size_t slash = filename.find_last_of("/\\");
   string directory = (slash == string::npos) ? "" : filename.substr(0, slash + 1);
@@ -46,8 +42,8 @@ string file_prefix(const string &filename) {
     base = base.substr(0, dot);
   return directory + base;
 }
-
-/** \brief Spectroscopic letter belonging to an orbital angular momentum */
+  
+/** @brief Spectroscopic letter belonging to an orbital angular momentum */
 string l_symbol(int l) {
   static const char *symbols = "SPDFGHIKLMNOQRTUVWXYZ";
   if (l < 0 || l >= (int)strlen(symbols))
@@ -55,9 +51,13 @@ string l_symbol(int l) {
   return string(1, symbols[l]);
 }
 
-/** \brief Level label in the notation used by the notebook, e.g. 3P1 */
-string level_label(const AUTOSO1::Level &level) {
+/** @brief Level label including the configuration, e.g. 2s2 2p6 3s2 3p2 3P1 */
+string level_label(const AUTOSO1::Level &level,
+                   const vector<string> &configurations) {
   ostringstream label;
+  if (level.CF > 0 && (size_t)level.CF <= configurations.size() &&
+      !configurations[level.CF - 1].empty())
+    label << configurations[level.CF - 1] << ' ';
   label << abs(level.S) << l_symbol(level.L) << 0.5 * level.J;
   return label.str();
 }
@@ -66,8 +66,9 @@ string level_label(const AUTOSO1::Level &level) {
 
 ////////////////////////////////////////////////////////////////////////////
 /**
- * @brief Sets up and solves the rate equations from an autostructure file
+ * @brief Sets up and solves the rate equations 
  *
+ * The transition rates are read in from autostructure output.
  * The levels are reordered by decreasing energy. In that order the
  * radiative rate matrix is lower triangular, i.e. its eigenvalues are the
  * negative total outflow rates. This makes it possible to write every
@@ -76,14 +77,15 @@ string level_label(const AUTOSO1::Level &level) {
  * transitions or degenerate outflow rates, the general matrix-exponential
  * solution from hydromath.cxx is used instead.
  */
-int compute_meta_cascade(const string &filename, const MetaCascadeParams &params,
-                         MetaCascadeResult &result, string &output_prefix) {
+int compute_level_populations(const string &filename, const LevelPopParams &params,
+			      LevelPopResult &result, string outfilename) {
   AUTOSO1 oic;
   if (!oic.read_oic(filename))
     return 0;
 
   const vector<AUTOSO1::Level> levels = oic.get_levels();
   const vector<AUTOSO1::RadiativeRate> rates = oic.get_radiative_rates();
+  const vector<string> configurations = oic.get_configurations();
   const size_t nlevels = levels.size();
   if (nlevels == 0 || rates.empty()) {
     cout << "ERROR:: No levels or radiative rates in " << filename << "!"
@@ -261,108 +263,144 @@ int compute_meta_cascade(const string &filename, const MetaCascadeParams &params
     cout << " Warning: maximum population normalization error "
          << result.max_norm_deviation << endl;
 
-  // write the level table, longest lived first
-  output_prefix = file_prefix(filename);
-  const string level_filename = output_prefix + "_lev.dat";
-  ofstream level_file(level_filename);
-  if (level_file.is_open()) {
-    level_file << "# K LV T label 2J (EK-E1)/eV lifetime/s\n";
-    for (size_t rank = 0; rank < nlevels; rank++) {
-      size_t i = result.lifetime_order[rank];
-      const auto &level = levels[i];
-      level_file << setw(5) << level.K << " " << setw(5) << level.LV << " "
-                 << setw(5) << level.T << " " << setw(8) << level_label(level)
-                 << " " << setw(5) << level.J << " " << scientific
-                 << setprecision(6) << level.energy * hydroconst::Ryd_eV << " ";
-      if (isinf(result.lifetimes[i]))
-        level_file << "Infinity";
-      else
-        level_file << result.lifetimes[i];
-      level_file << "\n";
-    }
-    level_file.close();
-  } else {
-    cout << "ERROR:: Cannot write " << level_filename << endl;
+  // levels to be included in the population table, longest lived first
+  vector<size_t> plot_levels;
+  for (size_t i : result.lifetime_order) {
+    if (result.lifetimes[i] > params.lifetime_min)
+      plot_levels.push_back(i);
   }
 
-  // write the population table for levels living longer than the threshold
+  // write one combined table: the level data (7 columns) followed by the
+  // population data (time, one column per plotted level, and the total)
   ostringstream temperature_string;
   temperature_string << setprecision(6) << params.kB_T_eV;
-  const string population_filename = output_prefix + "_" +
-                                     to_string(nlevels) + "_" +
-                                     temperature_string.str() + ".dat";
-  ofstream population_file(population_filename);
-  if (population_file.is_open()) {
-    vector<size_t> plot_levels;
-    for (size_t i : result.lifetime_order) {
-      if (result.lifetimes[i] > params.lifetime_min)
-        plot_levels.push_back(i);
+  const string output_filename =
+      outfilename + "T" + temperature_string.str() + ".pop";
+  ofstream output_file(output_filename);
+  if (!output_file.is_open()) {
+    cout << "ERROR:: Cannot write " << output_filename << endl;
+    return 0;
+  }
+
+  const size_t level_columns = 6;
+  const size_t population_columns = 2 + plot_levels.size();
+  const size_t columns = level_columns + population_columns;
+
+  time_t rawtime;
+  time(&rawtime);
+  struct tm *timeinfo = localtime(&rawtime);
+  auto metadata = [&](const string &label, const string &value) {
+    output_file << "###" << setw(27) << label << " : " << value << "\n";
+  };
+  auto scientific_string = [](double value) {
+    ostringstream value_string;
+    value_string << scientific << setprecision(6) << value;
+    return value_string.str();
+  };
+  char start_date[32];
+  strftime(start_date, sizeof(start_date), "%Y-%m-%d %H:%M:%S", timeinfo);
+  output_file << "###" << string(98, '#') << "\n";
+  output_file << "### Level population dynamics from radiative rates\n";
+  output_file << "###\n";
+  metadata("hydrocal revision", HYDROCAL_REVISION);
+  metadata("filename", output_filename);
+  metadata("input filename", filename);
+  metadata("number of data sets", to_string(max(nlevels, ntimes)));
+  metadata("start date & time", start_date);
+  metadata("number of levels", to_string(nlevels));
+  metadata("plotted levels", to_string(plot_levels.size()));
+  metadata("electron temperature (eV)", temperature_string.str());
+  metadata("first time point (s)", scientific_string(params.t_start));
+  metadata("last time point (s)", scientific_string(params.t_end));
+  metadata("number of time points", to_string(ntimes));
+  metadata("minimum lifetime (s)", scientific_string(params.lifetime_min));
+  output_file << "###" << string(98, '#') << "\n";
+  output_file << "### K [1]   LV [2]   T [3]   configuration + label [4]"
+                 "   (EK-E1)/eV [5]   lifetime/s [6]   time/s [7]";
+  for (size_t k = 0; k < plot_levels.size(); k++)
+    output_file << "   " << level_label(levels[plot_levels[k]], configurations) << " ["
+                << level_columns + 2 + k << "]";
+  output_file << "   total [" << columns << "]\n";
+  output_file << "###" << string(columns * 6, '-') << "\n";
+
+  for (size_t row = 0; row < max(nlevels, ntimes); row++) {
+    if (row < nlevels) {
+      size_t i = result.lifetime_order[row];
+      const auto &level = levels[i];
+      output_file << level.K << ", " << level.LV << ", " << level.T << ", "
+                  << level_label(level, configurations) << ", " << scientific
+                  << setprecision(6) << level.energy * hydroconst::Ryd_eV
+                  << ", ";
+      if (isinf(result.lifetimes[i]))
+        output_file << "Infinity";
+      else
+        output_file << result.lifetimes[i];
+    } else {
+      for (size_t k = 0; k < level_columns; k++)
+        output_file << (k > 0 ? ", --" : "--");
     }
-    population_file << "# time/s";
-    for (size_t i : plot_levels)
-      population_file << " " << level_label(levels[i]);
-    population_file << " total\n";
-    for (size_t it = 0; it < ntimes; it++) {
+
+    if (row < ntimes) {
       double total = 0.0;
       for (size_t i = 0; i < nlevels; i++)
-        total += result.populations[i][it];
-      population_file << scientific << setprecision(8) << result.times[it];
+        total += result.populations[i][row];
+      output_file << ", " << scientific << setprecision(8) << result.times[row];
       for (size_t i : plot_levels)
-        population_file << " " << result.populations[i][it];
-      population_file << " " << total << "\n";
+        output_file << ", " << result.populations[i][row];
+      output_file << ", " << total;
+    } else {
+      for (size_t k = 0; k < population_columns; k++)
+        output_file << ", --";
     }
-    population_file.close();
-  } else {
-    cout << "ERROR:: Cannot write " << population_filename << endl;
+    output_file << "\n";
   }
+  output_file.close();
 
   cout << " Solved rate equations for " << nlevels << " levels on " << ntimes
        << " time points" << endl;
-  cout << " Level data written to " << level_filename << endl;
-  cout << " Populations written to " << population_filename << endl;
+  cout << " Level and population data for " << plot_levels.size()
+       << " plotted levels written to " << output_filename << endl;
 
   return 1;
 }
 
 ////////////////////////////////////////////////////////////////////////////
 /**
- * @brief Interactive front end of the meta-cascade calculation
+ * @brief Interactive front end of the calculation
  */
-void MetaCascadeAS(void) {
-  cout << "\n Meta-cascade population dynamics from autostructure radiative "
-          "rates\n";
-
+void LevelPopulations(void) {
+  cout << "\n Level population dynamics from radiative rates\n";
   string filename;
-  cout << "\n Give name of autostructure file (*.oic or *.o1) ....: ";
+  cout << "\n Give name of autostructure file (*.oic or *.o1) ...: ";
   cin >> filename;
-
-  MetaCascadeParams params;
+  string outfilename = file_prefix(filename);
+  LevelPopParams params;
   char answer;
-  cout << "\n Change default calculation parameters? (y/n) .........: ";
+  cout << "\n Change default calculation parameters? (y/n) ......: ";
   cin >> answer;
   if ((answer == 'y') || (answer == 'Y')) {
-    cout << "\n Give electron temperature at stripping in eV"
-            " (0 -> statistical population) ....................: ";
+    cout << "\n Give electron temperature in eV (0 for statistical): ";
     cin >> params.kB_T_eV;
-    cout << "\n Give first time point in s ...........................: ";
+    cout << "\n Give first time point in s ........................: ";
     cin >> params.t_start;
-    cout << "\n Give last time point in s ............................: ";
+    cout << "\n Give last time point in s .........................: ";
     cin >> params.t_end;
-    cout << "\n Give number of log-spaced time points .................: ";
+    cout << "\n Give number of log-spaced time points .............: ";
     int n_times;
     cin >> n_times;
     if (n_times > 0)
       params.n_times = (size_t)n_times;
-    cout << "\n Give minimum lifetime of levels to be written in s"
-            " (default 1) .........................................: ";
+    cout << "\n Give mimimum life time in s for level to be plotted: ";
     cin >> params.lifetime_min;
+    cout << "\n Give output filename <fn> (<fn>T<temp>.pop) .......: ";
+    cin >> outfilename;
   }
   if (params.t_end <= params.t_start) {
     cout << "ERROR:: Last time point must be larger than the first one" << endl;
     return;
   }
 
-  MetaCascadeResult result;
+  LevelPopResult result;
   string output_prefix;
-  compute_meta_cascade(filename, params, result, output_prefix);
+  compute_level_populations(filename, params, result, outfilename);
 }

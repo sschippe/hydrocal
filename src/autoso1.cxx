@@ -14,6 +14,7 @@
 #include "fele.h"
 #include "hydroconst.h"
 #include "lifetime.h"
+#include <cctype>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
@@ -21,11 +22,12 @@
 #include <math.h>
 #include <sstream>
 #include <stdio.h>
+#include <utility>
 #include "stdin_guard.h"
 
 using namespace std;
 
-/** \brief Extracts all purely numeric tokens from a line
+/** @brief Extracts all purely numeric tokens from a line
  *
  * Autostructure output occasionally contains non-numeric tokens such as
  * 'X' in the middle of a data row. They are ignored here.
@@ -40,6 +42,37 @@ static void extract_numbers(const string &line, vector<double> &numbers) {
     if (end != token.c_str() && *end == '\0')
       numbers.push_back(value);
   }
+}
+
+/** @brief Spectroscopic letter for an orbital angular momentum */
+static string orbital_symbol(int l) {
+  static const char *symbols = "spdfghiklmnoqrtuvwxyz";
+  if (l < 0 || l >= (int)strlen(symbols))
+    return "?";
+  return string(1, symbols[l]);
+}
+
+/** @brief Subshell number encoded in the single-character CFIC label */
+static int configuration_index(char label) {
+  if (label >= '1' && label <= '9')
+    return label - '0';
+  if (label >= 'A' && label <= 'Z')
+    return 10 + label - 'A';
+  if (label >= 'a' && label <= 'z')
+    return 36 + label - 'a';
+  return -1;
+}
+
+/** @brief Parses a fixed-width integer field of a CFIC row */
+static bool fixed_int(const string &field, int &value) {
+  size_t start = field.find_first_not_of(' ');
+  if (start == string::npos)
+    return false;
+  for (size_t i = start; i < field.size(); i++)
+    if (!isdigit((unsigned char)field[i]))
+      return false;
+  value = atoi(field.c_str());
+  return true;
 }
 
 int AUTOSO1::open_file(string filename) {
@@ -233,9 +266,57 @@ int AUTOSO1::read_oic(const string &filename) {
   AR_W2.clear();
   AR_rate.clear();
   AR_energy.clear();
+  configurations.clear();
 
   string line;
   vector<double> num;
+
+  // The CFIC block precedes NLEVEL. Autostructure writes each occupied
+  // subshell as a two-character occupancy followed by a one-character
+  // subshell index; all but the first occupancy are offset by 50.
+  fin.clear();
+  fin.seekg(0);
+  while (getline(fin, line)) {
+    if (line.find("CFIC") == string::npos)
+      continue;
+    vector<pair<int, int> > subshells;
+    size_t nlpos = line.find("NL");
+    if (nlpos != string::npos) {
+      vector<double> nl;
+      extract_numbers(line.substr(nlpos + 2), nl);
+      for (size_t j = 0; j + 1 < nl.size(); j += 2)
+        subshells.push_back(make_pair((int)nl[j], (int)nl[j + 1]));
+    }
+    while (getline(fin, line)) {
+      int cf_number, field;
+      if (line.size() < 18 || !fixed_int(line.substr(0, 5), cf_number) ||
+          !fixed_int(line.substr(5, 5), field) ||
+          !isdigit((unsigned char)line[14]) ||
+          !fixed_int(line.substr(15, 2), field))
+        break;
+      ostringstream config;
+      bool first = true;
+      for (size_t p = 18; p + 2 <= line.size(); p += 3) {
+        int occupancy;
+        if (!fixed_int(line.substr(p, 2), occupancy))
+          break;
+        if (!first)
+          occupancy -= 50;
+        first = false;
+        int index = configuration_index(line[p + 2]);
+        if (index <= 0 || (size_t)index > subshells.size())
+          continue;
+        if (!config.str().empty())
+          config << ' ';
+        config << subshells[index - 1].first
+               << orbital_symbol(subshells[index - 1].second) << occupancy;
+      }
+      configurations.push_back(config.str());
+    }
+    break;
+  }
+  fin.clear();
+  fin.seekg(0);
 
   // find the NLEVEL line and extract the number of levels
   int nlevel = 0;
@@ -287,7 +368,7 @@ int AUTOSO1::read_oic(const string &filename) {
     }
   }
   if (!found_radiative_data) {
-    cout << "ERROR:: No RADIATIVE DATA block found in " << filename << "!"
+    cout << " ERROR:: No RADIATIVE DATA block found in " << filename << "!"
          << endl;
     return 0;
   }
@@ -307,7 +388,7 @@ int AUTOSO1::read_oic(const string &filename) {
   nAA = 0;
   nLV = (int)LV_K.size();
   nAR = (int)AR_CF1.size();
-  cout << "Read " << nLV << " levels and " << nAR << " radiative rates from "
+  cout << " Read " << nLV << " levels and " << nAR << " radiative rates from "
        << filename << endl;
 
   return 1;
@@ -329,6 +410,10 @@ vector<AUTOSO1::Level> AUTOSO1::get_levels(void) const {
     levels.push_back(level);
   }
   return levels;
+}
+
+vector<string> AUTOSO1::get_configurations(void) const {
+  return configurations;
 }
 
 vector<AUTOSO1::RadiativeRate> AUTOSO1::get_radiative_rates(void) const {

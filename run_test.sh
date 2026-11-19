@@ -16,7 +16,7 @@ srcdir=$(dirname "$(readlink -f "$0")")
 mkdir -p "$logdir/$name"
 
 # copy support files from the examples directory
-for f in Ne2deconv.inp O2DN1.bdr Xe53DRtheo4.dat Ar4rates.oic; do
+for f in Ne2deconv.inp O2DN1.bdr Xe53DRtheo4.dat Ar4levelpop.oic; do
   [ -f "$refdir/$f" ] && cp "$refdir/$f" "$logdir/$name/"
 done
 
@@ -200,17 +200,19 @@ case "$name" in
     else echo "FAILED (data differs)" > "$result_file"
     fi
     ;;
-  Ar4rates)
-    for out in Ar4rates_lev.dat Ar4rates_92_0.dat; do
-      if [ ! -f "$logdir/$name/$out" ]; then
-        echo "FAILED (missing $out)" > "$result_file"; exit 1
-      fi
-      diff -q "$logdir/$name/$out" "$refdir/$out" >/dev/null 2>&1
-      rc=$?
-      if [ $rc -ne 0 ]; then
-        echo "FAILED ($out differs)" > "$result_file"; exit 1
-      fi
-    done
+  Ar4levelpop)
+    out=Ar4levelpopT0.pop
+    if [ ! -f "$logdir/$name/$out" ]; then
+      echo "FAILED (missing $out)" > "$result_file"; exit 1
+    fi
+    grep -v '^#' "$logdir/$name/$out" > "$logdir/$name/$out.clean"
+    grep -v '^#' "$refdir/$out" > "$logdir/$name/$out.ref"
+    diff -q "$logdir/$name/$out.clean" "$logdir/$name/$out.ref" >/dev/null 2>&1
+    rc=$?
+    rm -f "$logdir/$name/$out.clean" "$logdir/$name/$out.ref"
+    if [ $rc -ne 0 ]; then
+      echo "FAILED ($out differs)" > "$result_file"; exit 1
+    fi
     echo "ok" > "$result_file"
     ;;
   *)
