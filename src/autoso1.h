@@ -1,9 +1,18 @@
+/**
+ * @file autoso1.h
+ *
+ * @brief Processing data from autostructure *.o1 output files
+ *
+ * @author Stefan Schippers
+ * @verbatim
 // SPDX-License-Identifier: MIT
-// Author: Stefan.E.Schippers@iamp.physik.uni-giessen.de 2006-07-18
+ @endverbatim
+ *
+ */
 #pragma once
 
-/** \class AUTOSO1
- * \brief Reads, holds and manipulates a nl-block
+/** @class AUTOSO1
+ * @brief Reads, holds and manipulates a nl-block
  *  of data from an autostructure *.o1 file
  *
  */
@@ -16,7 +25,7 @@ void TestAutosO1(void);
 class AUTOSO1 {
 
 public:
-  /** \brief One level from the NLEVEL block of an autostructure file */
+  /** @brief One level from the NLEVEL block of an autostructure file */
   struct Level {
     int K;      ///< configuration index
     int LV;     ///< level number used in the rate tables
@@ -28,7 +37,7 @@ public:
     double energy; ///< (EK-E1)/RY
   };
 
-  /** \brief One radiative transition from the RADIATIVE DATA block */
+  /** @brief One radiative transition from the RADIATIVE DATA block */
   struct RadiativeRate {
     int CF1, LV1, W1; ///< upper level (configuration, LV, weight)
     int CF2, LV2, W2; ///< lower level (configuration, LV, weight)
@@ -66,7 +75,7 @@ public:
   int summed_rates(int nminHydro, int CF1); /**< manipulates data
          beloging to a given nl-Rydberg state */
 
-  /** \brief Reads the complete level and radiative-rate data of an
+  /** @brief Reads the complete level and radiative-rate data of an
    *         autostructure *.oic (or *.o1) file
    *
    * In contrast to #read_nl this reader does not select an nl-Rydberg
@@ -79,12 +88,12 @@ public:
    */
   int read_oic(const std::string &filename);
 
-  /** \brief Returns the levels read by #read_oic */
+  /** @brief Returns the levels read by #read_oic */
   std::vector<Level> get_levels(void) const;
 
-  /** \brief Returns the radiative rates read by #read_oic */
+  /** @brief Returns the radiative rates read by #read_oic */
   std::vector<RadiativeRate> get_radiative_rates(void) const;
 
-  /** \brief Returns human-readable configurations indexed by CF-1 */
+  /** @brief Returns human-readable configurations indexed by CF-1 */
   std::vector<std::string> get_configurations(void) const;
 };

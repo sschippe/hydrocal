@@ -398,7 +398,7 @@ void CoolerMonteCarlo(void) {
   fout << "###            Publication : Eur. Phys. J. D 78, 122 (2024)" << endl;
   fout << "###                    DOI : https://doi.org/10.1140/epjd/s10053-024-00914-7" << endl;
   fout << "###" << endl;
-  fout << "###  hydrocal revision     : " << HYDROCAL_REVISION
+  fout << "###      hydrocal revision : " << HYDROCAL_REVISION
        << endl; // defined in buildinfo.h
   fout << "###               filename : " << outfilename << endl;
   fout << "###      start date & time : " << asctime(timeinfo);
