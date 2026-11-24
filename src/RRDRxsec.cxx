@@ -20,8 +20,10 @@
 #include "fele.h"
 #include "hydroconst.h"
 #include "hydromath.h"
+#include "buildinfo.h"
 #include "osci.h"
 #include <cmath>
+#include <ctime>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -193,68 +195,18 @@ double sigmarrnrd(double eV, double z, int n, int l) {
  *
  * @param Eph_eV photon energy in eV
  * @param z nuclear charge
- * @param nmin principal quantum number of the shell for which IP is specified
  * @param n principal quantum number of initial subshell
  * @param l orbital angular momentum quantum number
- * @param IP ionization potential of nmin-shell in eV
  *
- * @return photoionization cross section times photon energy in cm2 eV
+ * @return photoionization cross section 
  */
-double sigmaPIqm(double Eph_eV, double z, int nmin, int n, int l, double IP) {
-  const double Rydberg = hydroconst::Ryd_eV;
+double sigmapinrd(double Eph_eV, double z, int n, int l) {
   double gf = 1;
   double gi = 4 * l + 2;
-  double Erel = Eph_eV - Rydberg * z * z * (1.0 / (n * n) - 1.0 / (nmin * nmin)) + IP;
-  return 1.022e6 * gf / gi / Eph_eV * sigmarrnrd(Erel, z, n, l);
+  double Erel = Eph_eV - hydroconst::Ryd_eV*z*z/(n * n);
+  return Erel > 1.0E-9 ? 1.022e6 * gf / gi * sigmarrnrd(Erel, z, n, l)/Erel : 0.0;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-/**
- * @brief nonrelativistic (dipole approximation) n,l-specific RR cross section (NRD of type SIGMARR)
- *
- * @param Eph_eV photon energy in eV
- * @param z nuclear charge
- * @param fraction fractional populations for n,l subshells
- * @param use_fraction flags whether the above fractions should be used or not 
- * @param nmin principal quantum number of lowest shell
- * @param nmax prinicpal quantum number of highest shell
- * @param lmin orbital angular momentum quantum number of lowest subshell
- * @param IP ionization potential of nmin-shell in eV 
- *
- * @return photoionization cross section times photon energy in cm2 eV
- */
-double sigmaPIqm(double Eph_eV, double z, vector<double> fraction, int use_fraction,
-                 int nmin, int nmax, int lmin, double IP) {
-  double lterm = sigmaPIqm(Eph_eV, z, nmin, nmin, lmin, IP);
-  int n12 = (nmin - 1) * nmin / 2;
-  if (use_fraction) {
-    lterm *= fraction[n12 + lmin];
-  } else {
-    lterm *= fraction[0];
-  }
-  double lsum = lterm;
-  for (int l = lmin + 1; l < nmin; l++) {
-    lterm = sigmaPIqm(Eph_eV, z, nmin, nmin, l, IP);
-    if (use_fraction) {
-      lterm *= fraction[n12 + l];
-    }
-    lsum += lterm;
-  }
-  double nsum = lsum;
-  for (int n = nmin + 1; n <= nmax; n++) {
-    lsum = 0.0;
-    n12 = (n - 1) * n / 2;
-    for (int l = 0; l < n; l++) {
-      lterm = sigmaPIqm(Eph_eV, z, nmin, n, l, IP);
-      if (use_fraction) {
-        lterm *= fraction[n12 + l];
-      }
-      lsum += lterm;
-    }
-    nsum += lsum;
-  }
-  return nsum;
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -727,14 +679,9 @@ void calc_sigmaRR(void) {
     z = -fabs(z); // flags that Stobbe corrections are not applied
   } 
 
-  if (choice == 6) {
+  if ((choice == 6) || (choice == 7)) {
     cout << "\n Give n,l .........................................: ";
     cin >> nmin >> lmin;
-  } else if (choice == 7) {
-    cout << "\n Give maximum main quantum number nmax ............: ";
-    cin >> nmax;
-    cout << "\n Give electron energy in eV .......................: ";
-    cin >> eV;
   } else if ((choice == 10) || (choice == 14)) {
     cout << "\n Give n, l, j .....................................: ";
     cin >> nmin >> lmin >> jmin;
@@ -783,6 +730,23 @@ void calc_sigmaRR(void) {
   cin >> fnroot;
   filename = fnroot + ".sig";
   fout.open(filename);
+
+  time_t rawtime;
+  struct tm *timeinfo;
+  time(&rawtime);
+  timeinfo = localtime(&rawtime);
+
+  fout << "#################################################################################################" << endl;
+  fout << "### Cross sections for radiative recombination (RR) of bare ions" << endl;
+  fout << "###" << endl;
+  fout << "###            Publication : Atoms 14, 89 (2006)" << endl;
+  fout << "###                    DOI : https://doi.org/10.3390/atoms14120089" << endl;
+  fout << "###" << endl;
+  fout << "###      hydrocal revision : " << HYDROCAL_REVISION << endl; // defined in buildinfo.h
+  fout << "###               filename : " << fnroot << endl;
+  fout << "###      start date & time : " << asctime(timeinfo);
+  fout << "###" << endl;
+  
 
   if (choice == 7) {
     filename = fnroot + ".snl";
@@ -882,83 +846,117 @@ void calc_sigmaRR(void) {
 
   switch (choice) {
   case 1:
-    fout << "Bethe & Salpeter RR cross section without Gaunt factors\n";
-    fout << "BS: z=" << fixed << setprecision(2) << z << ", nmin=" << setw(3)
-         << nmin << ", lmin=" << setw(3) << lmin;
-    fout << " nele=" << setw(3) << nele << ", nmax=" << setw(3) << nmax << "\n";
+    fout << "### Bethe & Salpeter RR cross section without Gaunt factors\n";
+    fout << "###     cross section type : BS" << std::endl;
+    fout << "###         nuclear charge : " << fixed << setprecision(2) << z << endl;
+    fout << "###                   nmin : " << setw(3) << nmin << std::endl;
+    fout << "###                   lmin : " << setw(3) << lmin << std::endl;
+    fout << "###                   nele : " << setw(3) << nele << std::endl;
+    fout << "###                   nmax : " << setw(3) << nmax << std::endl;
     break;
   case 2:
-    fout << "semiclassical RR cross section, i.e. Bethe  & Salpeter with Gaunt factors\n";
-    fout << "SCL: z=" << fixed << setprecision(2) << z << ", nmin=" << setw(3)
-         << nmin << ", lmin=" << setw(3) << lmin;
-    fout << " nele=" << setw(3) << nele << ", nmax=" << setw(3) << nmax << "\n";
+    fout << "### semiclassical RR cross section, i.e. Bethe  & Salpeter with Gaunt factors\n";
+    fout << "###     cross section type : RR-SCL" << std::endl;
+    fout << "###         nuclear charge : " << fixed << setprecision(2) << z << endl;
+    fout << "###                   nmin : " << setw(3) << nmin << std::endl;
+    fout << "###                   lmin : " << setw(3) << lmin << std::endl;
+    fout << "###                   nele : " << setw(3) << nele << std::endl;
+    fout << "###                   nmax : " << setw(3) << nmax << std::endl;
     break;
   case 3:
-    fout << "RR cross section from nonrelativistic dipole approximation\n";
-    fout << "NRD: z=" << fixed << setprecision(2) << z << ", nmin=" << setw(3)
-         << nmin << ", lmin=" << setw(3) << lmin;
-    fout << " nele=" << setw(3) << nele << ", nmax=" << setw(3) << nmax << "\n";
+    fout << "### RR cross section from nonrelativistic dipole approximation\n";
+    fout << "###     cross section type : RR-NRD" << std::endl;
+    fout << "###         nuclear charge : " << fixed << setprecision(2) << z << endl;
+    fout << "###                   nmin : " << setw(3) << nmin << std::endl;
+    fout << "###                   lmin : " << setw(3) << lmin << std::endl;
+    fout << "###                   nele : " << setw(3) << nele << std::endl;
+    fout << "###                   nmax : " << setw(3) << nmax << std::endl;
     break;
   case 4:
-    fout << "RR cross section from relativistic (Dirac) dipole approximation\n";
-    fout << "DID: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
-         << nmin << ", l=" << setw(3) << lmin << ", j=" << setw(3) << jmin << "\n";
+    fout << "### RR cross section from relativistic (Dirac) dipole approximation\n";
+    fout << "###     cross section type : RR-DID" << std::endl;
+    fout << "###         nuclear charge : " << fixed << setprecision(2) << z << endl;
+    fout << "###                      n : " << setw(3) << nmin << std::endl;
+    fout << "###                      l : " << setw(3) << lmin << std::endl;
+    fout << "###                      j : " << setw(3) << jmin << std::endl;
     break;
   case 5:
-    fout << " relativistic (Dirac) fully retarded RR cross section (DIR)";
-    fout << " \n";
-    fout << "DIR: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
-         << nmin << ", l=" << setw(3) << lmin << ", j=" << setw(3) << jmin << "\n";
+    fout << "### relativistic (Dirac) fully retarded RR cross section\n";
+    fout << "###     cross section type : RR-DIR" << std::endl;
+    fout << "###         nuclear charge : " << fixed << setprecision(2) << z << endl;
+    fout << "###                      n : " << setw(3) << nmin << std::endl;
+    fout << "###                      l : " << setw(3) << lmin << std::endl;
+    fout << "###                      j : " << setw(3) << jmin << std::endl;
     break;
   case 6:
-    fout << "RR cross section from nonrelativistic dipole approximation\n";
-    fout << "NRD: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
-         << nmin << ", l=" << setw(3) << lmin << "\n";
+    fout << "### RR cross section from nonrelativistic dipole approximation\n";
+    fout << "###     cross section type : RR-NRD" << std::endl;
+    fout << "###         nuclear charge : " << fixed << setprecision(2) << z << endl;
+    fout << "###                      n : " << setw(3) << nmin << std::endl;
+    fout << "###                      l : " << setw(3) << lmin << std::endl;
     break;
   case 8:
-    fout << "semiclassical RR cross section with high-n integration\n";
-    fout << "SCI: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
-         << nmin << ", l=" << setw(3) << lmin << "\n";
-    fout << " nele=" << setw(3) << nele << ", nint=" << setw(3) << nint
-         << ", nmax=" << setw(3) << nmax << "\n";
+    fout << "### semiclassical RR cross section with high-n integration\n";
+    fout << "###     cross section type : RR-SCI" << std::endl;
+    fout << "###         nuclear charge : " << fixed << setprecision(2) << z << endl;
+    fout << "###                   nmin : " << setw(3) << nmin << std::endl;
+    fout << "###                   lmin : " << setw(3) << lmin << std::endl;
+    fout << "###                   nele : " << setw(3) << nele << std::endl;
+    fout << "###                   nint : " << setw(3) << nint << std::endl;
+    fout << "###                   nmax : " << setw(3) << nmax << std::endl;
     break;
   case 9:
-    fout << "PI cross section from nonrelativistic dipole approximation\n";
-    fout << "PI: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
-         << nmin << ", l=" << setw(3) << lmin << "\n";
-    fout << " nele=" << setw(3) << nele << ", nmax=" << setw(3) << nmax
-         << ", IP=" << fixed << setprecision(3) << IP << "\n";
+    fout << "### PI cross section from nonrelativistic dipole approximation\n";
+    fout << "###     cross section type : PI-NRD" << std::endl;
+    fout << "###         nuclear charge : " << fixed << setprecision(2) << z << endl;
+    fout << "###                      n : " << setw(3) << nmin << std::endl;
+    fout << "###                      l : " << setw(3) << lmin << std::endl;
     break;
   case 10:
-    fout << "Ichihara & Eichler tabulated RR cross section (interpolated)\n";
-    fout << "IE: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
-         << nmin << ", l=" << setw(3) << lmin << ", j=" << setw(3) << jmin << "\n";
+    fout << "### Ichihara & Eichler tabulated RR cross section (interpolated)\n";
+    fout << "###     cross section type : RR-IE" << std::endl;
+    fout << "###         nuclear charge : " << fixed << setprecision(2) << z << endl;
+    fout << "###                      n : " << setw(3) << nmin << std::endl;
+    fout << "###                      l : " << setw(3) << lmin << std::endl;
+    fout << "###                      j : " << setw(3) << jmin << std::endl;
     break;
   case 11:
-    fout << "comparison: semiclassical (SCL) vs. nonrelativistic dipole (NRD)\n";
-    fout << "SCL/NRD: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
-         << nmin << ", l=" << setw(3) << lmin << "\n";
+    fout << "### comparison: semiclassical (SCL) vs. nonrelativistic dipole (NRD)\n";
+    fout << "###     cross section type : RR-SCL/RR-NRD" << std::endl;
+    fout << "###         nuclear charge : " << fixed << setprecision(2) << z << endl;
+    fout << "###                      n : " << setw(3) << nmin << std::endl;
+    fout << "###                      l : " << setw(3) << lmin << std::endl;
     break;
   case 12:
-    fout << "comparison: nonrelativistic dipole (NRD) vs. relativistic dipole (DID)\n";
-    fout << "NRD/DID: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
-         << nmin << ", l=" << setw(3) << lmin << "\n";
+    fout << "### comparison: nonrelativistic dipole (NRD) vs. relativistic dipole (DID)\n";
+    fout << "###     cross section type : RR-NRD/RR-DID" << std::endl;
+    fout << "###         nuclear charge : " << fixed << setprecision(2) << z << endl;
+    fout << "###                      n : " << setw(3) << nmin << std::endl;
+    fout << "###                      l : " << setw(3) << lmin << std::endl;
     break;
   case 13:
-    fout << "comparison: Dirac dipole (DID) vs. Dirac fully retarded (DIR) \n";
-    fout << "DID/DIR: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
-         << nmin << ", l=" << setw(3) << lmin << "\n";
+    fout << "### comparison: Dirac dipole (DID) vs. Dirac fully retarded (DIR) \n";
+    fout << "###     cross section type : RR-DID/RR-DIR" << std::endl;
+    fout << "###         nuclear charge : " << fixed << setprecision(2) << z << endl;
+    fout << "###                      n : " << setw(3) << nmin << std::endl;
+    fout << "###                      l : " << setw(3) << lmin << std::endl;
     break;
   case 14:
-    fout << "comparison: Dirac fully retarded (DIR) vs. Ichihara & Eichler (IE)\n";
-    fout << "DIR/IE: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
-         << nmin << ", l=" << setw(3) << lmin << ", j=" << setw(3) << jmin << "\n";
+    fout << "### comparison: Dirac fully retarded (DIR) vs. Ichihara & Eichler (IE)\n";
+    fout << "###     cross section type : RR-DIR/RR-IE" << std::endl;
+    fout << "###         nuclear charge : " << fixed << setprecision(2) << z << endl;
+    fout << "###                      n : " << setw(3) << nmin << std::endl;
+    fout << "###                      l : " << setw(3) << lmin << std::endl;
+    fout << "###                      j : " << setw(3) << jmin << std::endl;
     break;
   case 15:
-    fout << "conversion check of Dirac fully retarded (DIR), "
-	 << "max number of channels: " << dir_max_no_channels << "\n";
-    fout << "DIR: z=" << fixed << setprecision(2) << z << ", n=" << setw(3)
-         << nmin << ", l=" << setw(3) << lmin << ", j=" << setw(3) << jmin << "\n";
+    fout << "### convergence check of relativistic (Dirac) fully retarded RR cross section";
+    fout << "###     cross section type : RR-DIR" << std::endl;
+    fout << "###         nuclear charge : " << fixed << setprecision(2) << z << endl;
+    fout << "###                      n : " << setw(3) << nmin << std::endl;
+    fout << "###                      l : " << setw(3) << lmin << std::endl;
+    fout << "###                      j : " << setw(3) << jmin << std::endl;
+    fout << "###        max no channels : " << dir_max_no_channels << std::endl;
     break;
   }
 
@@ -987,26 +985,27 @@ void calc_sigmaRR(void) {
     steps = int((emax - emin) / edelta);
   }
 
+  fout << "###############################################################################\n";
   if (choice == 11) {
-    cout << "\n     Ecm (eV)     sSCL (cm^2)      sNRD (cm^2)     sSCL/sNRD\n";
-    fout << "     Ecm (eV)     sSCL (cm^2)      sNRD (cm^2)     sSCL/sNRD\n";
+    cout << "\n     Ecm (eV)     sSCL (cm^2)      sNRD (cm^2)    sSCL/sNRD\n";
+    fout << "###  Ecm (eV) [1]  sSCL (cm^2) [2]  sNRD (cm^2) [3]  sSCL/sNRD [4]\n";
   } else if (choice == 12) {
-    cout << "\n     Ecm (eV)     sNRD (cm^2)      sDID (cm^2)     sNRD/sDID\n";
-    fout << "     Ecm (eV)     sNRD (cm^2)      sDID (cm^2)     sNRD/sDID\n";
+    cout << "\n     Ecm (eV)     sNRD (cm^2)      sDID (cm^2)    sNRD/sDID\n";
+    fout << "###  Ecm (eV) [1]  sNRD (cm^2) [2]  sDID (cm^2) [3]  sNRD/sDID [4]\n";
   } else if (choice == 13) {
-    cout << "\n     Ecm (eV)     sDID (cm^2)      sDIR (cm^2)     sDID/sDIR\n";
-    fout << "     Ecm (eV)     sDID (cm^2)      sDIR (cm^2)     sDID/sDIR\n";
+    cout << "\n     Ecm (eV)     sDID (cm^2)      sDIR (cm^2)    sDID/sDIR\n";
+    fout << "###  Ecm (eV) [1]  sDID (cm^2) [2]  sDIR (cm^2) [3]  sDID/sDIR [4]\n";
   } else if (choice == 14) {
-    cout << "\n     Ecm (eV)     sDIR (cm^2)      sIE (cm^2)      sDIR/sIE\n";
-    fout << "     Ecm (eV)     sDIR (cm^2)      sIE (cm^2)      sDIR/sIE\n";
+    cout << "\n     Ecm (eV)     sDIR (cm^2)      sIE (cm^2)     sDIR/sIE\n";
+    fout << "###  Ecm (eV) [1]  sDIR (cm^2) [2]   sIE (cm^2) [3]  sDIR/sIE [4]\n";
   } else if (choice == 15) {
     cout << "\n     Ecm (eV)     sDIR (cm^2)        tol    nKc\n";
-      fout << "     Ecm (eV)     sDIR (cm^2)        tol    nKc\n";
+    fout << "###  Ecm (eV) [1]  sDIR (cm^2) [2]  tol [3]  nKc [4]\n";
   } else {
     cout << "\n     Ecm (eV)        sigma (cm^2)    E*sigma (eV cm^2)\n";
-    fout << "     Ecm             sigma           E*sigma\n";
-    fout << "     (eV)            (cm^2)          (eV cm^2)\n";
+    fout << "###  Ecm (eV) [1]  sigma (cm^2) [2]   E*sigma (eV cm^2) [3] \n";
   }
+  fout << "###-------------------------------------------------------------------\n";
 
   if (read_energy)
     fenergy.open(filename);
@@ -1042,7 +1041,7 @@ void calc_sigmaRR(void) {
       sigma = sigmarrsci(eV, z, fraction, nint, nmin, nmax, lmin);
       break;
     case 9:
-      sigma = sigmaPIqm(eV, z, fraction, use_fraction, nmin, nmax, lmin, IP);
+      sigma = sigmapinrd(eV, z, nmin, lmin);
       break;
     case 10: {
       sigma = sigma_IchiharaEichlerRR(eV, (int)z, nmin, lmin, jmin) * eV;

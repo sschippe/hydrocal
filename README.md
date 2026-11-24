@@ -195,7 +195,7 @@ If you use hydrocal in your research, please cite the software itself:
   author       = {Schippers, Stefan},
   title        = {{hydrocal}: hydrogenic atomic structure calculations
                   and radiative transition rates},
-  version      = {1.0.3},
+  version      = {1.0.4},
   year         = {2026},
   month        = oct,
   publisher    = {Zenodo},
@@ -224,6 +224,7 @@ There is no dedicated hydrocal software paper. The articles under [References](#
 - S. Schippers, JQSRT **219** (2019) 33 — [doi:10.1016/j.jqsrt.2018.08.003](https://doi.org/10.1016/j.jqsrt.2018.08.003)
 - S. Schippers et al., ChemPhysChem **24** (2023) e202300061 — [doi:10.1002/cphc.202300061](https://doi.org/10.1002/cphc.202300061)
 - S.-X. Wang et al., Eur. Phys. J. D **78** (2024) 122 — [doi:10.1140/epjd/s10053-024-00914-7](https://doi.org/10.1140/epjd/s10053-024-00914-7)
+- S. Schippers, Atoms **14** (2026) 89 [doi:10.3390/atoms14120089](https://doi.org/10.3390/atoms14120089)
 
 ## Author
 

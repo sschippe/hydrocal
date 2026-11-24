@@ -67,6 +67,7 @@
  * - @subpage O2DN1DR
  * - @subpage Pb78DR
  * - @subpage Sn12DR
+ * - @subpage Ar4DN0DR
  *
 ****************************************************************************************************************************
  * @page Ar4rates Example: Radiative transtion rates beween atomic levels
@@ -89,7 +90,7 @@
 ****************************************************************************************************************************
  * @page O2DR Example: &Delta; N=0 DR of C-like O2+ with modeled n-cutoff
  *
- * -# Preparation of n-cutoff calcuation; the cutoff is due to field ionization in the storage ring magnets.
+ * -# Preparation of n-cutoff calculation; the cutoff is due to field ionization in the storage ring magnets.
  * Here, we perform a calculation for CRYRING\@ESR:
  * @verbatim
     hydrocal < O2cutoff.hcin
@@ -97,7 +98,7 @@
  * using  <tt>[O2cutoff.hcin](../../autostructure/examples/O2DR/O2cutoff.hcin)</tt> and producing the output files (filenames as
  * requested in the input file)  <tt>[O2YR.txt](../../autostructure/examples/O2DR/O2YR.txt)</tt>  and
  * <tt>[O2YR.hcin](../../autostructure/examples/O2DR/O2YR.hcin)</tt>. The former just informs about what has been requested, the
- * latter in used as an input for the next step of the calcuation.
+ * latter in used as an input for the next step of the calculation.
  *
  * -# Calculation of nl-dependent survival probabilites:
  * @verbatim
@@ -294,4 +295,91 @@
  * This produces the output file <tt>[Sn12DN0.mcr](../../autostructure/examples/Sn12DR/Sn12DN0.mcr)</tt>,
  * which contains the theoretical merged-beams rate coefficients to be compared with the experimental one
  *
- */
+****************************************************************************************************************************
+ * @page Ar4DN0DR Example: &Delta; N=0 DR of Ar4+ with Hartee-Fock wavefunctions
+ *
+ * Autostructure foresees to read precomputed wavefunctions instead of computing them by itself. In this example, Hartee-Fock wavefunctions
+ * are used that are generated with a seprarate code by Froese Fischer.
+ *
+ * -# Computation of Hartee-Fock wave functions:
+ * @verbatim
+    autoshf Ar4HF
+   @endverbatim
+ * The script invokes the Hartee-Fock code of Froese Fischer (for details see <tt>[Ar4HF.txt](../../autostructure/examples/Ar4DN0DR/Ar4HF.txt)</tt>)
+ * and a short code for converting the thus generated wave functions (<tt>Ar4HF/wfn.out</tt>)
+ * autostructure format (<tt>Ar4HF/orbital.inp</tt>). The latter must be made available
+ * to the subsequent autostructure runs, e.g., with the following commands
+ * @verbatim
+    ln -s Ar4/orbital.inp Ar4IC.radwin
+    ln -s Ar4/orbital.inp Ar4HFDN0.radwin
+   @endverbatim
+ * The file extension <tt>radwin </tt> is mandatory.
+ *
+ * -# Intermediate-coupling (IC) calculation of energy levels of the primary ion:
+ * @verbatim
+    autos Ar4IC
+   @endverbatim
+ * using the input file <tt>[Ar4IC.in](../../autostructure/examples/Ar4DN0DR/Ar4IC.in)</tt>.
+ * Note, that the 7s in the subshell definitions flag the use of external wavefunctions. The minus sign in <tt>KCOR2=-3</tt>
+ * says that also the wavefunctions of the core should be read from the external source. This is why the corresponding subshells
+ * appear in the subshell definitions. Also note the empty namelist <tt>&SRADWIN &END</tt>.
+ * The output file <tt>[Ar4IC/LEVELS](../../autostructure/examples/Ar4DN0DR/LEVELS)</tt>
+ * contains excitation energies and is to be appended to the input file for the DR postprocessor (see step 6 below).
+ *
+ * -# Calculation of all level energies and transitions rates required for DR:
+ * @verbatim
+    autos Ar4HFDN0
+   @endverbatim
+ * using the input file <tt>[Ar4HFDN0.in](../../autostructure/examples/Ar4DN0DR/Ar4HFDN0.in)</tt>.
+ *
+ * -# Preparation of n-cutoff calculation; the cutoff is due to field ionization in the storage ring magnets.
+ * Here, we perform a calculation for CRYRING\@ESR:
+ * @verbatim
+    hydrocal < Ar4cutoff.hcin
+   @endverbatim
+ * using  <tt>[Ar4cutoff.hcin](../../autostructure/examples/Ar4DN0DR/Ar4cutoff.hcin)</tt> and producing the output files (filenames as
+ * requested in the input file)  <tt>[Ar4YR.txt](../../autostructure/examples/Ar4DN0DR/Ar4YR.txt)</tt>  and
+ * <tt>[Ar4YR.hcin](../../autostructure/examples/Ar4DN0DR/Ar4YR.hcin)</tt>. The former just informs about what has been requested, the
+ * latter in used as an input for the next step of the calculation.
+ *
+ * -# Calculation of nl-dependent survival probabilites:
+ * @verbatim
+    hydrocal < Ar4YR.hcin
+   @endverbatim
+ * using the input file <tt>[ArYR.hcin](../../autostructure/examples/Ar4DN0DR/Ar4YR.hcin)</tt> producing several output files
+ * from the various steps of the calculation. Of primary interest are  <tt>[Ar4YR.fn](../../autostructure/examples/Ar4DN0DR/Ar4YR.fn)</tt>,
+ * which list the l-averaged survival probabilities per n, and <tt>[Ar4YR.fnl](../../autostructure/examples/Ar4DN0DR/Ar4YR.fnl)</tt>, which
+ * contains the nl-specific survival probabilities to be read in by the DR postprocessor (see step 6 below).
+
+ * -# Calculation of binned DR cross sections with the DR post-processor:
+ * @verbatim
+    autosdr Ar4HFDN0 Ar4YR
+   @endverbatim
+ * using the input files <tt>[Ar4HFN0.drin](../../autostructure/examples/Ar4DN0DR/Ar4HFDN0.drin)</tt>
+ * based on <tt>[Ar4IC/LEVELS](../../autostructure/examples/Ar4DN0DR/LEVELS)</tt> from step 2 and
+ *  <tt>[Ar4YR.fnl](../../autostructure/examples/Ar4DN0DR/Ar4YR.fnl)</tt> from step 5. The use of the latter is
+ * requested by <tt>NFNLMX=100</tt> in namelist <tt>&TWO</tt> of the input file
+ * <tt>[Ar4HFN0.drin](../../autostructure/examples/Ar4DN0DR/Ar4HFDN0.drin)</tt>,
+ * with the 100 being the highest n value considered in steps 4 and 5.
+ * Note that the <tt>NECOR=27</tt> lowest levels a shifted to NIST values, which are provided on the last line.
+ * The resulting binned cross sections are in the output file <tt>[Ar4HFDN0.bdr](../../autostructure/examples/Ar4DN0DR/Ar4HFDN0.bdr)</tt>.
+ * The output file <tt>[Ar4HFDN0.adr](../../autostructure/examples/Ar4DN0DR/Ar4HFDN0.adr)</tt>
+ * contains rate coefficients obtained by a convolution with a flattened maxwellian velocity distribution,
+ * which is characterized by the temperatures <tt>TPAR</tt> and <tt>TPER</tt> as specified in
+ * <tt>[Ar4HFDN0.drin](../../autostructure/examples/Ar4DN0DR/Ar4HFDN0.drin)</tt> (unit: Rydberg=13.6057 eV).
+ *
+ * -# Convolution with the cooler electron energy distribution (see also @ref conv).
+ * Here, we perform a calculation for CRYRING\@ESR:
+ * @verbatim
+    hydrocal < Ar4MC.hcin
+   @endverbatim
+ * using  <tt>[Ar4HFDR.bdr](../../autostructure/examples/Ar4DN0DR/Ar4HFDN0.bdr)</tt> and
+ * the hydrocal input file <tt>[Ar4MC.hcin](../../autostructure/examples/Ar4DN0DR/Ar4MC.hcin)</tt>.
+ * This produces the output files
+ * <tt>[Ar4HFDN01.mcr](../../autostructure/examples/Ar4DN0DR/Ar4HFDN01.mcr)</tt>,
+ * <tt>[Ar4HFDN02.mcr](../../autostructure/examples/Ar4DN0DR/Ar4HFDN02.mcr)</tt>,
+ * <tt>[Ar4HFDN03.mcr](../../autostructure/examples/Ar4DN0DR/Ar4HFDN03.mcr)</tt>, and
+ * <tt>[Ar4HFDN04.mcr](../../autostructure/examples/Ar4DN0DR/Ar4HFDN04.mcr)</tt>,
+ * which contain the theoretical merged-beams rate coefficients for the first 4 lowest-energy levels of the parent ion.
+ *
+*/
