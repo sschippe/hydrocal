@@ -328,7 +328,7 @@ void COOLER::Print(fstream &fout) {
            << 7919 * electron_current / sqrt(cooling_energy) << endl;
     } else {
       fout << "###       drifttube layout : new (after Oct.2023)" << endl;
-      fout << "###            Publication : Eur. Phys. J. Spec. Top. (2026)" << endl;
+      fout << "###            Publication : Eur. Phys. J. Spec. Top. 235 (2026) 3577" << endl;
       fout << "###                    DOI : https://doi.org/10.1140/epjs/s11734-026-02357-0"  << endl;
     }
   }
