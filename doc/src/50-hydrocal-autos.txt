@@ -38,6 +38,7 @@
     cd ~/hydrocal/autostructure
     make AUTOS
     make AUTOSDR
+    make HF
     make install-all
     make doc
  @endverbatim
@@ -307,11 +308,11 @@
    @endverbatim
  * The script invokes the Hartee-Fock code of Froese Fischer (for details see <tt>[Ar4HF.txt](../../autostructure/examples/Ar4DN0DR/Ar4HF.txt)</tt>)
  * and a short code for converting the thus generated wave functions (<tt>Ar4HF/wfn.out</tt>)
- * autostructure format (<tt>Ar4HF/orbital.inp</tt>). The latter must be made available
+ * to autostructure format (<tt>Ar4HF/orbital.inp</tt>). The latter must be made available
  * to the subsequent autostructure runs, e.g., with the following commands
  * @verbatim
-    ln -s Ar4/orbital.inp Ar4IC.radwin
-    ln -s Ar4/orbital.inp Ar4HFDN0.radwin
+    ln -s Ar4HF/orbital.inp Ar4IC.radwin
+    ln -s Ar4HF/orbital.inp Ar4HFDN0.radwin
    @endverbatim
  * The file extension <tt>radwin </tt> is mandatory.
  *
